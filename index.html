@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Juice Studio Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F2F4F1; --surface:#FFFFFF; --surface-2:#E9ECE8; --surface-3:#DDE2DD;
+  --ink:#131A17; --ink-2:#465250; --ink-3:#77837F; --line:#D8DDD8; --line-2:#C5CCC6;
+  --accent:#0D6B5E; --accent-ink:#FFFFFF; --accent-soft:#D5EBE6; --accent-line:#9FCFC4;
+  --good:#1C7A4B; --good-soft:#DBF0E3; --warn:#9A5B00; --warn-soft:#FBEBCF; --bad:#B8342A; --bad-soft:#F8DEDA;
+  --role-0:#5856CF; --role-1:#0E8A7C; --role-2:#C27405; --role-3:#C0406A; --role-4:#2F7DB5;
+  --shadow:0 1px 2px rgba(19,26,23,.06),0 8px 24px rgba(19,26,23,.08);
+  --f-display:"Bricolage Grotesque","IBM Plex Sans",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:8px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1311; --surface:#161C1A; --surface-2:#1D2522; --surface-3:#27312D;
+    --ink:#E4EBE8; --ink-2:#A9B5B0; --ink-3:#7A8783; --line:#28322F; --line-2:#36423E;
+    --accent:#4CC2AE; --accent-ink:#04201B; --accent-soft:#143A33; --accent-line:#24665A;
+    --good:#5CCB8E; --good-soft:#15352A; --warn:#F0B34E; --warn-soft:#3A2D12; --bad:#F2796D; --bad-soft:#3E1D1A;
+    --role-0:#8E8CF2; --role-1:#40BFAE; --role-2:#E9A23B; --role-3:#EB7598; --role-4:#65AEE3;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1311; --surface:#161C1A; --surface-2:#1D2522; --surface-3:#27312D;
+  --ink:#E4EBE8; --ink-2:#A9B5B0; --ink-3:#7A8783; --line:#28322F; --line-2:#36423E;
+  --accent:#4CC2AE; --accent-ink:#04201B; --accent-soft:#143A33; --accent-line:#24665A;
+  --good:#5CCB8E; --good-soft:#15352A; --warn:#F0B34E; --warn-soft:#3A2D12; --bad:#F2796D; --bad-soft:#3E1D1A;
+  --role-0:#8E8CF2; --role-1:#40BFAE; --role-2:#E9A23B; --role-3:#EB7598; --role-4:#65AEE3;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:14px;line-height:1.45;padding-inline:20px;padding-block:0 60px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1320px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;letter-spacing:-.01em;text-wrap:balance;margin:0}
+h2{font-size:22px} h3{font-size:16px;font-weight:600}
+.num,td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.mono{font-family:var(--f-mono)}
+.muted{color:var(--ink-3)}
+.sub{font-size:12px;color:var(--ink-3)}
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:20;background:var(--bg);padding-block:16px 0;border-bottom:1px solid var(--line)}
+.top-row{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{font-size:26px;line-height:1}
+.brand .tc{font-family:var(--f-mono);font-size:12px;color:var(--ink-3)}
+.sync{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);display:flex;align-items:center;gap:6px}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--ink-3);display:inline-block}
+.sync.ok i{background:var(--good)} .sync.warn i{background:var(--warn)}
+.tabs{display:flex;gap:4px;margin-top:14px;overflow-x:auto;scrollbar-width:none}
+.tab{appearance:none;border:0;background:none;padding:10px 14px;border-bottom:2px solid transparent;color:var(--ink-2);font-weight:500;cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.banner{margin-top:16px;padding:10px 14px;border-radius:var(--r);background:var(--warn-soft);color:var(--warn);font-size:13px}
+
+main{padding-top:22px}
+.section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.section-head p{margin:4px 0 0;color:var(--ink-2);max-width:68ch}
+
+/* controls */
+.btn{appearance:none;border:1px solid var(--line-2);background:var(--surface);padding:7px 12px;border-radius:6px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--ink-3)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink-2)}
+.btn.ghost:hover{background:var(--surface-2);color:var(--ink)}
+.btn.danger{color:var(--bad)}
+.btn.danger.armed{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.sm{padding:4px 8px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label,.lbl{font-size:12px;color:var(--ink-2);font-weight:500}
+.inp{border:1px solid var(--line-2);background:var(--surface);border-radius:6px;padding:7px 9px;min-width:0;width:100%}
+.inp:hover{border-color:var(--ink-3)}
+.inp:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+.inp.numi{text-align:right;font-variant-numeric:tabular-nums}
+.inp.xs{padding:4px 6px}
+textarea.inp{resize:vertical;min-height:60px}
+.toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--ink-2)}
+.toggle input{accent-color:var(--accent);width:16px;height:16px}
+
+/* chips */
+.chip{display:inline-block;font-family:var(--f-mono);font-size:12px;font-weight:500;padding:2px 7px;border-radius:999px;background:var(--surface-2);color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip.good{background:var(--good-soft);color:var(--good)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st-pitch{border:1px dashed var(--line-2);color:var(--ink-2)}
+.st-confirmed{background:var(--accent-soft);color:var(--accent)}
+.st-production{background:var(--warn-soft);color:var(--warn)}
+.st-delivered{background:var(--surface-2);color:var(--ink-3)}
+
+/* panels */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.panel-pad{padding:16px 18px}
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th{font-size:11px;font-family:var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:color-mix(in srgb,var(--surface-2) 45%,transparent)}
+
+/* quote builder */
+.quote-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
+@media (max-width:1000px){.quote-grid{grid-template-columns:1fr}}
+.proj-bar{display:grid;grid-template-columns:2fr 1.4fr 1fr 1fr 1fr .7fr;gap:10px;align-items:end}
+@media (max-width:900px){.proj-bar{grid-template-columns:1fr 1fr}}
+.proj-switch{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.proj-switch select{max-width:340px}
+.add-row{display:flex;gap:8px;align-items:end;flex-wrap:wrap;padding:14px 18px;border-top:1px solid var(--line);background:var(--surface-2);border-radius:0 0 10px 10px}
+.add-row .field:first-child{flex:1 1 280px}
+.lines td{vertical-align:middle}
+.line-name{font-weight:600}
+.line-cat{font-size:11px;color:var(--ink-3);font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.05em}
+.base-sel{margin-top:6px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2)}
+.base-sel select{max-width:230px}
+.empty{padding:36px 18px;text-align:center;color:var(--ink-3)}
+.empty strong{display:block;color:var(--ink-2);font-size:15px;margin-bottom:4px}
+
+.summary{position:sticky;top:120px;display:flex;flex-direction:column;gap:14px}
+.sum-hero{padding:18px}
+.sum-hero .big{font-family:var(--f-display);font-size:38px;font-weight:700;letter-spacing:-.02em;line-height:1.05;font-variant-numeric:tabular-nums}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:13px}
+.kv dt{color:var(--ink-2)} .kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.kv .tot{font-weight:600;color:var(--ink);border-top:1px solid var(--line);padding-top:6px}
+.metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-top:1px solid var(--line)}
+.metric{background:var(--surface);padding:10px 14px}
+.metric .v{font-family:var(--f-display);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.metric:first-child{border-bottom-left-radius:10px}.metric:last-child{border-bottom-right-radius:10px}
+.role-line{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:center;font-size:13px}
+.dot{width:9px;height:9px;border-radius:2px;display:inline-block}
+.bar{height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;grid-column:1/-1}
+.bar>span{display:block;height:100%;border-radius:3px}
+.callout{font-size:13px;padding:10px 12px;border-radius:8px;background:var(--surface-2);color:var(--ink-2)}
+.callout b{color:var(--ink)}
+.callout.warn{background:var(--warn-soft);color:var(--warn)} .callout.warn b{color:inherit}
+.callout.bad{background:var(--bad-soft);color:var(--bad)} .callout.bad b{color:inherit}
+
+/* split bar */
+.split{display:flex;height:8px;width:110px;border-radius:2px;overflow:hidden;background:var(--surface-2)}
+.split>span{height:100%}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+
+/* rate card */
+.cat-head td{background:var(--surface-2);padding:12px 10px}
+tbody tr.cat-head:hover td{background:var(--surface-2)}
+.cat-head .cn{font-family:var(--f-display);font-weight:600;font-size:15px}
+.cat-head .cb{font-size:12px;color:var(--ink-2);margin-top:2px}
+.asset{font-weight:600}
+.desc{font-size:12px;color:var(--ink-3);max-width:44ch;margin-top:2px}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* capacity */
+.cap-grid td,.cap-grid th{text-align:right}
+.cap-grid td:first-child,.cap-grid th:first-child{text-align:left}
+.cell{min-width:118px}
+.cell .top-n{font-variant-numeric:tabular-nums;font-size:13px}
+.cell .top-n b{font-weight:600}
+.cbar{height:8px;background:var(--surface-2);border-radius:2px;margin-top:6px;position:relative;overflow:hidden;display:flex}
+.cbar .s{height:100%}
+.cbar .h{height:100%;background-image:repeating-linear-gradient(135deg,currentColor 0 2px,transparent 2px 5px);opacity:.6}
+.pct{font-family:var(--f-mono);font-size:11px}
+.pct.good{color:var(--good)} .pct.warn{color:var(--warn)} .pct.bad{color:var(--bad)}
+.month-nav{display:flex;gap:6px;align-items:center}
+.gantt{position:relative;height:10px;background:var(--surface-2);border-radius:2px;min-width:160px}
+.gantt span{position:absolute;top:0;bottom:0;border-radius:2px;background:var(--accent)}
+.gantt span.pitch{background:transparent;border:1px dashed var(--ink-3)}
+
+/* reference */
+.ref-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+@media (max-width:900px){.ref-grid{grid-template-columns:1fr}}
+.ref-card h3{margin-bottom:4px}
+.ref-card p.hint{margin:0 0 12px;font-size:12px;color:var(--ink-3)}
+.rows{display:flex;flex-direction:column;gap:8px}
+.r-row{display:grid;gap:8px;align-items:end}
+.savebar{position:sticky;bottom:12px;z-index:10;margin-top:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-radius:10px;background:var(--ink);color:var(--bg);box-shadow:var(--shadow)}
+.savebar .btn{background:transparent;color:var(--bg);border-color:color-mix(in srgb,var(--bg) 40%,transparent)}
+.savebar .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.delta-up{color:var(--bad)} .delta-down{color:var(--good)}
+.compact th,.compact td{padding:6px 6px;font-size:12px}
+.compact td:first-child{white-space:nowrap}
+.hist li{padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.hist li:last-child{border-bottom:0}
+.hist ul{list-style:none;margin:0;padding:0}
+.formula{font-family:var(--f-mono);font-size:12px;background:var(--surface-2);border-radius:8px;padding:10px 12px;color:var(--ink-2);line-height:1.7;overflow-x:auto}
+.formula b{color:var(--ink);font-weight:500}
+
+/* modal */
+.overlay{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--ink) 38%,transparent);display:flex;justify-content:flex-end}
+.drawer{width:min(620px,100%);height:100%;background:var(--surface);box-shadow:var(--shadow);display:flex;flex-direction:column}
+.drawer-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.drawer-body{padding:18px 20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:18px}
+.drawer-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fgrid .full{grid-column:1/-1}
+@media (max-width:520px){.fgrid{grid-template-columns:1fr}}
+fieldset{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:0}
+legend{font-size:12px;font-weight:600;color:var(--ink-2);padding:0 6px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg label{position:relative;border:1px solid var(--line-2);border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent);font-weight:500}
+.seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.preview{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.preview div{background:var(--surface-2);padding:10px 12px}
+.preview .v{font-family:var(--f-display);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
+@media (max-width:520px){.preview{grid-template-columns:1fr 1fr}}
+
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:13px;box-shadow:var(--shadow);transition:opacity .2s;pointer-events:none}
+#toast[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<script src="data/seed.js"></script>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <div class="top-row">
+      <div class="brand">
+        <h1>Studio Planner</h1>
+        <span class="tc">JUICE AI STUDIO · COST &amp; BANDWIDTH</span>
+      </div>
+      <div id="sync" class="sync"><i></i><span>Connecting…</span></div>
+    </div>
+    <nav class="tabs" role="tablist" id="tabs"></nav>
+  </header>
+  <div id="banner"></div>
+  <main id="main"></main>
+</div>
+<div id="modal-root"></div>
+<div id="toast" role="status" hidden></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nf0=new Intl.NumberFormat("en-IN",{maximumFractionDigits:0});
+const nf2=new Intl.NumberFormat("en-IN",{maximumFractionDigits:2});
+const nf3=new Intl.NumberFormat("en-IN",{maximumFractionDigits:3});
+const inr=n=>{n=+n||0;return (n<0?"−":"")+"₹"+nf0.format(Math.abs(Math.round(n)));};
+const inr2=n=>"₹"+nf2.format(+n||0);
+const days=n=>nf3.format(Math.round((+n||0)*1000)/1000);
+const num=n=>nf0.format(Math.round(+n||0));
+const hrs=n=>new Intl.NumberFormat("en-IN",{maximumFractionDigits:1}).format(+n||0);
+const pct=f=>isFinite(f)?Math.round(f*100)+"%":"—";
+const xfmt=m=>isFinite(m)?(m>=10?m.toFixed(0):m.toFixed(1))+"×":"—";
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const parseNum=v=>{const n=parseFloat(String(v).replace(/[,₹%×\s]/g,""));return isNaN(n)?null:n;};
+const todayISO=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+
+const STATUSES=[["pitch","Pitch"],["confirmed","Confirmed"],["production","In production"],["delivered","Delivered"]];
+const STATUS_LABEL=Object.fromEntries(STATUSES);
+const PRICING=[["fixed","Fixed price"],["range","Price range"],["tbd","Quote per brief"],["free","Complimentary"],["adapt","% of base film"]];
+const EMPTY_SETTINGS={credits:[],dayRate:0,hoursPerDay:8,markupFloor:1.5,targetMarkup:2.5,roles:[],categoryBlurbs:{},history:[]};
+
+/* ---------- state ---------- */
+const state={
+  tab:"quote", dbState:"live",
+  settings:null, jobs:[], projects:[], loaded:{settings:false,jobs:false,projects:false},
+  curId:null, cur:null, dirty:false, saveTimer:null, saving:false,
+  addJobId:"", addQty:1,
+  includePitches:true, monthOffset:0,
+  exampleBaseId:"",
+  jobDraft:null, jobDraftNew:false, jobErr:"",
+  sDraft:null, sDirty:false,
+  armed:null
+};
+try{const t=localStorage.getItem("sp-tab");if(t)state.tab=t;}catch(e){}
+const S=()=>state.settings||EMPTY_SETTINGS;
+
+/* ---------- calculation engine ---------- */
+const creditRate=(id,s)=>{const c=(s.credits||[]).find(c=>c.id===id);return c?(+c.rate||0):0;};
+const creditName=(id,s)=>{const c=((s||S()).credits||[]).find(c=>c.id===id);return c?c.name:"—";};
+const jobById=id=>state.jobs.find(j=>j.id===id);
+const isAdapt=j=>j&&j.pricing&&j.pricing.type==="adapt";
+const jobCredits=j=>(+j.credits||0)+(+j.buffer||0);
+
+function jobCost(j,base,s){
+  s=s||S();
+  const people=(+j.effortDays||0)*(+s.dayRate||0);
+  let credits=0,creditType=j.creditType,creditCost=0;
+  if(isAdapt(j)){
+    if(base){credits=(+j.adaptShare||0)*jobCredits(base);creditType=base.creditType;creditCost=credits*creditRate(creditType,s);}
+  }else{credits=jobCredits(j);creditCost=credits*creditRate(creditType,s);}
+  const ext=+j.externalCost||0;
+  return {people,credits,creditType,creditCost,ext,total:people+creditCost+ext};
+}
+function jobSP(j,base,s){
+  s=s||S();const p=j.pricing||{};
+  switch(p.type){
+    case "fixed":return {sp:+p.sp||0,kind:"fixed"};
+    case "range":return {sp:((+p.min||0)+(+p.max||0))/2,kind:"range"};
+    case "tbd":return {sp:jobCost(j,null,s).total*(+s.targetMarkup||0),kind:"suggested"};
+    case "free":return {sp:0,kind:"free"};
+    case "adapt":return base?{sp:(+p.pct||0)*jobSP(base,null,s).sp,kind:"adapt"}:{sp:0,kind:"adapt-nobase"};
+    default:return {sp:0,kind:"none"};
+  }
+}
+function lineCalc(l,s){
+  s=s||S();const j=jobById(l.jobId);if(!j)return null;
+  const base=isAdapt(j)?jobById(l.baseJobId):null;
+  const c=jobCost(j,base,s),p=jobSP(j,base,s);
+  const qty=Math.max(0,+l.qty||0);
+  const ov=l.spOverride;const hasOv=ov!==""&&ov!=null&&isFinite(+ov);
+  const unitSP=hasOv?+ov:p.sp;
+  const roleDays={};(s.roles||[]).forEach(r=>{roleDays[r.id]=(+j.effortDays||0)*((+(j.split||{})[r.id]||0)/100)*qty;});
+  const credits={};if(c.credits&&c.creditType)credits[c.creditType]=c.credits*qty;
+  return {j,base,c,p,qty,unitSP,hasOv,sp:unitSP*qty,cost:c.total*qty,people:c.people*qty,creditCost:c.creditCost*qty,ext:c.ext*qty,days:(+j.effortDays||0)*qty,roleDays,credits};
+}
+function projectCalc(p,s){
+  s=s||S();
+  const out={gross:0,cost:0,people:0,creditCost:0,ext:0,days:0,roleDays:{},credits:{},creditCostBy:{},lines:[],missing:0};
+  (s.roles||[]).forEach(r=>out.roleDays[r.id]=0);
+  (p.lines||[]).forEach(l=>{
+    const c=lineCalc(l,s);if(!c){out.missing++;out.lines.push({l,c:null});return;}
+    out.lines.push({l,c});
+    out.gross+=c.sp;out.cost+=c.cost;out.people+=c.people;out.creditCost+=c.creditCost;out.ext+=c.ext;out.days+=c.days;
+    for(const k in c.roleDays)out.roleDays[k]=(out.roleDays[k]||0)+c.roleDays[k];
+    for(const k in c.credits){out.credits[k]=(out.credits[k]||0)+c.credits[k];out.creditCostBy[k]=(out.creditCostBy[k]||0)+c.credits[k]*creditRate(k,s);}
+  });
+  out.discount=out.gross*((+p.discountPct||0)/100);
+  out.sp=out.gross-out.discount;
+  out.margin=out.sp-out.cost;
+  out.marginPct=out.sp>0?out.margin/out.sp:NaN;
+  out.markup=out.cost>0?out.sp/out.cost:NaN;
+  return out;
+}
+function markupChip(sp,cost,s){
+  s=s||S();
+  if(!(cost>0))return '<span class="chip">—</span>';
+  const m=sp/cost;
+  const cls=m<(+s.markupFloor||0)?"bad":m<(+s.targetMarkup||0)?"warn":"good";
+  return `<span class="chip ${cls}" title="Selling price ÷ internal cost">${xfmt(m)}</span>`;
+}
+const marginTxt=(sp,cost)=>sp>0?pct((sp-cost)/sp):"—";
+
+/* calendar */
+const D=s=>s?new Date(s+"T12:00:00"):null;
+function wd(a,b){if(!a||!b||a>b)return 0;let n=0;const x=new Date(a);while(x<=b){const w=x.getDay();if(w!==0&&w!==6)n++;x.setDate(x.getDate()+1);}return n;}
+function overlapWd(a1,b1,a2,b2){const a=a1>a2?a1:a2,b=b1<b2?b1:b2;return wd(a,b);}
+const fmtDate=s=>{const d=D(s);return d?d.toLocaleDateString("en-IN",{day:"numeric",month:"short"}):"";};
+const counted=p=>p.status!=="pitch"||state.includePitches;
+function projDates(p){const a=D(p.start),b=D(p.end);return a&&b&&a<=b?{a,b,n:wd(a,b)}:null;}
+
+function roleColor(i){return `var(--role-${i%5})`;}
+
+/* ---------- local storage (this browser) ---------- */
+const STORE_KEY="juice-studio-planner-v1";
+const SEED=window.STUDIO_SEED||null;
+function fromShape(d){
+  const obj=o=>Object.entries(o||{}).map(([id,v])=>Object.assign({id},clone(v)));
+  state.settings=Object.assign(clone(EMPTY_SETTINGS),clone(d.settings||{}));
+  state.jobs=(Array.isArray(d.jobs)?clone(d.jobs):obj(d.jobs)).sort((a,b)=>(a.order||0)-(b.order||0));
+  state.projects=Array.isArray(d.projects)?clone(d.projects):obj(d.projects);
+}
+function toShape(){
+  const obj=arr=>Object.fromEntries(arr.map(x=>{const c=clone(x);const id=c.id;delete c.id;return [id,c];}));
+  return {version:1,exportedAt:new Date().toISOString(),settings:clone(state.settings||EMPTY_SETTINGS),jobs:obj(state.jobs),projects:obj(state.projects)};
+}
+let storeOK=true;
+function persist(){
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(toShape()));if(state.curId)localStorage.setItem("sp-cur",state.curId);storeOK=true;}
+  catch(e){storeOK=false;toast("This browser blocked saving. Download a backup so nothing is lost.");}
+  setSync();
+}
+function loadStore(){
+  let d=null;
+  try{const raw=localStorage.getItem(STORE_KEY);if(raw)d=JSON.parse(raw);}catch(e){storeOK=false;}
+  if(!d&&SEED)d=SEED;
+  if(d)fromShape(d);
+  state.loaded={settings:true,jobs:true,projects:true};
+  state.dbState="live";
+  let last=null;try{last=localStorage.getItem("sp-cur");}catch(e){}
+  const p=state.projects.find(x=>x.id===last)||[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];
+  if(p){state.curId=p.id;state.cur=clone(p);}
+}
+function setSync(){
+  const el=$("#sync");
+  el.className="sync "+(storeOK?"ok":"warn");
+  el.querySelector("span").textContent=!storeOK?"Not saving — download a backup":(state.dirty?"Saving…":"Saved in this browser");
+}
+function banner(){
+  const b=$("#banner");
+  b.innerHTML=!SEED&&!state.jobs.length?'<div class="banner">No rate card loaded. Keep <b>data/seed.js</b> next to this file, or restore a backup from Reference rates.</div>':"";
+}
+window.addEventListener("storage",e=>{if(e.key!==STORE_KEY||!e.newValue)return;try{fromShape(JSON.parse(e.newValue));if(state.curId){const f=state.projects.find(p=>p.id===state.curId);state.cur=f?clone(f):null;}render();}catch(err){}});
+async function dbSet(){persist();}
+async function dbDel(){persist();}
+function downloadFile(name,text,type){
+  const blob=new Blob([text],{type});const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+/* ---------- project persistence ---------- */
+function updateProject(fn){
+  if(!state.cur)return;
+  fn(state.cur);state.cur.updatedAt=new Date().toISOString();
+  const i=state.projects.findIndex(p=>p.id===state.cur.id);
+  if(i>=0)state.projects[i]=clone(state.cur);
+  state.dirty=true;clearTimeout(state.saveTimer);
+  state.saveTimer=setTimeout(flushProject,550);
+  render();
+}
+async function flushProject(){
+  if(!state.cur||!state.dirty)return;
+  state.dirty=false;
+  const i=state.projects.findIndex(p=>p.id===state.cur.id);
+  if(i>=0)state.projects[i]=clone(state.cur);else state.projects.push(clone(state.cur));
+  persist();
+}
+function newProject(){
+  flushProject();
+  const now=new Date().toISOString();
+  const p={id:uid("p"),name:"Untitled quote",client:"",status:"pitch",start:"",end:"",discountPct:0,notes:"",lines:[],createdAt:now,updatedAt:now};
+  state.projects.push(clone(p));state.curId=p.id;state.cur=p;state.dirty=true;
+  flushProject();state.tab="quote";render();
+  setTimeout(()=>{const el=$("#proj-name");if(el){el.focus();el.select();}},30);
+}
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600);}
+
+/* ---------- rendering ---------- */
+function render(){
+  const ae=document.activeElement;
+  const keep=ae&&ae.id&&(ae.tagName==="INPUT"||ae.tagName==="TEXTAREA"||ae.tagName==="SELECT")?{id:ae.id,v:ae.value,s:ae.selectionStart,e:ae.selectionEnd,type:ae.type}:null;
+  const scrollY=window.scrollY;
+  const dScroll=$(".drawer-body")?.scrollTop;
+  $("#tabs").innerHTML=[["quote","Quote builder"],["pipeline","Pipeline & capacity"],["rates","Rate card"],["reference","Reference rates"]]
+    .map(([k,l])=>`<button class="tab" role="tab" aria-selected="${state.tab===k}" data-action="tab" data-tab="${k}">${l}</button>`).join("");
+  banner();setSync();
+  const m=$("#main");
+  const ready=true;
+  if(!ready){m.innerHTML='<div class="empty"><strong>Loading your rate card…</strong></div>';}
+  else if(state.tab==="quote")m.innerHTML=viewQuote();
+  else if(state.tab==="pipeline")m.innerHTML=viewPipeline();
+  else if(state.tab==="rates")m.innerHTML=viewRates();
+  else m.innerHTML=viewReference();
+  $("#modal-root").innerHTML=state.jobDraft?viewJobDrawer():"";
+  if(keep){const el=document.getElementById(keep.id);if(el){
+    if(el.tagName!=="SELECT"&&keep.type!=="checkbox"&&keep.type!=="radio"&&keep.type!=="date")el.value=keep.v;
+    el.focus({preventScroll:true});try{if(keep.s!=null)el.setSelectionRange(keep.s,keep.e);}catch(e){}
+  }}
+  if(dScroll!=null&&$(".drawer-body"))$(".drawer-body").scrollTop=dScroll;
+  window.scrollTo(0,scrollY);
+}
+
+function jobOptions(selected,filter){
+  const s=S();const groups={};
+  state.jobs.filter(filter||(()=>true)).forEach(j=>{(groups[j.category||"Other"]=groups[j.category||"Other"]||[]).push(j);});
+  return Object.entries(groups).map(([cat,js])=>`<optgroup label="${esc(cat)}">${js.map(j=>`<option value="${esc(j.id)}" ${j.id===selected?"selected":""}>${esc(j.name)}${j.variant?" · "+esc(j.variant):""}</option>`).join("")}</optgroup>`).join("");
+}
+const jobLabel=j=>j?esc(j.name)+(j.variant?` <span class="muted">· ${esc(j.variant)}</span>`:""):"";
+const nonAdapt=j=>!isAdapt(j);
+function defaultBaseId(p){
+  const inProj=(p&&p.lines||[]).map(l=>jobById(l.jobId)).find(j=>j&&!isAdapt(j)&&(+j.effortDays||0)>=1);
+  if(inProj)return inProj.id;
+  const f=state.jobs.find(j=>!isAdapt(j)&&(+j.effortDays||0)>=1);return f?f.id:"";
+}
+
+/* ----- quote builder ----- */
+function viewQuote(){
+  const s=S();
+  const sorted=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
+  const switcher=`<div class="proj-switch">
+    <select class="inp" id="proj-select" data-k="curId" aria-label="Open a saved quote">
+      ${sorted.length?"":'<option value="">No saved quotes</option>'}
+      ${sorted.map(p=>`<option value="${esc(p.id)}" ${p.id===state.curId?"selected":""}>${esc(p.name||"Untitled")}${p.client?" — "+esc(p.client):""} (${esc(STATUS_LABEL[p.status]||"")})</option>`).join("")}
+    </select>
+    <button class="btn primary" data-action="new-project">+ New quote</button>
+    ${state.cur?`<button class="btn ghost" data-action="dup-project">Duplicate</button>`:""}
+    ${state.cur?`<button class="btn ghost" data-action="export-quote">Export CSV</button>`:""}
+  </div>`;
+  if(!state.cur){
+    return `<div class="section-head"><div><h2>Quote builder</h2><p>Put a project together from your rate card to see price, internal cost, markup, credits and team days.</p></div></div>${switcher}
+    <div class="panel empty"><strong>No quote open</strong>Start a new quote to begin.</div>`;
+  }
+  const p=state.cur;const pc=projectCalc(p,s);
+  const bar=`<div class="panel panel-pad" style="margin-bottom:16px"><div class="proj-bar">
+    <div class="field"><label for="proj-name">Project</label><input class="inp" id="proj-name" data-k="proj.name" value="${esc(p.name)}"></div>
+    <div class="field"><label for="proj-client">Client</label><input class="inp" id="proj-client" data-k="proj.client" value="${esc(p.client)}" placeholder="Brand name"></div>
+    <div class="field"><label for="proj-status">Status</label><select class="inp" id="proj-status" data-k="proj.status">${STATUSES.map(([k,l])=>`<option value="${k}" ${p.status===k?"selected":""}>${l}</option>`).join("")}</select></div>
+    <div class="field"><label for="proj-start">Start</label><input class="inp" type="date" id="proj-start" data-k="proj.start" value="${esc(p.start)}"></div>
+    <div class="field"><label for="proj-end">Delivery</label><input class="inp" type="date" id="proj-end" data-k="proj.end" value="${esc(p.end)}"></div>
+    <div class="field"><label for="proj-disc">Discount %</label><input class="inp numi" inputmode="decimal" id="proj-disc" data-k="proj.discountPct" data-num value="${esc(p.discountPct||0)}"></div>
+  </div></div>`;
+
+  const rows=pc.lines.map(({l,c})=>{
+    if(!c)return `<tr><td colspan="8"><span class="muted">A job type on this line was deleted from the rate card.</span></td><td class="num"><button class="btn ghost sm" data-action="rm-line" data-id="${esc(l.id)}" aria-label="Remove line">✕</button></td></tr>`;
+    const j=c.j;
+    const baseSel=isAdapt(j)?`<div class="base-sel"><label for="ln-base-${esc(l.id)}">Base film</label><select class="inp xs" id="ln-base-${esc(l.id)}" data-k="line.baseJobId" data-id="${esc(l.id)}"><option value="">Choose…</option>${jobOptions(l.baseJobId,nonAdapt)}</select></div>`:"";
+    const note=c.p.kind==="suggested"?'<div class="sub">suggested @ '+xfmt(+s.targetMarkup)+'</div>':c.p.kind==="range"?'<div class="sub">range midpoint</div>':c.p.kind==="free"?'<div class="sub">complimentary</div>':c.p.kind==="adapt"?`<div class="sub">${Math.round((+j.pricing.pct||0)*100)}% of base</div>`:c.p.kind==="adapt-nobase"?'<div class="sub" style="color:var(--warn)">pick a base film</div>':"";
+    return `<tr>
+      <td><div class="line-cat">${esc(j.category)}</div><div class="line-name">${jobLabel(j)}</div>${baseSel}</td>
+      <td class="num" style="width:78px"><input class="inp numi xs" inputmode="decimal" id="ln-qty-${esc(l.id)}" data-k="line.qty" data-id="${esc(l.id)}" data-num value="${esc(l.qty)}" aria-label="Quantity"></td>
+      <td class="num" style="width:130px"><input class="inp numi xs" inputmode="decimal" id="ln-sp-${esc(l.id)}" data-k="line.spOverride" data-id="${esc(l.id)}" data-num data-opt value="${c.hasOv?esc(l.spOverride):""}" placeholder="${esc(num(c.p.sp))}" aria-label="Unit price override">${c.hasOv?'<div class="sub">custom price</div>':note}</td>
+      <td class="num">${inr(c.sp)}</td>
+      <td class="num">${inr(c.cost)}</td>
+      <td class="num">${markupChip(c.sp,c.cost)}</td>
+      <td class="num">${days(c.days)}</td>
+      <td class="num">${c.c.credits?num(c.c.credits*c.qty):"—"}${c.c.credits?`<div class="sub">${esc(creditName(c.c.creditType))}</div>`:""}</td>
+      <td class="num"><button class="btn ghost sm" data-action="rm-line" data-id="${esc(l.id)}" aria-label="Remove line">✕</button></td>
+    </tr>`;
+  }).join("");
+
+  const addJob=state.addJobId&&jobById(state.addJobId)?state.addJobId:(state.jobs[0]&&state.jobs[0].id)||"";
+  const lines=`<div class="panel">
+    <div class="table-wrap"><table class="lines">
+      <thead><tr><th>Deliverable</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Line price</th><th class="num">Internal cost</th><th class="num">Markup</th><th class="num">Days</th><th class="num">Credits</th><th></th></tr></thead>
+      <tbody>${rows||`<tr><td colspan="9"><div class="empty"><strong>No deliverables yet</strong>Add jobs from your rate card below.</div></td></tr>`}</tbody>
+    </table></div>
+    <div class="add-row">
+      <div class="field"><label for="add-job">Add a deliverable</label><select class="inp" id="add-job" data-k="addJobId">${jobOptions(addJob)}</select></div>
+      <div class="field" style="width:80px"><label for="add-qty">Qty</label><input class="inp numi" inputmode="decimal" id="add-qty" data-k="addQty" data-num value="${esc(state.addQty)}"></div>
+      <button class="btn primary" data-action="add-line" ${state.jobs.length?"":"disabled"}>Add</button>
+    </div>
+  </div>
+  <div class="field" style="margin-top:14px"><label for="proj-notes">Notes</label><textarea class="inp" id="proj-notes" data-k="proj.notes" placeholder="Scope assumptions, revision rounds, talent or music at cost…">${esc(p.notes||"")}</textarea></div>
+  <div style="margin-top:14px;display:flex;justify-content:flex-end"><button class="btn danger ${state.armed==="del-proj"?"armed":""}" data-action="del-project">${state.armed==="del-proj"?"Click again to delete this quote":"Delete quote"}</button></div>`;
+
+  return `<div class="section-head"><div><h2>Quote builder</h2><p>Changes save automatically and feed the pipeline &amp; capacity view once the quote has dates.</p></div></div>
+  ${switcher}${bar}
+  <div class="quote-grid"><div>${lines}</div>${viewSummary(p,pc)}</div>`;
+}
+
+function viewSummary(p,pc){
+  const s=S();const roles=s.roles||[];
+  const maxRole=Math.max(0.0001,...roles.map(r=>pc.roleDays[r.id]||0));
+  // delivery estimate
+  let bottleneck=null,minDays=0;
+  roles.forEach(r=>{const d=pc.roleDays[r.id]||0;if(d<=0)return;const cap=(+r.headcount||0)*((+r.utilisation||0)/100);const need=cap>0?d/cap:Infinity;if(need>minDays){minDays=need;bottleneck=r;}});
+  const splitSum=pc.lines.reduce((a,{c})=>a+(c?c.days:0),0);
+  const assigned=Object.values(pc.roleDays).reduce((a,b)=>a+b,0);
+  const unassigned=splitSum-assigned;
+  const roleRows=roles.map((r,i)=>{
+    const d=pc.roleDays[r.id]||0;
+    return `<div class="role-line"><span class="dot" style="background:${roleColor(i)}"></span><span>${esc(r.name)}</span><span class="num">${days(d)} d <span class="sub">· ${hrs(d*(+s.hoursPerDay||8))} h</span></span>
+      <div class="bar"><span style="width:${(d/maxRole)*100}%;background:${roleColor(i)}"></span></div></div>`;
+  }).join("");
+  let est="";
+  if(minDays===Infinity)est=`<div class="callout bad">No <b>${esc(bottleneck.name)}</b> on the team. Add headcount in Reference rates.</div>`;
+  else if(minDays>0)est=`<div class="callout">Fastest delivery with the current team: <b>${Math.ceil(minDays)} working days</b>. ${esc(bottleneck.name)} is the bottleneck.</div>`;
+  // window load
+  let win="";
+  const pd=projDates(p);
+  if(pd&&roles.length){
+    const rowsW=roles.map((r,i)=>{
+      const cap=(+r.headcount||0)*pd.n*((+r.utilisation||0)/100);
+      let other=0;
+      state.projects.forEach(q=>{if(q.id===p.id||!counted(q))return;const qd=projDates(q);if(!qd)return;const ov=overlapWd(pd.a,pd.b,qd.a,qd.b);if(!ov)return;const qc=projectCalc(q,s);other+=(qc.roleDays[r.id]||0)*ov/qd.n;});
+      const mine=pc.roleDays[r.id]||0;const load=cap>0?(mine+other)/cap:(mine+other>0?Infinity:0);
+      const cls=load>1?"bad":load>.85?"warn":"good";
+      return `<tr><td><span class="dot" style="background:${roleColor(i)}"></span> ${esc(r.name)}</td><td class="num">${days(mine)}</td><td class="num">${days(other)}</td><td class="num">${days(cap)}</td><td class="num"><span class="pct ${cls}">${isFinite(load)?pct(load):"no team"}</span></td></tr>`;
+    }).join("");
+    win=`<div class="panel panel-pad"><div class="eyebrow" style="margin-bottom:6px">Team load · ${esc(fmtDate(p.start))} – ${esc(fmtDate(p.end))} · ${pd.n} working days</div>
+      <div class="table-wrap"><table class="compact"><thead><tr><th>Role</th><th class="num">This</th><th class="num">Others</th><th class="num">Capacity</th><th class="num">Load</th></tr></thead><tbody>${rowsW}</tbody></table></div>
+      <div class="sub" style="margin-top:6px">"Others" = overlapping ${state.includePitches?"confirmed, in-production and pitch":"confirmed and in-production"} quotes, spread evenly across their dates.</div></div>`;
+  }else if(p.lines&&p.lines.length){
+    win=`<div class="callout">Add start and delivery dates to check this against the rest of your pipeline.</div>`;
+  }
+  const creditRows=Object.keys(pc.credits).map(k=>`<dt>${esc(creditName(k))} · ${num(pc.credits[k])} cr</dt><dd>${inr(pc.creditCostBy[k])}</dd>`).join("");
+  return `<aside class="summary">
+    <div class="panel">
+      <div class="sum-hero">
+        <div class="eyebrow">Quote value · excl. taxes</div>
+        <div class="big">${inr(pc.sp)}</div>
+        ${pc.discount?`<div class="sub">${inr(pc.gross)} less ${nf2.format(+p.discountPct)}% discount (${inr(pc.discount)})</div>`:""}
+        <dl class="kv" style="margin-top:14px">
+          <dt>Team time · ${days(pc.days)} d × ${inr(s.dayRate)}</dt><dd>${inr(pc.people)}</dd>
+          ${creditRows}
+          ${pc.ext?`<dt>External (artists, vendors)</dt><dd>${inr(pc.ext)}</dd>`:""}
+          <dt class="tot">Internal cost</dt><dd class="tot">${inr(pc.cost)}</dd>
+        </dl>
+      </div>
+      <div class="metric-row">
+        <div class="metric"><div class="eyebrow">Margin</div><div class="v">${inr(pc.margin)}</div></div>
+        <div class="metric"><div class="eyebrow">Margin %</div><div class="v">${pct(pc.marginPct)}</div></div>
+        <div class="metric"><div class="eyebrow">Markup</div><div class="v">${xfmt(pc.markup)}</div></div>
+      </div>
+    </div>
+    <div class="panel panel-pad" style="display:flex;flex-direction:column;gap:10px">
+      <div class="eyebrow">Bandwidth · ${days(pc.days)} workdays</div>
+      ${roleRows||'<div class="sub">Add roles in Reference rates.</div>'}
+      ${unassigned>0.001?`<div class="callout warn"><b>${days(unassigned)} d</b> not assigned to a role. Fix the role split on those job types.</div>`:""}
+      ${est}
+    </div>
+    ${win}
+  </aside>`;
+}
+
+/* ----- pipeline & capacity ----- */
+function viewPipeline(){
+  const s=S();const roles=s.roles||[];
+  const now=new Date();const start=new Date(now.getFullYear(),now.getMonth()+state.monthOffset,1,12);
+  const months=[...Array(6)].map((_,i)=>{const a=new Date(start.getFullYear(),start.getMonth()+i,1,12);const b=new Date(a.getFullYear(),a.getMonth()+1,0,12);return {a,b,n:wd(a,b),label:a.toLocaleDateString("en-IN",{month:"short",year:"2-digit"})};});
+  const calcs={};state.projects.forEach(p=>calcs[p.id]=projectCalc(p,s));
+  const load=(roleId,m,filter)=>{let t=0;state.projects.forEach(p=>{if(!filter(p))return;const pd=projDates(p);if(!pd)return;const ov=overlapWd(pd.a,pd.b,m.a,m.b);if(ov)t+=(calcs[p.id].roleDays[roleId]||0)*ov/pd.n;});return t;};
+  const firm=p=>p.status!=="pitch";const pitch=p=>p.status==="pitch";
+  const roleRows=roles.map((r,i)=>{
+    const cells=months.map(m=>{
+      const cap=(+r.headcount||0)*m.n*((+r.utilisation||0)/100);
+      const f=load(r.id,m,firm),pi=state.includePitches?load(r.id,m,pitch):0;
+      const tot=f+pi;const l=cap>0?tot/cap:(tot>0?Infinity:0);
+      const cls=l>1?"bad":l>.85?"warn":"good";
+      const W=Math.max(cap,tot)||1;
+      return `<td class="cell"><div class="top-n"><b>${days(tot)}</b><span class="muted"> / ${days(cap)} d</span></div>
+        <div class="cbar" style="color:${roleColor(i)}"><span class="s" style="width:${f/W*100}%;background:${roleColor(i)}"></span><span class="h" style="width:${pi/W*100}%"></span></div>
+        <div class="pct ${tot?cls:""}">${tot?(isFinite(l)?pct(l)+" booked":"no team"):"free"}${l>1&&isFinite(l)?` · short ${days(tot-cap)} d`:""}</div></td>`;
+    }).join("");
+    return `<tr><td><div style="display:flex;gap:8px;align-items:center"><span class="dot" style="background:${roleColor(i)}"></span><b>${esc(r.name)}</b></div><div class="sub">${esc(r.headcount)} × ${esc(r.utilisation)}% utilisation</div></td>${cells}</tr>`;
+  }).join("");
+  const creditRows=(s.credits||[]).map(c=>{
+    const cells=months.map(m=>{let t=0;state.projects.forEach(p=>{if(!counted(p))return;const pd=projDates(p);if(!pd)return;const ov=overlapWd(pd.a,pd.b,m.a,m.b);if(ov)t+=(calcs[p.id].credits[c.id]||0)*ov/pd.n;});
+      return `<td class="cell"><div class="top-n"><b>${num(t)}</b><span class="muted"> cr</span></div><div class="sub">${inr(t*(+c.rate||0))}</div></td>`;}).join("");
+    return `<tr><td><b>${esc(c.name)} credits</b><div class="sub">${inr2(c.rate)} / credit</div></td>${cells}</tr>`;
+  }).join("");
+
+  // projects table
+  const rangeA=months[0].a,rangeB=months[5].b;const span=(rangeB-rangeA)||1;
+  const plist=[...state.projects].sort((a,b)=>(a.start||"9").localeCompare(b.start||"9"));
+  const prow=plist.map(p=>{
+    const c=calcs[p.id];const pd=projDates(p);
+    let g="";if(pd){const a=Math.max(pd.a,rangeA),b=Math.min(pd.b,rangeB);if(a<=b){g=`<span class="${p.status==="pitch"?"pitch":""}" style="left:${(a-rangeA)/span*100}%;width:${Math.max(1.2,(b-a)/span*100)}%"></span>`;}}
+    return `<tr>
+      <td><button class="btn ghost sm" style="padding-left:0;font-weight:600;color:var(--ink)" data-action="open-project" data-id="${esc(p.id)}">${esc(p.name||"Untitled")}</button><div class="sub">${esc(p.client||"")}</div></td>
+      <td><span class="pill st-${esc(p.status)}">${esc(STATUS_LABEL[p.status]||p.status)}</span></td>
+      <td>${pd?`${esc(fmtDate(p.start))} – ${esc(fmtDate(p.end))}<div class="sub">${pd.n} working days</div>`:'<span class="chip warn">No dates · not counted</span>'}</td>
+      <td style="min-width:170px"><div class="gantt">${g}</div></td>
+      <td class="num">${inr(c.sp)}</td><td class="num">${inr(c.cost)}</td><td class="num">${markupChip(c.sp,c.cost)}</td>
+      ${roles.map(r=>`<td class="num">${days(c.roleDays[r.id]||0)}</td>`).join("")}
+    </tr>`;
+  }).join("");
+  const tot=plist.filter(p=>p.status!=="delivered").reduce((a,p)=>{const c=calcs[p.id];a.sp+=c.sp;a.cost+=c.cost;if(p.status==="pitch")a.pitch+=c.sp;else a.firm+=c.sp;return a;},{sp:0,cost:0,pitch:0,firm:0});
+
+  return `<div class="section-head"><div><h2>Pipeline &amp; capacity</h2><p>Booked team days against capacity, month by month. Each quote's effort is spread evenly across its working days (Mon–Fri) between start and delivery.</p></div>
+    <div class="toolbar">
+      <label class="toggle"><input type="checkbox" id="pipe-pitch" data-k="includePitches" ${state.includePitches?"checked":""}> Include pitches <span class="muted">(hatched)</span></label>
+      <div class="month-nav"><button class="btn sm" data-action="month" data-d="-1" aria-label="Earlier months">←</button><button class="btn sm" data-action="month" data-d="0">Today</button><button class="btn sm" data-action="month" data-d="1" aria-label="Later months">→</button></div>
+    </div></div>
+  <div class="panel" style="margin-bottom:18px"><div class="table-wrap"><table class="cap-grid">
+    <thead><tr><th>Role</th>${months.map(m=>`<th>${m.label}<div class="sub" style="text-transform:none;letter-spacing:0">${m.n} working days</div></th>`).join("")}</tr></thead>
+    <tbody>${roleRows||`<tr><td colspan="7" class="muted">Add roles in Reference rates.</td></tr>`}${creditRows?`<tr class="cat-head"><td colspan="7"><span class="eyebrow">Credits to buy</span></td></tr>`+creditRows:""}</tbody>
+  </table></div></div>
+  <div class="section-head" style="margin-bottom:10px"><h3>Quotes</h3>
+    <div class="legend"><span>Open pipeline <b>${inr(tot.sp)}</b></span><span>Confirmed <b>${inr(tot.firm)}</b></span><span>Pitching <b>${inr(tot.pitch)}</b></span><button class="btn sm primary" data-action="new-project">+ New quote</button></div></div>
+  <div class="panel"><div class="table-wrap"><table>
+    <thead><tr><th>Quote</th><th>Status</th><th>Dates</th><th>${esc(months[0].label)} – ${esc(months[5].label)}</th><th class="num">Price</th><th class="num">Cost</th><th class="num">Markup</th>${roles.map((r,i)=>`<th class="num"><span class="dot" style="background:${roleColor(i)}"></span> ${esc(r.name.split(" ").map(w=>w[0]).join(""))} d</th>`).join("")}</tr></thead>
+    <tbody>${prow||`<tr><td colspan="${7+roles.length}"><div class="empty"><strong>No quotes yet</strong>Create one in the Quote builder.</div></td></tr>`}</tbody>
+  </table></div></div>`;
+}
+
+/* ----- rate card ----- */
+function priceCell(j,base){
+  const p=j.pricing||{};const s=S();
+  switch(p.type){
+    case "fixed":return inr(p.sp);
+    case "range":return `${inr(p.min)} – ${inr(p.max).replace("₹","")}<div class="sub">midpoint ${inr(jobSP(j).sp)}</div>`;
+    case "tbd":return `<span class="muted">Quote per brief</span><div class="sub">suggest ${inr(jobSP(j).sp)} @ ${xfmt(+s.targetMarkup)}</div>`;
+    case "free":return `<span class="muted">Complimentary</span>`;
+    case "adapt":return `${Math.round((+p.pct||0)*100)}% of base${base?`<div class="sub">${inr(jobSP(j,base).sp)} on example</div>`:""}`;
+  }
+  return "—";
+}
+function splitBar(j){
+  const roles=S().roles||[];
+  return `<div class="split" title="${roles.map(r=>esc(r.name)+" "+(+(j.split||{})[r.id]||0)+"%").join(" · ")}">${roles.map((r,i)=>`<span style="width:${+(j.split||{})[r.id]||0}%;background:${roleColor(i)}"></span>`).join("")}</div>`;
+}
+function viewRates(){
+  const s=S();
+  const exBase=jobById(state.exampleBaseId)&&!isAdapt(jobById(state.exampleBaseId))?jobById(state.exampleBaseId):jobById(defaultBaseId(null));
+  const cats=[];state.jobs.forEach(j=>{const c=j.category||"Other";if(!cats.includes(c))cats.push(c);});
+  const body=cats.map(cat=>{
+    const js=state.jobs.filter(j=>(j.category||"Other")===cat);
+    const blurb=(s.categoryBlurbs||{})[cat];
+    return `<tr class="cat-head"><td colspan="9"><div class="cn">${esc(cat)}</div>${blurb?`<div class="cb">${esc(blurb)}</div>`:""}</td></tr>`+js.map(j=>{
+      const base=isAdapt(j)?exBase:null;const c=jobCost(j,base);const sp=jobSP(j,base).sp;
+      const creditsCell=isAdapt(j)?`${Math.round((+j.adaptShare||0)*100)}% of base<div class="sub">${base?num(c.credits)+" cr on example":""}</div>`:(jobCredits(j)?`${nf2.format(+j.credits||0)} <span class="muted">+ ${nf2.format(+j.buffer||0)}</span><div class="sub">${esc(creditName(j.creditType))}</div>`:"—");
+      const effort=(+j.effortDays||0)?`${days(j.effortDays)} d<div class="sub">${hrs((+j.effortDays||0)*(+s.hoursPerDay||8))} h</div>`:(j.externalCost?'<span class="muted">external</span>':"—");
+      return `<tr>
+        <td><div class="asset">${esc(j.name)}</div>${j.variant?`<div class="sub" style="color:var(--ink-2)">${esc(j.variant)}</div>`:""}${j.description?`<div class="desc">${esc(j.description)}</div>`:""}</td>
+        <td class="num">${priceCell(j,base)}</td>
+        <td class="num">${inr(c.total)}${c.ext?`<div class="sub">incl. ${inr(c.ext)} external</div>`:""}</td>
+        <td class="num">${(j.pricing||{}).type==="tbd"?'<span class="chip">'+xfmt(+s.targetMarkup)+'</span>':(j.pricing||{}).type==="free"?'<span class="chip">free</span>':markupChip(sp,c.total)}</td>
+        <td class="num">${marginTxt(sp,c.total)}</td>
+        <td class="num">${effort}</td>
+        <td class="num">${creditsCell}</td>
+        <td>${splitBar(j)}</td>
+        <td class="num"><button class="btn sm" data-action="edit-job" data-id="${esc(j.id)}">Edit</button></td>
+      </tr>`;}).join("");
+  }).join("");
+  const roles=s.roles||[];
+  return `<div class="section-head"><div><h2>Rate card</h2><p>Every job type you sell, with its selling price next to what it costs you. Internal cost = workdays × ${inr(s.dayRate)} + (credits + buffer) × credit rate + external cost.</p></div>
+    <div class="toolbar"><button class="btn" data-action="export-rates">Export CSV</button><button class="btn primary" data-action="new-job">+ Add job type</button></div></div>
+  <div class="toolbar" style="justify-content:space-between;margin-bottom:12px">
+    <div class="legend">${roles.map((r,i)=>`<span><span class="dot" style="background:${roleColor(i)}"></span>${esc(r.name)}</span>`).join("")}
+      <span><span class="chip good">${xfmt(+s.targetMarkup)}+</span> on target</span><span><span class="chip warn">${xfmt(+s.markupFloor)}–${xfmt(+s.targetMarkup)}</span> below target</span><span><span class="chip bad">&lt;${xfmt(+s.markupFloor)}</span> below floor</span></div>
+    <div class="base-sel" style="margin:0"><label for="ex-base">Adapt examples use</label><select class="inp xs" id="ex-base" data-k="exampleBaseId">${jobOptions(exBase&&exBase.id,nonAdapt)}</select></div>
+  </div>
+  <div class="panel"><div class="table-wrap"><table>
+    <thead><tr><th>Job type</th><th class="num">Selling price</th><th class="num">Internal cost</th><th class="num">Markup</th><th class="num">Margin</th><th class="num">Effort</th><th class="num">Credits + buffer</th><th>Role split</th><th></th></tr></thead>
+    <tbody>${body||`<tr><td colspan="9"><div class="empty"><strong>No job types yet</strong>Add your first job type to start quoting.</div></td></tr>`}</tbody>
+  </table></div></div>
+  <p class="sub" style="margin-top:12px;max-width:90ch">Rates exclude applicable taxes. Talent licensing, third-party music and stock assets are billed at cost. Two revision rounds are included per deliverable.</p>`;
+}
+
+/* ----- job drawer ----- */
+function viewJobDrawer(){
+  const j=state.jobDraft;const s=S();const p=j.pricing||{};
+  const cats=[...new Set(state.jobs.map(x=>x.category).filter(Boolean))];
+  const ad=isAdapt(j);
+  const exBase=jobById(state.exampleBaseId)&&!isAdapt(jobById(state.exampleBaseId))?jobById(state.exampleBaseId):jobById(defaultBaseId(null));
+  const base=ad?exBase:null;
+  const c=jobCost(j,base);const sp=jobSP(j,base).sp;
+  const splitTotal=(s.roles||[]).reduce((a,r)=>a+(+(j.split||{})[r.id]||0),0);
+  const priceFields={
+    fixed:`<div class="field"><label for="jd-sp">Selling price (₹)</label><input class="inp numi" inputmode="decimal" id="jd-sp" data-k="job.pricing.sp" data-num value="${esc(p.sp??"")}"></div>`,
+    range:`<div class="field"><label for="jd-min">From (₹)</label><input class="inp numi" inputmode="decimal" id="jd-min" data-k="job.pricing.min" data-num value="${esc(p.min??"")}"></div><div class="field"><label for="jd-max">To (₹)</label><input class="inp numi" inputmode="decimal" id="jd-max" data-k="job.pricing.max" data-num value="${esc(p.max??"")}"></div>`,
+    tbd:`<div class="sub full">Priced per brief. Quotes suggest internal cost × your target markup (${xfmt(+s.targetMarkup)}); override the price on the quote line.</div>`,
+    free:`<div class="sub full">Shown at ₹0 on quotes. Its effort and cost still count.</div>`,
+    adapt:`<div class="field"><label for="jd-pct">Price as % of base film SP</label><input class="inp numi" inputmode="decimal" id="jd-pct" data-k="job.pricing.pctView" data-num value="${esc(Math.round((+p.pct||0)*1000)/10)}"></div><div class="field"><label for="jd-share">Credits as % of base film credits</label><input class="inp numi" inputmode="decimal" id="jd-share" data-k="job.adaptShareView" data-num value="${esc(Math.round((+j.adaptShare||0)*1000)/10)}"></div><div class="sub full">Pick the base film on each quote line. Credits use the base film's provider and include its buffer.</div>`
+  }[p.type]||"";
+  return `<div class="overlay" data-action="close-drawer-bg"><div class="drawer" role="dialog" aria-modal="true" aria-labelledby="jd-title">
+    <div class="drawer-head"><h2 id="jd-title" style="font-size:19px">${state.jobDraftNew?"New job type":"Edit job type"}</h2><button class="btn ghost" data-action="close-drawer" aria-label="Close">✕</button></div>
+    <div class="drawer-body">
+      <div class="preview">
+        <div><div class="eyebrow">Price</div><div class="v">${p.type==="free"?"₹0":inr(sp)}</div></div>
+        <div><div class="eyebrow">Internal cost</div><div class="v">${inr(c.total)}</div></div>
+        <div><div class="eyebrow">Markup</div><div class="v">${p.type==="free"?"—":xfmt(c.total>0?sp/c.total:NaN)}</div></div>
+        <div><div class="eyebrow">Margin</div><div class="v">${marginTxt(sp,c.total)}</div></div>
+      </div>
+      ${ad&&base?`<div class="sub" style="margin-top:-10px">Preview uses ${esc(base.name)} · ${esc(base.variant||"")} as the base film.</div>`:""}
+      <div class="fgrid">
+        <div class="field"><label for="jd-cat">Category</label><input class="inp" id="jd-cat" list="cat-list" data-k="job.category" value="${esc(j.category)}"><datalist id="cat-list">${cats.map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
+        <div class="field"><label for="jd-name">Job name</label><input class="inp" id="jd-name" data-k="job.name" value="${esc(j.name)}" placeholder="e.g. Product Promo (With Characters)"></div>
+        <div class="field"><label for="jd-var">Duration / variant</label><input class="inp" id="jd-var" data-k="job.variant" value="${esc(j.variant)}" placeholder="e.g. Up to 30 sec"></div>
+        <div class="field"><label for="jd-order">Sort order</label><input class="inp numi" inputmode="decimal" id="jd-order" data-k="job.order" data-num value="${esc(j.order??"")}"></div>
+        <div class="field full"><label for="jd-desc">Description (quality / complexity)</label><textarea class="inp" id="jd-desc" data-k="job.description">${esc(j.description)}</textarea></div>
+      </div>
+      <fieldset><legend>Selling price</legend>
+        <div class="seg" role="radiogroup" aria-label="Pricing type">${PRICING.map(([k,l])=>`<label><input type="radio" name="jd-ptype" id="jd-pt-${k}" data-k="job.pricing.type" value="${k}" ${p.type===k?"checked":""}>${l}</label>`).join("")}</div>
+        <div class="fgrid" style="margin-top:12px">${priceFields}</div>
+      </fieldset>
+      <fieldset><legend>Internal cost inputs</legend>
+        <div class="fgrid">
+          <div class="field"><label for="jd-eff">Effort (workdays)</label><input class="inp numi" inputmode="decimal" id="jd-eff" data-k="job.effortDays" data-num value="${esc(j.effortDays??0)}"><span class="sub">${hrs((+j.effortDays||0)*(+s.hoursPerDay||8))} h · ${inr(c.people)} team cost</span></div>
+          <div class="field"><label for="jd-ext">External cost (₹)</label><input class="inp numi" inputmode="decimal" id="jd-ext" data-k="job.externalCost" data-num value="${esc(j.externalCost??0)}"><span class="sub">Voice artists, vendors, licences</span></div>
+          ${ad?"":`<div class="field"><label for="jd-ct">Credit provider</label><select class="inp" id="jd-ct" data-k="job.creditType"><option value="">None</option>${(s.credits||[]).map(cr=>`<option value="${esc(cr.id)}" ${cr.id===j.creditType?"selected":""}>${esc(cr.name)} · ${inr2(cr.rate)}/cr</option>`).join("")}</select></div><div></div>
+          <div class="field"><label for="jd-cr">Credits</label><input class="inp numi" inputmode="decimal" id="jd-cr" data-k="job.credits" data-num value="${esc(j.credits??0)}"></div>
+          <div class="field"><label for="jd-buf">Buffer credits</label><input class="inp numi" inputmode="decimal" id="jd-buf" data-k="job.buffer" data-num value="${esc(j.buffer??0)}"><span class="sub">${num(jobCredits(j))} cr × ${inr2(creditRate(j.creditType,s))} = ${inr(c.creditCost)}</span></div>`}
+        </div>
+      </fieldset>
+      <fieldset><legend>Who does the work · % of effort</legend>
+        <div class="fgrid">${(s.roles||[]).map((r,i)=>`<div class="field"><label for="jd-sp-${esc(r.id)}"><span class="dot" style="background:${roleColor(i)}"></span> ${esc(r.name)}</label><input class="inp numi" inputmode="decimal" id="jd-sp-${esc(r.id)}" data-k="job.split.${esc(r.id)}" data-num value="${esc((j.split||{})[r.id]??0)}"><span class="sub">${days((+j.effortDays||0)*((+(j.split||{})[r.id]||0)/100))} d</span></div>`).join("")}</div>
+        <div class="${Math.abs(splitTotal-100)>0.01&&(+j.effortDays||0)>0?"callout warn":"sub"}" style="margin-top:10px">Split totals ${nf2.format(splitTotal)}%${Math.abs(splitTotal-100)>0.01&&(+j.effortDays||0)>0?" — it should add up to 100%.":""}</div>
+      </fieldset>
+      ${state.jobErr?`<div class="callout bad">${esc(state.jobErr)}</div>`:""}
+    </div>
+    <div class="drawer-foot">
+      <div style="display:flex;gap:8px">${state.jobDraftNew?"":`<button class="btn danger ${state.armed==="del-job"?"armed":""}" data-action="del-job">${state.armed==="del-job"?delJobMsg(j):"Delete"}</button><button class="btn ghost" data-action="dup-job">Duplicate</button>`}</div>
+      <div style="display:flex;gap:8px"><button class="btn" data-action="close-drawer">Cancel</button><button class="btn primary" data-action="save-job">${state.jobDraftNew?"Add to rate card":"Save changes"}</button></div>
+    </div>
+  </div></div>`;
+}
+function delJobMsg(j){const n=state.projects.filter(p=>(p.lines||[]).some(l=>l.jobId===j.id||l.baseJobId===j.id)).length;return n?`Used in ${n} quote${n>1?"s":""} — click again to delete`:"Click again to delete";}
+
+/* ----- reference rates ----- */
+function flat(s){
+  const m={};
+  (s.credits||[]).forEach(c=>{m["cr:"+c.id]=[`${c.name} credit`,inr2(c.rate)];});
+  m.dayRate=["Workday cost",inr(s.dayRate)];m.hours=["Hours per workday",String(s.hoursPerDay)];
+  m.floor=["Markup floor",xfmt(+s.markupFloor)];m.target=["Target markup",xfmt(+s.targetMarkup)];
+  (s.roles||[]).forEach(r=>{m["rn:"+r.id]=["Role name",r.name];m["rh:"+r.id]=[`${r.name} headcount`,String(r.headcount)];m["ru:"+r.id]=[`${r.name} utilisation`,r.utilisation+"%"];});
+  return m;
+}
+function viewReference(){
+  const s=S();if(!state.sDraft)state.sDraft=clone(s);
+  const d=state.sDraft;
+  const used=id=>state.jobs.filter(j=>j.creditType===id).length;
+  const credits=(d.credits||[]).map((c,i)=>`<div class="r-row" style="grid-template-columns:1.4fr 1fr auto auto">
+      <div class="field"><label for="st-cn-${i}">Provider</label><input class="inp" id="st-cn-${i}" data-k="set.credits.${i}.name" value="${esc(c.name)}"></div>
+      <div class="field"><label for="st-cr-${i}">₹ per credit</label><input class="inp numi" inputmode="decimal" id="st-cr-${i}" data-k="set.credits.${i}.rate" data-num value="${esc(c.rate)}"></div>
+      <span class="sub" style="padding-bottom:9px">${used(c.id)} job${used(c.id)===1?"":"s"}</span>
+      <button class="btn ghost sm" data-action="rm-credit" data-i="${i}" ${used(c.id)?"disabled title=\"In use by job types\"":""} aria-label="Remove provider" style="margin-bottom:5px">✕</button></div>`).join("");
+  const roles=(d.roles||[]).map((r,i)=>`<div class="r-row" style="grid-template-columns:auto 1.6fr .8fr .9fr auto">
+      <span class="dot" style="background:${roleColor(i)};margin-bottom:12px"></span>
+      <div class="field"><label for="st-rn-${i}">Role</label><input class="inp" id="st-rn-${i}" data-k="set.roles.${i}.name" value="${esc(r.name)}"></div>
+      <div class="field"><label for="st-rh-${i}">Headcount</label><input class="inp numi" inputmode="decimal" id="st-rh-${i}" data-k="set.roles.${i}.headcount" data-num value="${esc(r.headcount)}"></div>
+      <div class="field"><label for="st-ru-${i}">Utilisation %</label><input class="inp numi" inputmode="decimal" id="st-ru-${i}" data-k="set.roles.${i}.utilisation" data-num value="${esc(r.utilisation)}"></div>
+      <button class="btn ghost sm" data-action="rm-role" data-i="${i}" aria-label="Remove role" style="margin-bottom:5px">✕</button></div>`).join("");
+  // impact
+  let impact="";
+  if(state.sDirty){
+    const exBase=jobById(defaultBaseId(null));
+    const rows=state.jobs.map(j=>{const b=isAdapt(j)?exBase:null;const a=jobCost(j,b,s).total,n=jobCost(j,b,d).total;const spA=jobSP(j,b,s).sp,spN=jobSP(j,b,d).sp;return {j,a,n,spA,spN};}).filter(r=>Math.abs(r.a-r.n)>0.005||Math.abs(r.spA-r.spN)>0.5);
+    impact=`<div class="panel" style="margin-top:16px"><div class="panel-pad" style="padding-bottom:6px"><h3>What these changes do to your rate card</h3><p class="sub" style="margin:4px 0 0">${rows.length} of ${state.jobs.length} job types change. Nothing is saved until you click Save.</p></div>
+      ${rows.length?`<div class="table-wrap"><table><thead><tr><th>Job type</th><th class="num">Cost now</th><th class="num">New cost</th><th class="num">Change</th><th class="num">Markup now</th><th class="num">New markup</th></tr></thead><tbody>${rows.map(r=>{const dlt=r.n-r.a;return `<tr><td>${jobLabel(r.j)}</td><td class="num">${inr(r.a)}</td><td class="num">${inr(r.n)}</td><td class="num ${dlt>0?"delta-up":dlt<0?"delta-down":""}">${dlt>0?"+":""}${inr(dlt)}</td><td class="num">${markupChip(r.spA,r.a,s)}</td><td class="num">${markupChip(r.spN,r.n,d)}</td></tr>`;}).join("")}</tbody></table></div>`:""}
+    </div>`;
+  }
+  const hist=(s.history||[]).slice(0,12);
+  return `<div class="section-head"><div><h2>Reference rates</h2><p>The inputs behind every internal cost. Edit here and every job type, quote and capacity figure updates.</p></div></div>
+  <div class="formula" style="margin-bottom:16px"><b>Internal cost</b> = effort (workdays) × <b>${inr(d.dayRate)}</b> + (credits + buffer) × <b>credit rate</b> + external cost<br><b>Adapts</b> = adapt effort × ${inr(d.dayRate)} + share × base film's (credits + buffer) × base film's credit rate · price = % × base film price<br><b>Markup</b> = selling price ÷ internal cost · <b>Margin</b> = (price − cost) ÷ price</div>
+  <div class="ref-grid">
+    <section class="panel panel-pad ref-card"><h3>Credit rates</h3><p class="hint">What one credit costs you, per AI tool. A credit rate can't be removed while job types use it.</p>
+      <div class="rows">${credits}</div><button class="btn sm" style="margin-top:10px" data-action="add-credit">+ Add provider</button></section>
+    <section class="panel panel-pad ref-card"><h3>Workday</h3><p class="hint">Blended cost of one person-day, used for all roles.</p>
+      <div class="fgrid">
+        <div class="field"><label for="st-day">₹ per workday</label><input class="inp numi" inputmode="decimal" id="st-day" data-k="set.dayRate" data-num value="${esc(d.dayRate)}"></div>
+        <div class="field"><label for="st-hrs">Hours per workday</label><input class="inp numi" inputmode="decimal" id="st-hrs" data-k="set.hoursPerDay" data-num value="${esc(d.hoursPerDay)}"></div>
+      </div><p class="sub" style="margin:8px 0 0">= ${inr2((+d.dayRate||0)/((+d.hoursPerDay)||1))} per hour</p>
+      <h3 style="margin-top:18px">Markup guardrails</h3><p class="hint">Colours the markup chips, and sets suggested prices for jobs quoted per brief.</p>
+      <div class="fgrid">
+        <div class="field"><label for="st-floor">Floor (×)</label><input class="inp numi" inputmode="decimal" id="st-floor" data-k="set.markupFloor" data-num value="${esc(d.markupFloor)}"></div>
+        <div class="field"><label for="st-target">Target (×)</label><input class="inp numi" inputmode="decimal" id="st-target" data-k="set.targetMarkup" data-num value="${esc(d.targetMarkup)}"></div>
+      </div></section>
+    <section class="panel panel-pad ref-card" style="grid-column:1/-1"><h3>Team</h3><p class="hint">Headcount × working days × utilisation = capacity. Utilisation is the share of a day spent on billable production (leave room for reviews, pitches and admin).</p>
+      <div class="rows">${roles}</div><button class="btn sm" style="margin-top:10px" data-action="add-role">+ Add role</button></section>
+  </div>
+  ${state.sDirty?`<div class="savebar"><span>You have unsaved changes to reference rates.</span><div style="display:flex;gap:8px"><button class="btn" data-action="discard-settings">Discard</button><button class="btn primary" data-action="save-settings">Save changes</button></div></div>`:""}
+  ${impact}
+  <section class="panel panel-pad ref-card" style="margin-top:16px"><h3>Your data</h3>
+    <p class="hint">Everything is saved in this browser only. Download a backup regularly. To change the default rate card for everyone who opens the repo, download <b>seed.js</b> and commit it to <span class="mono">data/seed.js</span>.</p>
+    <div class="toolbar"><button class="btn" data-action="backup">Download backup (.json)</button><button class="btn" data-action="restore">Restore from backup</button><button class="btn" data-action="export-seed">Download seed.js</button>
+    <button class="btn danger ${state.armed==="reset"?"armed":""}" data-action="reset-defaults">${state.armed==="reset"?"Click again — this replaces all local data":"Reset to repo defaults"}</button></div>
+    <input type="file" id="restore-file" accept=".json,.js,application/json" hidden>
+  </section>
+  <section class="panel panel-pad hist" style="margin-top:16px"><h3>Change history</h3>
+    ${hist.length?`<ul>${hist.map(h=>`<li><span class="sub mono">${esc(new Date(h.at).toLocaleString("en-IN",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))}</span><div>${h.changes.map(c=>`${esc(c.label)}: <span class="muted">${esc(c.from)}</span> → <b>${esc(c.to)}</b>`).join(" · ")}</div></li>`).join("")}</ul>`:'<p class="sub" style="margin:6px 0 0">No changes yet.</p>'}
+  </section>`;
+}
+
+/* ---------- events ---------- */
+function setPath(o,path,v){const k=path.split(".");let x=o;for(let i=0;i<k.length-1;i++){if(x[k[i]]==null||typeof x[k[i]]!=="object")x[k[i]]={};x=x[k[i]];}x[k[k.length-1]]=v;}
+function readVal(el){
+  if(el.type==="checkbox")return el.checked;
+  if(el.hasAttribute("data-num")){const n=parseNum(el.value);return n==null?(el.hasAttribute("data-opt")?"":0):n;}
+  return el.value;
+}
+function onField(e){
+  const el=e.target.closest("[data-k]");if(!el)return;
+  if(e.type==="input"&&(el.tagName==="SELECT"||el.type==="checkbox"||el.type==="radio"||el.type==="date"))return;
+  if(e.type==="change"&&el.tagName!=="SELECT"&&el.type!=="checkbox"&&el.type!=="radio"&&el.type!=="date")return;
+  const k=el.dataset.k;const v=readVal(el);
+  if(k==="curId"){flushProject();state.curId=v;try{localStorage.setItem("sp-cur",v);}catch(e){}const f=state.projects.find(p=>p.id===v);state.cur=f?clone(f):null;state.armed=null;render();return;}
+  if(k==="addJobId"){state.addJobId=v;return;}
+  if(k==="addQty"){state.addQty=v;return;}
+  if(k==="includePitches"){state.includePitches=v;render();return;}
+  if(k==="exampleBaseId"){state.exampleBaseId=v;render();return;}
+  if(k.startsWith("proj.")){updateProject(p=>{p[k.slice(5)]=v;});return;}
+  if(k.startsWith("line.")){const id=el.dataset.id;updateProject(p=>{const l=(p.lines||[]).find(x=>x.id===id);if(l)l[k.slice(5)]=v;});return;}
+  if(k.startsWith("job.")){
+    const path=k.slice(4);
+    if(path==="pricing.pctView")setPath(state.jobDraft,"pricing.pct",(+v||0)/100);
+    else if(path==="adaptShareView")state.jobDraft.adaptShare=(+v||0)/100;
+    else setPath(state.jobDraft,path,v);
+    if(path==="pricing.type"&&v==="adapt"){if(state.jobDraft.pricing.pct==null)state.jobDraft.pricing.pct=.5;if(state.jobDraft.adaptShare==null)state.jobDraft.adaptShare=.2;}
+    state.jobErr="";render();return;
+  }
+  if(k.startsWith("set.")){setPath(state.sDraft,k.slice(4),v);state.sDirty=true;render();return;}
+}
+document.addEventListener("input",onField);
+document.addEventListener("change",onField);
+document.addEventListener("change",e=>{
+  if(e.target.id!=="restore-file")return;const f=e.target.files&&e.target.files[0];if(!f)return;
+  f.text().then(t=>{let d;try{d=JSON.parse(t.replace(/^[^{]*?(\{)/,"$1").replace(/;\s*$/,""));}catch(err){toast("That file isn't a planner backup");return;}
+    if(!d||!d.settings||!d.jobs){toast("That file isn't a planner backup");return;}
+    fromShape(d);state.sDraft=null;state.sDirty=false;const p=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];state.curId=p?p.id:null;state.cur=p?clone(p):null;persist();render();toast("Backup restored");});
+  e.target.value="";
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&state.jobDraft){state.jobDraft=null;state.armed=null;render();}});
+
+const actions={
+  tab(el){flushProject();state.tab=el.dataset.tab;state.armed=null;try{localStorage.setItem("sp-tab",state.tab);}catch(e){}render();},
+  "new-project"(){newProject();},
+  "dup-project"(){if(!state.cur)return;flushProject();const now=new Date().toISOString();const p=clone(state.cur);p.id=uid("p");p.name=(p.name||"Quote")+" (copy)";p.status="pitch";p.createdAt=now;p.updatedAt=now;p.lines=(p.lines||[]).map(l=>Object.assign(l,{id:uid("l")}));state.projects.push(clone(p));state.curId=p.id;state.cur=p;state.dirty=true;flushProject();render();toast("Quote duplicated");},
+  "open-project"(el){flushProject();const f=state.projects.find(p=>p.id===el.dataset.id);if(!f)return;state.curId=f.id;state.cur=clone(f);state.tab="quote";render();window.scrollTo(0,0);},
+  "del-project"(){if(state.armed!=="del-proj"){state.armed="del-proj";render();return;}const id=state.curId;clearTimeout(state.saveTimer);state.dirty=false;state.projects=state.projects.filter(p=>p.id!==id);state.cur=null;state.curId=null;state.armed=null;dbDel("projects/"+id);const n=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];if(n){state.curId=n.id;state.cur=clone(n);}render();toast("Quote deleted");},
+  "add-line"(){const id=state.addJobId&&jobById(state.addJobId)?state.addJobId:(state.jobs[0]&&state.jobs[0].id);const j=jobById(id);if(!j)return;const qty=+state.addQty>0?+state.addQty:1;updateProject(p=>{p.lines=p.lines||[];p.lines.push({id:uid("l"),jobId:id,qty,spOverride:"",baseJobId:isAdapt(j)?defaultBaseId(p):""});});},
+  "rm-line"(el){updateProject(p=>{p.lines=(p.lines||[]).filter(l=>l.id!==el.dataset.id);});},
+  month(el){const d=+el.dataset.d;state.monthOffset=d===0?0:state.monthOffset+d;render();},
+  "new-job"(){const s=S();const split={};(s.roles||[]).forEach(r=>split[r.id]=0);state.jobDraft={id:uid("j"),category:"",name:"",variant:"",description:"",pricing:{type:"fixed",sp:0},effortDays:1,creditType:(s.credits[0]||{}).id||"",credits:0,buffer:0,externalCost:0,split,order:(Math.max(0,...state.jobs.map(j=>+j.order||0))+10)};state.jobDraftNew=true;state.jobErr="";state.armed=null;render();setTimeout(()=>$("#jd-cat")&&$("#jd-cat").focus(),20);},
+  "edit-job"(el){const j=jobById(el.dataset.id);if(!j)return;state.jobDraft=clone(j);state.jobDraftNew=false;state.jobErr="";state.armed=null;render();},
+  "dup-job"(){const j=clone(state.jobDraft);j.id=uid("j");j.name=(j.name||"")+" (copy)";j.order=(+j.order||0)+1;state.jobDraft=j;state.jobDraftNew=true;state.armed=null;render();},
+  "close-drawer"(){state.jobDraft=null;state.armed=null;render();},
+  "close-drawer-bg"(el,e){if(e.target===el){state.jobDraft=null;state.armed=null;render();}},
+  async "save-job"(){const j=clone(state.jobDraft);if(!String(j.name||"").trim()){state.jobErr="Give the job type a name.";render();return;}if(!String(j.category||"").trim())j.category="Other";const id=j.id;delete j.id;delete j.pricing.pctView;delete j.adaptShareView;const i=state.jobs.findIndex(x=>x.id===id);const rec=Object.assign({id},j);if(i>=0)state.jobs[i]=rec;else state.jobs.push(rec);state.jobs.sort((a,b)=>(a.order||0)-(b.order||0));const isNew=state.jobDraftNew;state.jobDraft=null;render();await dbSet("jobs/"+id,j);toast(isNew?"Added to rate card":"Rate card updated");},
+  async "del-job"(){if(state.armed!=="del-job"){state.armed="del-job";render();return;}const id=state.jobDraft.id;state.jobs=state.jobs.filter(j=>j.id!==id);state.jobDraft=null;state.armed=null;render();await dbDel("jobs/"+id);toast("Job type deleted");},
+  "add-credit"(){state.sDraft.credits.push({id:uid("c"),name:"New provider",rate:0});state.sDirty=true;render();},
+  "rm-credit"(el){state.sDraft.credits.splice(+el.dataset.i,1);state.sDirty=true;render();},
+  "add-role"(){state.sDraft.roles.push({id:uid("r"),name:"New role",headcount:1,utilisation:80});state.sDirty=true;render();},
+  "rm-role"(el){state.sDraft.roles.splice(+el.dataset.i,1);state.sDirty=true;render();},
+  "discard-settings"(){state.sDraft=null;state.sDirty=false;render();},
+  async "save-settings"(){
+    const a=flat(S()),b=flat(state.sDraft);const changes=[];
+    new Set([...Object.keys(a),...Object.keys(b)]).forEach(k=>{const x=a[k],y=b[k];if(!x)changes.push({label:"Added "+y[0],from:"—",to:y[1]});else if(!y)changes.push({label:"Removed "+x[0],from:x[1],to:"—"});else if(x[1]!==y[1])changes.push({label:k.startsWith("rn:")?"Role renamed":y[0],from:x[1],to:y[1]});});
+    const next=clone(state.sDraft);next.history=[{at:new Date().toISOString(),changes}].concat((S().history||[])).slice(0,25);
+    if(!changes.length){state.sDirty=false;state.sDraft=null;render();return;}
+    state.settings=next;state.sDraft=null;state.sDirty=false;render();
+    await dbSet("settings/main",next);toast("Reference rates saved");
+  },
+  "backup"(){const d=new Date().toISOString().slice(0,10);downloadFile(`studio-planner-backup-${d}.json`,JSON.stringify(toShape(),null,2),"application/json");toast("Backup downloaded");},
+  "export-seed"(){const d=toShape();d.projects={};downloadFile("seed.js","/* Juice Studio Planner — default rate card. Generated "+d.exportedAt+". Commit this to data/seed.js. */\nwindow.STUDIO_SEED = "+JSON.stringify(d,null,2)+";\n","text/javascript");toast("seed.js downloaded — replace data/seed.js in the repo");},
+  "restore"(){$("#restore-file").click();},
+  "reset-defaults"(){if(!SEED){toast("No data/seed.js found next to this file");return;}if(state.armed!=="reset"){state.armed="reset";render();return;}state.armed=null;fromShape(SEED);state.sDraft=null;state.sDirty=false;const p=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];state.curId=p?p.id:null;state.cur=p?clone(p):null;persist();render();toast("Reset to the rate card in data/seed.js");},
+  async "export-quote"(){if(!state.cur)return;const p=state.cur,s=S(),pc=projectCalc(p,s);
+    const rows=[["Project",p.name],["Client",p.client],["Status",STATUS_LABEL[p.status]],["Start",p.start],["Delivery",p.end],[],["Category","Job","Variant","Base film","Qty","Unit price","Line price","Internal cost","Markup","Margin %","Workdays",...(s.roles||[]).map(r=>r.name+" days"),"Credits","Credit provider"]];
+    pc.lines.forEach(({l,c})=>{if(!c)return;rows.push([c.j.category,c.j.name,c.j.variant,c.base?c.base.name+" "+(c.base.variant||""):"",c.qty,Math.round(c.unitSP),Math.round(c.sp),Math.round(c.cost),c.cost>0?(c.sp/c.cost).toFixed(2):"",c.sp>0?((c.sp-c.cost)/c.sp*100).toFixed(1):"",c.days,...(s.roles||[]).map(r=>+(c.roleDays[r.id]||0).toFixed(3)),Math.round(c.c.credits*c.qty),c.c.credits?creditName(c.c.creditType):""]);});
+    rows.push([],["Gross",Math.round(pc.gross)],["Discount",Math.round(pc.discount)],["Quote value (excl. taxes)",Math.round(pc.sp)],["Internal cost",Math.round(pc.cost)],["Margin",Math.round(pc.margin)],["Markup",pc.cost>0?pc.markup.toFixed(2):""]);
+    saveCSV((p.name||"quote").replace(/[^\w\- ]+/g,"").trim()+".csv",rows);},
+  async "export-rates"(){const s=S();const rows=[["Category","Job","Variant","Description","Pricing","Selling price","Internal cost","Markup","Margin %","Workdays","Credits","Buffer","Provider","External cost",...(s.roles||[]).map(r=>r.name+" %")]];
+    const exBase=jobById(defaultBaseId(null));
+    state.jobs.forEach(j=>{const b=isAdapt(j)?exBase:null;const c=jobCost(j,b),sp=jobSP(j,b).sp;const p=j.pricing||{};rows.push([j.category,j.name,j.variant,j.description,p.type==="adapt"?Math.round(p.pct*100)+"% of base":p.type==="range"?`${p.min}-${p.max}`:(PRICING.find(x=>x[0]===p.type)||[,""])[1],Math.round(sp),Math.round(c.total),c.total>0?(sp/c.total).toFixed(2):"",sp>0?((sp-c.total)/sp*100).toFixed(1):"",j.effortDays,isAdapt(j)?Math.round(j.adaptShare*100)+"% of base":j.credits,isAdapt(j)?"":j.buffer,creditName(j.creditType),j.externalCost||0,...(s.roles||[]).map(r=>(j.split||{})[r.id]||0)]);});
+    saveCSV("juice-rate-card.csv",rows);}
+};
+async function saveCSV(name,rows){
+  const csv=rows.map(r=>r.map(v=>{v=v==null?"":String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(",")).join("\n");
+  downloadFile(name,"\uFEFF"+csv,"text/csv;charset=utf-8");toast("Exported "+name);
+}
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-action]");if(!el)return;
+  const a=actions[el.dataset.action];if(!a)return;
+  if(el.dataset.action!=="close-drawer-bg")e.preventDefault();
+  if(state.armed&&!["del-project","del-job","reset-defaults"].includes(el.dataset.action))state.armed=null;
+  a(el,e);
+});
+window.addEventListener("beforeunload",()=>{flushProject();});
+loadStore();
+render();
+})();
+</script>
+
+</body>
+</html>
