@@ -63,6 +63,20 @@ button,input,select,textarea{font:inherit;color:inherit}
 .sync{font-size:var(--fs-sm);color:var(--ink-2);display:flex;align-items:center;gap:8px}
 .sync i{width:8px;height:8px;border-radius:50%;background:var(--ink-3);display:inline-block}
 .sync.ok i{background:var(--good)} .sync.warn i{background:var(--warn)}
+.acct{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+#account{display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);color:var(--ink-2)}
+.auth-card{max-width:520px;margin:40px auto;padding:28px}
+.auth-card h2{margin-bottom:6px}
+.auth-card p{color:var(--ink-2);margin:0 0 16px}
+.auth-card form{display:flex;flex-direction:column;gap:12px}
+.auth-card .row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
+.auth-card .row .field{flex:1 1 220px}
+.choice{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+.choice button{text-align:left;display:block;width:100%;padding:14px 16px;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);cursor:pointer}
+.choice button:hover:not(:disabled){border-color:var(--accent)}
+.choice button b{display:block;font-size:var(--fs-base);margin-bottom:2px}
+.choice button span{font-size:var(--fs-sm);color:var(--ink-3)}
+.choice button:disabled{opacity:.5;cursor:not-allowed}
 .tabs{display:flex;gap:4px;margin-top:14px;overflow-x:auto;scrollbar-width:none}
 .tab{appearance:none;border:0;background:none;padding:11px 16px;border-bottom:3px solid transparent;color:var(--ink-2);font-size:var(--fs-base);font-weight:500;cursor:pointer;white-space:nowrap}
 .tab:hover{color:var(--ink)}
@@ -239,6 +253,8 @@ legend{font-size:var(--fs-sm);font-weight:700;color:var(--ink);padding:0 6px}
 #toast[hidden]{display:none!important}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="data/config.js"></script>
 <script src="data/seed.js"></script>
 </head>
 <body>
@@ -251,7 +267,7 @@ legend{font-size:var(--fs-sm);font-weight:700;color:var(--ink);padding:0 6px}
         <h1>Studio Planner</h1>
         <span class="tc">JUICE AI STUDIO · COST &amp; BANDWIDTH</span>
       </div>
-      <div id="sync" class="sync"><i></i><span>Connecting…</span></div>
+      <div class="acct"><div id="sync" class="sync"><i></i><span>Loading…</span></div><div id="account"></div></div>
     </div>
     <nav class="tabs" role="tablist" id="tabs"></nav>
   </header>
@@ -426,11 +442,133 @@ function migrateState(){
   return true;
 }
 let storeOK=true;
+/* ---------- shared database (Supabase) ---------- */
+const CFG=window.STUDIO_CONFIG||{};
+const TABLES={settings:"sp_settings",jobs:"sp_jobs",projects:"sp_quotes"};
+const cloud={sb:null,user:null,channel:null,pending:0,err:"",meta:{}};
+const cloudOn=()=>state.mode==="cloud";
+const allowedDomain=String(CFG.allowedDomain||"").toLowerCase();
+const emailAllowed=e=>!allowedDomain||String(e||"").toLowerCase().endsWith("@"+allowedDomain);
+function cloudErrMsg(e){
+  const c=e&&e.code,m=String(e&&e.message||"");
+  if(c==="42501"||/row-level security/i.test(m))return "The database refused this change. Make sure you're signed in with your @"+(allowedDomain||"company")+" email.";
+  if(c==="42P01"||c==="PGRST205"||/could not find the table|does not exist/i.test(m))return "The planner tables don't exist yet. Run supabase/schema.sql in the Supabase SQL editor.";
+  if(/jwt|expired|invalid claim/i.test(m))return "Your session expired. Sign out and sign in again.";
+  if(/fetch|network/i.test(m))return "Can't reach the database. Check your connection.";
+  return m||"Unknown error";
+}
+const docData=d=>{const c=clone(d);delete c.id;return c;};
+async function cloudCall(fn){
+  if(!cloudOn()||state.cloudView!=="live")return true;
+  cloud.pending++;setSync();
+  try{const {error}=await fn();if(error)throw error;cloud.err="";return true;}
+  catch(e){cloud.err=cloudErrMsg(e);toast("Not saved: "+cloud.err);return false;}
+  finally{cloud.pending--;setSync();}
+}
+function cloudUpsert(coll,docs){
+  const at=new Date().toISOString(),by=cloud.user&&cloud.user.email||null;
+  const rows=docs.map(d=>({id:d.id,data:docData(d),updated_at:at,updated_by:by}));
+  rows.forEach(r=>{(cloud.meta[coll]=cloud.meta[coll]||{})[r.id]={at,by};});
+  return cloudCall(()=>cloud.sb.from(TABLES[coll]).upsert(rows));
+}
+function cloudDelete(coll,ids){return cloudCall(()=>cloud.sb.from(TABLES[coll]).delete().in("id",ids));}
+function settingsDoc(){return Object.assign({id:"main"},clone(state.settings||EMPTY_SETTINGS));}
+async function cloudReplaceAll(){
+  const [j,p]=await Promise.all([cloud.sb.from(TABLES.jobs).select("id"),cloud.sb.from(TABLES.projects).select("id")]);
+  const goneJ=(j.data||[]).map(r=>r.id).filter(id=>!state.jobs.some(x=>x.id===id));
+  const goneP=(p.data||[]).map(r=>r.id).filter(id=>!state.projects.some(x=>x.id===id));
+  await cloudUpsert("settings",[settingsDoc()]);
+  if(state.jobs.length)await cloudUpsert("jobs",state.jobs);
+  if(state.projects.length)await cloudUpsert("projects",state.projects);
+  if(goneJ.length)await cloudDelete("jobs",goneJ);
+  if(goneP.length)await cloudDelete("projects",goneP);
+}
+function pickCurrent(){
+  let last=null;try{last=localStorage.getItem("sp-cur");}catch(e){}
+  const p=state.projects.find(x=>x.id===state.curId)||state.projects.find(x=>x.id===last)||[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];
+  state.curId=p?p.id:null;state.cur=p?clone(p):null;
+}
+function rowsToState(sRows,jRows,pRows){
+  const main=(sRows||[]).find(r=>r.id==="main");
+  state.settings=Object.assign(clone(EMPTY_SETTINGS),clone(main?main.data:{}));
+  state.jobs=(jRows||[]).map(r=>Object.assign({id:r.id},clone(r.data))).sort((a,b)=>(a.order||0)-(b.order||0));
+  state.projects=(pRows||[]).map(r=>Object.assign({id:r.id},clone(r.data)));
+  cloud.meta={};
+  [["settings",sRows],["jobs",jRows],["projects",pRows]].forEach(([c,rows])=>{cloud.meta[c]={};(rows||[]).forEach(r=>cloud.meta[c][r.id]={at:r.updated_at,by:r.updated_by});});
+}
+async function cloudLoad(silent){
+  if(!silent){state.cloudView="loading";render();}
+  const res=await Promise.all(["settings","jobs","projects"].map(c=>cloud.sb.from(TABLES[c]).select("id,data,updated_at,updated_by")));
+  const err=res.map(r=>r.error).find(Boolean);
+  if(err){state.cloudView="error";state.cloudMsg=cloudErrMsg(err);render();return;}
+  const [sR,jR,pR]=res.map(r=>r.data||[]);
+  if(!sR.length&&!jR.length&&!pR.length){state.cloudView="setup";render();return;}
+  if(silent&&state.dirty)return;
+  rowsToState(sR,jR,pR);
+  if(!state.sDirty)state.sDraft=null;
+  state.cloudView="live";
+  if(migrateState()){await cloudUpsert("settings",[settingsDoc()]);await cloudUpsert("jobs",state.jobs);toast("Role splits updated: CD and PM time is now tracked per project");}
+  pickCurrent();subscribe();render();
+}
+function subscribe(){
+  if(cloud.channel)return;
+  cloud.channel=cloud.sb.channel("studio-planner");
+  Object.entries(TABLES).forEach(([coll,t])=>cloud.channel.on("postgres_changes",{event:"*",schema:"public",table:t},pl=>applyRemote(coll,pl.eventType,pl.new,pl.old)));
+  cloud.channel.subscribe();
+}
+function applyRemote(coll,type,row,old){
+  const id=(row&&row.id)||(old&&old.id);if(!id)return;
+  if(type!=="DELETE")(cloud.meta[coll]=cloud.meta[coll]||{})[id]={at:row.updated_at,by:row.updated_by};
+  if(coll==="settings"){
+    if(type==="DELETE"||id!=="main")return;
+    state.settings=Object.assign(clone(EMPTY_SETTINGS),clone(row.data));if(!state.sDirty)state.sDraft=null;
+  }else{
+    const arr=coll==="jobs"?state.jobs:state.projects;const i=arr.findIndex(x=>x.id===id);
+    if(type==="DELETE"){
+      if(i>=0)arr.splice(i,1);
+      if(coll==="projects"&&id===state.curId&&!state.dirty){state.cur=null;state.curId=null;pickCurrent();}
+    }else{
+      if(coll==="projects"&&id===state.curId&&state.dirty)return;
+      const doc=Object.assign({id},clone(row.data));
+      if(i>=0)arr[i]=doc;else arr.push(doc);
+      if(coll==="jobs")arr.sort((a,b)=>(a.order||0)-(b.order||0));
+      if(coll==="projects"&&id===state.curId)state.cur=clone(doc);
+    }
+  }
+  render();
+}
+async function afterSignIn(){
+  if(!emailAllowed(cloud.user.email)){state.cloudView="denied";render();return;}
+  await cloudLoad();
+}
+async function boot(){
+  if(CFG.supabaseUrl&&CFG.supabaseAnonKey){
+    state.mode="cloud";
+    if(!(window.supabase&&window.supabase.createClient)){state.cloudView="error";state.cloudMsg="Couldn't load the database library. Check your connection and reload the page.";render();return;}
+    cloud.sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    state.cloudView="loading";render();
+    cloud.sb.auth.onAuthStateChange((ev,sess)=>{
+      if(sess&&sess.user)cloud.user=sess.user;
+      if(ev==="SIGNED_IN"&&state.cloudView==="signin"){cloud.user=sess.user;setTimeout(afterSignIn,0);}
+      if(ev==="SIGNED_OUT"){cloud.user=null;state.cloudView="signin";render();}
+    });
+    let session=null;
+    try{session=(await cloud.sb.auth.getSession()).data.session;}catch(e){}
+    if(session){cloud.user=session.user;await afterSignIn();}
+    else{state.cloudView="signin";render();}
+    document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.cloudView==="live")cloudLoad(true);});
+  }else{
+    state.mode="local";loadStore();render();
+  }
+}
 function persist(){
-  try{localStorage.setItem(STORE_KEY,JSON.stringify(toShape()));if(state.curId)localStorage.setItem("sp-cur",state.curId);storeOK=true;}
+  try{if(state.curId)localStorage.setItem("sp-cur",state.curId);}catch(e){}
+  if(cloudOn()){setSync();return;}
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(toShape()));storeOK=true;}
   catch(e){storeOK=false;toast("This browser blocked saving. Download a backup so nothing is lost.");}
   setSync();
 }
+async function replaceAllData(){persist();if(cloudOn())await cloudReplaceAll();}
 function loadStore(){
   let d=null;
   try{const raw=localStorage.getItem(STORE_KEY);if(raw)d=JSON.parse(raw);}catch(e){storeOK=false;}
@@ -439,22 +577,52 @@ function loadStore(){
   if(migrateState()){persist();setTimeout(()=>toast("Role splits updated: CD and PM time is now tracked per project"),400);}
   state.loaded={settings:true,jobs:true,projects:true};
   state.dbState="live";
-  let last=null;try{last=localStorage.getItem("sp-cur");}catch(e){}
-  const p=state.projects.find(x=>x.id===last)||[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];
-  if(p){state.curId=p.id;state.cur=clone(p);}
+  pickCurrent();
 }
 function setSync(){
-  const el=$("#sync");
-  el.className="sync "+(storeOK?"ok":"warn");
-  el.querySelector("span").textContent=!storeOK?"Not saving — download a backup":(state.dirty?"Saving…":"Saved in this browser");
+  const el=$("#sync");if(!el)return;
+  let cls="ok",txt;
+  if(cloudOn()){
+    if(state.cloudView!=="live"){cls=state.cloudView==="error"?"warn":"";txt={signin:"Signed out",setup:"Signed in · database empty",denied:"Not allowed",error:"Not connected"}[state.cloudView]||"Connecting…";}
+    else if(cloud.err){cls="warn";txt="Not saved — "+cloud.err;}
+    else txt=(state.dirty||cloud.pending)?"Saving…":"Synced with your team";
+  }else{cls=storeOK?"ok":"warn";txt=!storeOK?"Not saving — download a backup":(state.dirty?"Saving…":"Saved in this browser");}
+  el.className="sync "+cls;el.querySelector("span").textContent=txt;
+  const a=$("#account");if(a)a.innerHTML=cloudOn()&&cloud.user?`<span>${esc(cloud.user.email)}</span><button class="btn ghost sm" data-action="sign-out">Sign out</button>`:"";
 }
 function banner(){
   const b=$("#banner");
-  b.innerHTML=!SEED&&!state.jobs.length?'<div class="banner">No rate card loaded. Keep <b>data/seed.js</b> next to this file, or restore a backup from Reference rates.</div>':"";
+  b.innerHTML=!cloudOn()&&!SEED&&!state.jobs.length?'<div class="banner">No rate card loaded. Keep <b>data/seed.js</b> next to this file, or restore a backup from Reference rates.</div>':"";
 }
-window.addEventListener("storage",e=>{if(e.key!==STORE_KEY||!e.newValue)return;try{fromShape(JSON.parse(e.newValue));migrateState();if(state.curId){const f=state.projects.find(p=>p.id===state.curId);state.cur=f?clone(f):null;}render();}catch(err){}});
-async function dbSet(){persist();}
-async function dbDel(){persist();}
+window.addEventListener("storage",e=>{if(cloudOn()||e.key!==STORE_KEY||!e.newValue)return;try{fromShape(JSON.parse(e.newValue));migrateState();if(state.curId){const f=state.projects.find(p=>p.id===state.curId);state.cur=f?clone(f):null;}render();}catch(err){}});
+async function dbSet(path,data){persist();const [coll,id]=path.split("/");await cloudUpsert(coll,[Object.assign({id},data)]);}
+async function dbDel(path){persist();const [coll,id]=path.split("/");await cloudDelete(coll,[id]);}
+function localBackupData(){try{const raw=localStorage.getItem(STORE_KEY);return raw?JSON.parse(raw):null;}catch(e){return null;}}
+
+/* ---------- sign-in, setup and error screens ---------- */
+function viewCloud(){
+  const v=state.cloudView;
+  if(v==="loading"||v==="loading-auth")return '<div class="empty"><strong>Loading shared data…</strong></div>';
+  if(v==="error")return `<div class="panel auth-card"><h2>Can't open the planner</h2><p>${esc(state.cloudMsg)}</p><div class="toolbar"><button class="btn primary" data-action="retry">Try again</button>${cloud.user?'<button class="btn" data-action="sign-out">Sign out</button>':""}</div></div>`;
+  if(v==="denied")return `<div class="panel auth-card"><h2>This account can't open the planner</h2><p>You're signed in as <b>${esc(cloud.user&&cloud.user.email)}</b>. Sign in with your @${esc(allowedDomain)} email instead.</p><button class="btn primary" data-action="sign-out">Sign out</button></div>`;
+  if(v==="setup"){
+    const d=localBackupData();const nj=d?Object.keys(d.jobs||{}).length:0,np=d?Object.keys(d.projects||{}).length:0;
+    const sj=SEED?Object.keys(SEED.jobs||{}).length:0;
+    return `<div class="panel auth-card"><h2>Set up the shared database</h2><p>It's empty. Choose what to start with. You only do this once; after that, everyone signed in sees the same data.</p>
+      <div class="choice">
+        <button data-action="setup-import" ${nj?"":"disabled"}><b>Import from this browser</b><span>${nj?`${nj} job types, ${np} quote${np===1?"":"s"}, plus your rates and team.`:"No saved data in this browser."}</span></button>
+        <button data-action="setup-seed" ${sj?"":"disabled"}><b>Start from the repo defaults</b><span>${sj?`The ${sj} job types in data/seed.js, with no quotes.`:"data/seed.js wasn't found."}</span></button>
+      </div>${state.setupBusy?'<p class="sub" style="margin-top:12px">Copying data…</p>':""}</div>`;
+  }
+  // sign in
+  const sent=state.otpSent;
+  return `<div class="panel auth-card"><h2>Sign in</h2><p>Use your ${allowedDomain?"@"+esc(allowedDomain)+" ":""}email. We'll send you a sign-in link — no password needed.</p>
+    <form data-form="send-link"><div class="row"><div class="field"><label for="auth-email">Work email</label><input class="inp" type="email" id="auth-email" autocomplete="email" required value="${esc(state.authEmail||"")}" placeholder="you@${esc(allowedDomain||"company.com")}"></div>
+    <button class="btn primary" type="submit" ${state.authBusy?"disabled":""}>${sent?"Send again":"Email me a sign-in link"}</button></div></form>
+    ${sent?`<div class="callout" style="margin-top:14px">Check <b>${esc(state.authEmail)}</b> for an email from Supabase and open the link in this browser.</div>
+    <form data-form="verify-code" style="margin-top:14px"><div class="row"><div class="field"><label for="auth-code">Or enter the code from the email</label><input class="inp" id="auth-code" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code"></div><button class="btn" type="submit" ${state.authBusy?"disabled":""}>Verify code</button></div></form>`:""}
+    ${state.authErr?`<div class="callout bad" style="margin-top:14px">${esc(state.authErr)}</div>`:""}</div>`;
+}
 function downloadFile(name,text,type){
   const blob=new Blob([text],{type});const url=URL.createObjectURL(blob);
   const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
@@ -476,6 +644,7 @@ async function flushProject(){
   const i=state.projects.findIndex(p=>p.id===state.cur.id);
   if(i>=0)state.projects[i]=clone(state.cur);else state.projects.push(clone(state.cur));
   persist();
+  await cloudUpsert("projects",[state.cur]);
 }
 function newProject(){
   flushProject();
@@ -500,13 +669,13 @@ function render(){
     .map(([k,l])=>`<button class="tab" role="tab" aria-selected="${state.tab===k}" data-action="tab" data-tab="${k}">${l}</button>`).join("");
   banner();setSync();
   const m=$("#main");
-  const ready=true;
-  if(!ready){m.innerHTML='<div class="empty"><strong>Loading your rate card…</strong></div>';}
+  const gated=cloudOn()&&state.cloudView!=="live";
+  if(gated){$("#tabs").innerHTML="";m.innerHTML=viewCloud();}
   else if(state.tab==="quote")m.innerHTML=viewQuote();
   else if(state.tab==="pipeline")m.innerHTML=viewPipeline();
   else if(state.tab==="rates")m.innerHTML=viewRates();
   else m.innerHTML=viewReference();
-  $("#modal-root").innerHTML=state.jobDraft?viewJobDrawer():"";
+  $("#modal-root").innerHTML=state.jobDraft&&!gated?viewJobDrawer():"";
   if(keep){const el=document.getElementById(keep.id);if(el){
     if(el.tagName!=="SELECT"&&keep.type!=="checkbox"&&keep.type!=="radio"&&keep.type!=="date")el.value=keep.v;
     el.focus({preventScroll:true});try{if(keep.s!=null)el.setSelectionRange(keep.s,keep.e);}catch(e){}
@@ -588,7 +757,8 @@ function viewQuote(){
   <div class="field" style="margin-top:14px"><label for="proj-notes">Notes</label><textarea class="inp" id="proj-notes" data-k="proj.notes" placeholder="Scope assumptions, revision rounds, talent or music at cost…">${esc(p.notes||"")}</textarea></div>
   <div style="margin-top:14px;display:flex;justify-content:flex-end"><button class="btn danger ${state.armed==="del-proj"?"armed":""}" data-action="del-project">${state.armed==="del-proj"?"Click again to delete this quote":"Delete quote"}</button></div>`;
 
-  return `<div class="section-head"><div><h2>Quote builder</h2><p>Changes save automatically and feed the pipeline &amp; capacity view once the quote has dates.</p></div></div>
+  const meta=cloudOn()&&cloud.meta.projects&&cloud.meta.projects[p.id];
+  return `<div class="section-head"><div><h2>Quote builder</h2><p>Changes save automatically and feed the pipeline &amp; capacity view once the quote has dates.${meta&&meta.by?` <span class="muted">Last saved by ${esc(meta.by)} · ${esc(new Date(meta.at).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</span>`:""}</p></div></div>
   ${switcher}${bar}
   <div class="quote-grid"><div>${lines}</div>${viewSummary(p,pc)}</div>`;
 }
@@ -901,9 +1071,9 @@ function viewReference(){
   ${state.sDirty?`<div class="savebar"><span>You have unsaved changes to reference rates.</span><div style="display:flex;gap:8px"><button class="btn" data-action="discard-settings">Discard</button><button class="btn primary" data-action="save-settings">Save changes</button></div></div>`:""}
   ${impact}
   <section class="panel panel-pad ref-card" style="margin-top:16px"><h3>Your data</h3>
-    <p class="hint">Everything is saved in this browser only. Download a backup regularly. To change the default rate card for everyone who opens the repo, download <b>seed.js</b> and commit it to <span class="mono">data/seed.js</span>.</p>
+    <p class="hint">${cloudOn()?"Quotes, the rate card, rates and team are saved in the shared Juice database and sync live for everyone signed in. Download a backup now and then as a safety copy.":"Everything is saved in this browser only. Download a backup regularly."} To change the default rate card in the repo, download <b>seed.js</b> and commit it to <span class="mono">data/seed.js</span>.</p>
     <div class="toolbar"><button class="btn" data-action="backup">Download backup (.json)</button><button class="btn" data-action="restore">Restore from backup</button><button class="btn" data-action="export-seed">Download seed.js</button>
-    <button class="btn danger ${state.armed==="reset"?"armed":""}" data-action="reset-defaults">${state.armed==="reset"?"Click again — this replaces all local data":"Reset to repo defaults"}</button></div>
+    <button class="btn danger ${state.armed==="reset"?"armed":""}" data-action="reset-defaults">${state.armed==="reset"?(cloudOn()?"Click again — this replaces the shared data for everyone":"Click again — this replaces all local data"):"Reset to repo defaults"}</button></div>
     <input type="file" id="restore-file" accept=".json,.js,application/json" hidden>
   </section>
   <section class="panel panel-pad hist" style="margin-top:16px"><h3>Change history</h3>
@@ -947,12 +1117,34 @@ document.addEventListener("change",e=>{
   if(e.target.id!=="restore-file")return;const f=e.target.files&&e.target.files[0];if(!f)return;
   f.text().then(t=>{let d;try{d=JSON.parse(t.replace(/^[^{]*?(\{)/,"$1").replace(/;\s*$/,""));}catch(err){toast("That file isn't a planner backup");return;}
     if(!d||!d.settings||!d.jobs){toast("That file isn't a planner backup");return;}
-    fromShape(d);migrateState();state.sDraft=null;state.sDirty=false;const p=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];state.curId=p?p.id:null;state.cur=p?clone(p):null;persist();render();toast("Backup restored");});
+    fromShape(d);migrateState();state.sDraft=null;state.sDirty=false;const p=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];state.curId=p?p.id:null;state.cur=p?clone(p):null;render();replaceAllData().then(()=>toast(cloudOn()?"Backup restored for everyone":"Backup restored"));});
   e.target.value="";
+});
+document.addEventListener("submit",async e=>{
+  const f=e.target.closest("[data-form]");if(!f)return;e.preventDefault();
+  if(f.dataset.form==="send-link"){
+    const email=($("#auth-email").value||"").trim();state.authEmail=email;state.authErr="";
+    if(!emailAllowed(email)){state.authErr="Use your @"+allowedDomain+" email address.";render();return;}
+    state.authBusy=true;render();
+    const {error}=await cloud.sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
+    state.authBusy=false;
+    if(error)state.authErr=/rate|seconds|too many/i.test(error.message)?"Too many emails sent. Wait a few minutes and try again.":error.message;else state.otpSent=true;
+    render();
+  }
+  if(f.dataset.form==="verify-code"){
+    const token=($("#auth-code").value||"").replace(/\s/g,"");if(!token)return;
+    state.authBusy=true;state.authErr="";render();
+    const {error}=await cloud.sb.auth.verifyOtp({email:state.authEmail,token,type:"email"});
+    state.authBusy=false;if(error){state.authErr="That code didn't work. Check it, or use the link in the email.";render();}
+  }
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&state.jobDraft){state.jobDraft=null;state.armed=null;render();}});
 
 const actions={
+  "sign-out"(){flushProject();if(cloud.channel){cloud.sb.removeChannel(cloud.channel);cloud.channel=null;}cloud.sb.auth.signOut();cloud.user=null;state.cloudView="signin";state.otpSent=false;render();},
+  retry(){if(cloud.user)afterSignIn();else location.reload();},
+  async "setup-import"(){const d=localBackupData();if(!d)return;state.setupBusy=true;render();fromShape(d);migrateState();state.cloudView="live";await cloudReplaceAll();state.setupBusy=false;await cloudLoad();toast("Imported into the shared database");},
+  async "setup-seed"(){if(!SEED)return;state.setupBusy=true;render();fromShape(SEED);migrateState();state.cloudView="live";await cloudReplaceAll();state.setupBusy=false;await cloudLoad();toast("Shared database set up from the repo defaults");},
   tab(el){flushProject();state.tab=el.dataset.tab;state.armed=null;try{localStorage.setItem("sp-tab",state.tab);}catch(e){}render();},
   "new-project"(){newProject();},
   "dup-project"(){if(!state.cur)return;flushProject();const now=new Date().toISOString();const p=clone(state.cur);p.id=uid("p");p.name=(p.name||"Quote")+" (copy)";p.status="pitch";p.createdAt=now;p.updatedAt=now;p.lines=(p.lines||[]).map(l=>Object.assign(l,{id:uid("l")}));state.projects.push(clone(p));state.curId=p.id;state.cur=p;state.dirty=true;flushProject();render();toast("Quote duplicated");},
@@ -984,7 +1176,7 @@ const actions={
   "backup"(){const d=new Date().toISOString().slice(0,10);downloadFile(`studio-planner-backup-${d}.json`,JSON.stringify(toShape(),null,2),"application/json");toast("Backup downloaded");},
   "export-seed"(){const d=toShape();d.projects={};downloadFile("seed.js","/* Juice Studio Planner — default rate card. Generated "+d.exportedAt+". Commit this to data/seed.js. */\nwindow.STUDIO_SEED = "+JSON.stringify(d,null,2)+";\n","text/javascript");toast("seed.js downloaded — replace data/seed.js in the repo");},
   "restore"(){$("#restore-file").click();},
-  "reset-defaults"(){if(!SEED){toast("No data/seed.js found next to this file");return;}if(state.armed!=="reset"){state.armed="reset";render();return;}state.armed=null;fromShape(SEED);migrateState();state.sDraft=null;state.sDirty=false;const p=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];state.curId=p?p.id:null;state.cur=p?clone(p):null;persist();render();toast("Reset to the rate card in data/seed.js");},
+  "reset-defaults"(){if(!SEED){toast("No data/seed.js found next to this file");return;}if(state.armed!=="reset"){state.armed="reset";render();return;}state.armed=null;fromShape(SEED);migrateState();state.sDraft=null;state.sDirty=false;const p=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];state.curId=p?p.id:null;state.cur=p?clone(p):null;render();replaceAllData().then(()=>toast("Reset to the rate card in data/seed.js"));},
   async "export-quote"(){if(!state.cur)return;const p=state.cur,s=S(),pc=projectCalc(p,s);
     const rows=[["Project",p.name],["Client",p.client],["Status",STATUS_LABEL[p.status]],["Start",p.start],["Delivery",p.end],[],["Category","Job","Variant","Base film","Qty","Unit price","Line price","Internal cost","Markup","Margin %","Workdays",...(s.roles||[]).map(r=>r.name+" days"),"Credits","Credit provider"]];
     pc.lines.forEach(({l,c})=>{if(!c)return;rows.push([c.j.category,c.j.name,c.j.variant,c.base?c.base.name+" "+(c.base.variant||""):"",c.qty,Math.round(c.unitSP),Math.round(c.sp),Math.round(c.cost),c.cost>0?(c.sp/c.cost).toFixed(2):"",c.sp>0?((c.sp-c.cost)/c.sp*100).toFixed(1):"",c.days,...(s.roles||[]).map(r=>+(c.roleDays[r.id]||0).toFixed(3)),Math.round(c.c.credits*c.qty),c.c.credits?creditName(c.c.creditType):""]);});
@@ -1007,8 +1199,7 @@ document.addEventListener("click",e=>{
   a(el,e);
 });
 window.addEventListener("beforeunload",()=>{flushProject();});
-loadStore();
-render();
+boot();
 })();
 </script>
 

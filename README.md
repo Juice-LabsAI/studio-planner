@@ -39,12 +39,29 @@ Margin % = (price − internal cost) ÷ price
 
 ## Where your data lives
 
-Your quotes and edits are saved in the **browser you're using**, in its localStorage for this site. There's no database or server behind the app. That means data doesn't sync between computers or people, and clearing your browser's site data deletes it.
+The planner saves to a shared **Supabase** database (Postgres), set in `data/config.js`. Anyone signed in with a @juicelabs.ai email sees and edits the same rate card, rates, team and quotes, and open planners update live.
 
-When the app changes how it stores data, it updates your saved data the next time it loads. It keeps your rates, team and quotes.
+It uses three tables, all prefixed `sp_` so other apps can share the same Supabase project:
 
-- **Reference rates → Download backup** saves everything (rate card, rates, team, quotes) as a JSON file. **Restore from backup** loads one back.
-- **Reference rates → Download seed.js** exports the current rate card, rates and team without quotes. Commit it as `data/seed.js` to change the defaults for everyone who opens the repo.
-- **Reset to repo defaults** reloads `data/seed.js` and replaces all local data.
+| Table | Holds |
+|---|---|
+| `sp_settings` | Reference rates, team and markup guardrails (one row, `main`) |
+| `sp_jobs` | Rate card job types |
+| `sp_quotes` | Quotes |
 
-The first time the app opens in a browser, it loads `data/seed.js`.
+Each row stores one JSON document (`data`), plus `updated_at` and `updated_by`.
+
+### One-time setup
+
+1. In Supabase, open **SQL Editor**, paste `supabase/schema.sql`, and click **Run**. This creates the tables and the rule that only @juicelabs.ai accounts can read or write.
+2. Go to **Authentication → URL Configuration**. Set **Site URL** to `https://juice-labsai.github.io/studio-planner/` and add the same URL under **Redirect URLs**.
+3. Optional: under **Authentication → Emails → Magic Link**, add `{{ .Token }}` to the template. People can then type the 6-digit code instead of clicking the link, which helps when email opens on a different device.
+4. Open the planner **in the browser that has your existing data** and sign in. The database is empty the first time, so choose **Import from this browser**.
+
+Sign-in uses an emailed link, so there are no passwords. Supabase's built-in email service only sends a few emails per hour. That's fine for a small team because sessions last, but add your own SMTP server under **Authentication → Emails** if it becomes a problem.
+
+### Backups and defaults
+
+- **Reference rates → Download backup** saves everything as a JSON file. **Restore from backup** loads one back, for everyone.
+- **Download seed.js** exports the current rate card, rates and team. Commit it as `data/seed.js` to change the repo defaults.
+- To run the planner without the database, in this browser only, delete `data/config.js`.
