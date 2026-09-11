@@ -1,4 +1,4 @@
-/* Juice Studio Planner — default rate card, reference rates, team and example quotes.
+/* Juice Studio Planner — default rate card, reference rates and team.
    Edit here (or use Reference rates → Download seed.js in the app) and commit. */
 window.STUDIO_SEED = {
   "version": 1,
@@ -25,19 +25,37 @@ window.STUDIO_SEED = {
         "id": "cd",
         "name": "Creative Director",
         "headcount": 1,
-        "utilisation": 70
+        "utilisation": 70,
+        "group": "leadership",
+        "perProjectHours": 4,
+        "pctOfProduction": 15
       },
       {
         "id": "ve",
         "name": "Video Editor",
         "headcount": 3,
-        "utilisation": 80
+        "utilisation": 80,
+        "group": "production",
+        "perProjectHours": 0,
+        "pctOfProduction": 0
       },
       {
         "id": "gd",
         "name": "Graphic Designer",
         "headcount": 2,
-        "utilisation": 80
+        "utilisation": 80,
+        "group": "production",
+        "perProjectHours": 0,
+        "pctOfProduction": 0
+      },
+      {
+        "id": "pm",
+        "name": "PM",
+        "group": "leadership",
+        "headcount": 1,
+        "utilisation": 80,
+        "perProjectHours": 3,
+        "pctOfProduction": 10
       }
     ],
     "categoryBlurbs": {
@@ -48,7 +66,8 @@ window.STUDIO_SEED = {
       "Static Ads": "CPAS / performance / social: high-velocity AI-generated creative built for paid media testing and scaling.",
       "PDP Content": "Amazon, Q-Com & marketplaces: conversion-focused listing assets generated and optimized for marketplace placements."
     },
-    "history": []
+    "history": [],
+    "schema": 2
   },
   "jobs": {
     "brand-film-15": {
@@ -67,9 +86,7 @@ window.STUDIO_SEED = {
       "buffer": 500,
       "externalCost": 0,
       "split": {
-        "cd": 25,
-        "ve": 65,
-        "gd": 10
+        "ve": 100
       }
     },
     "brand-film-30": {
@@ -88,9 +105,7 @@ window.STUDIO_SEED = {
       "buffer": 500,
       "externalCost": 0,
       "split": {
-        "cd": 25,
-        "ve": 65,
-        "gd": 10
+        "ve": 100
       }
     },
     "brand-film-60": {
@@ -110,9 +125,7 @@ window.STUDIO_SEED = {
       "buffer": 500,
       "externalCost": 0,
       "split": {
-        "cd": 25,
-        "ve": 65,
-        "gd": 10
+        "ve": 100
       }
     },
     "promo-char-15": {
@@ -131,9 +144,7 @@ window.STUDIO_SEED = {
       "buffer": 300,
       "externalCost": 0,
       "split": {
-        "cd": 20,
-        "ve": 70,
-        "gd": 10
+        "ve": 100
       }
     },
     "promo-char-30": {
@@ -152,9 +163,7 @@ window.STUDIO_SEED = {
       "buffer": 200,
       "externalCost": 0,
       "split": {
-        "cd": 20,
-        "ve": 70,
-        "gd": 10
+        "ve": 100
       }
     },
     "promo-char-60": {
@@ -173,9 +182,7 @@ window.STUDIO_SEED = {
       "buffer": 200,
       "externalCost": 0,
       "split": {
-        "cd": 20,
-        "ve": 70,
-        "gd": 10
+        "ve": 100
       }
     },
     "promo-prod-15": {
@@ -194,9 +201,7 @@ window.STUDIO_SEED = {
       "buffer": 150,
       "externalCost": 0,
       "split": {
-        "cd": 15,
-        "ve": 70,
-        "gd": 15
+        "ve": 100
       }
     },
     "promo-prod-30": {
@@ -215,9 +220,7 @@ window.STUDIO_SEED = {
       "buffer": 150,
       "externalCost": 0,
       "split": {
-        "cd": 15,
-        "ve": 70,
-        "gd": 15
+        "ve": 100
       }
     },
     "promo-prod-60": {
@@ -236,9 +239,7 @@ window.STUDIO_SEED = {
       "buffer": 300,
       "externalCost": 0,
       "split": {
-        "cd": 15,
-        "ve": 70,
-        "gd": 15
+        "ve": 100
       }
     },
     "cgi-15": {
@@ -256,9 +257,7 @@ window.STUDIO_SEED = {
       "buffer": 500,
       "externalCost": 0,
       "split": {
-        "cd": 20,
-        "ve": 50,
-        "gd": 30
+        "ve": 100
       }
     },
     "dub-artist": {
@@ -277,9 +276,7 @@ window.STUDIO_SEED = {
       "buffer": 0,
       "externalCost": 14000,
       "split": {
-        "cd": 0,
-        "ve": 0,
-        "gd": 0
+        "pm": 100
       }
     },
     "ai-vo": {
@@ -298,9 +295,7 @@ window.STUDIO_SEED = {
       "buffer": 500,
       "externalCost": 0,
       "split": {
-        "cd": 10,
-        "ve": 90,
-        "gd": 0
+        "ve": 100
       }
     },
     "adapt-same": {
@@ -319,9 +314,7 @@ window.STUDIO_SEED = {
       "buffer": 0,
       "externalCost": 0,
       "split": {
-        "cd": 0,
-        "ve": 100,
-        "gd": 0
+        "ve": 100
       },
       "adaptShare": 0.2
     },
@@ -341,9 +334,7 @@ window.STUDIO_SEED = {
       "buffer": 0,
       "externalCost": 0,
       "split": {
-        "cd": 10,
-        "ve": 90,
-        "gd": 0
+        "ve": 100
       },
       "adaptShare": 0.4
     },
@@ -363,9 +354,7 @@ window.STUDIO_SEED = {
       "buffer": 2.5,
       "externalCost": 0,
       "split": {
-        "cd": 10,
-        "ve": 0,
-        "gd": 90
+        "gd": 100
       }
     },
     "static-var": {
@@ -384,9 +373,7 @@ window.STUDIO_SEED = {
       "buffer": 2.5,
       "externalCost": 0,
       "split": {
-        "cd": 5,
-        "ve": 0,
-        "gd": 95
+        "gd": 100
       }
     },
     "carousel": {
@@ -405,9 +392,7 @@ window.STUDIO_SEED = {
       "buffer": 10,
       "externalCost": 0,
       "split": {
-        "cd": 15,
-        "ve": 0,
-        "gd": 85
+        "gd": 100
       }
     },
     "gif": {
@@ -426,9 +411,7 @@ window.STUDIO_SEED = {
       "buffer": 45,
       "externalCost": 0,
       "split": {
-        "cd": 10,
-        "ve": 50,
-        "gd": 40
+        "ve": 100
       }
     },
     "ratio": {
@@ -447,8 +430,6 @@ window.STUDIO_SEED = {
       "buffer": 2.5,
       "externalCost": 0,
       "split": {
-        "cd": 0,
-        "ve": 0,
         "gd": 100
       }
     },
@@ -468,9 +449,7 @@ window.STUDIO_SEED = {
       "buffer": 2.5,
       "externalCost": 0,
       "split": {
-        "cd": 15,
-        "ve": 0,
-        "gd": 85
+        "gd": 100
       }
     },
     "pdp-explainer": {
@@ -489,9 +468,7 @@ window.STUDIO_SEED = {
       "buffer": 300,
       "externalCost": 0,
       "split": {
-        "cd": 10,
-        "ve": 80,
-        "gd": 10
+        "ve": 100
       }
     },
     "pdp-copy": {
@@ -509,122 +486,9 @@ window.STUDIO_SEED = {
       "buffer": 0,
       "externalCost": 0,
       "split": {
-        "cd": 100,
-        "ve": 0,
-        "gd": 0
+        "pm": 100
       }
     }
   },
-  "projects": {
-    "example-festive": {
-      "name": "Example · Festive launch campaign",
-      "client": "Example brand",
-      "status": "confirmed",
-      "start": "2026-09-21",
-      "end": "2026-10-16",
-      "discountPct": 0,
-      "notes": "Example quote to show how the planner works — edit or delete it.",
-      "lines": [
-        {
-          "id": "l1",
-          "jobId": "brand-film-30",
-          "qty": 1,
-          "spOverride": "",
-          "baseJobId": ""
-        },
-        {
-          "id": "l2",
-          "jobId": "adapt-same",
-          "qty": 2,
-          "spOverride": "",
-          "baseJobId": "brand-film-30"
-        },
-        {
-          "id": "l3",
-          "jobId": "adapt-cross",
-          "qty": 1,
-          "spOverride": "",
-          "baseJobId": "brand-film-30"
-        },
-        {
-          "id": "l4",
-          "jobId": "promo-char-15",
-          "qty": 3,
-          "spOverride": "",
-          "baseJobId": ""
-        },
-        {
-          "id": "l5",
-          "jobId": "ai-vo",
-          "qty": 4,
-          "spOverride": "",
-          "baseJobId": ""
-        },
-        {
-          "id": "l6",
-          "jobId": "static",
-          "qty": 12,
-          "spOverride": "",
-          "baseJobId": ""
-        },
-        {
-          "id": "l7",
-          "jobId": "static-var",
-          "qty": 20,
-          "spOverride": "",
-          "baseJobId": ""
-        }
-      ],
-      "createdAt": "2026-09-11T10:00:00.000Z",
-      "updatedAt": "2026-09-11T10:00:00.000Z"
-    },
-    "example-marketplace": {
-      "name": "Example · Marketplace refresh",
-      "client": "Example brand",
-      "status": "pitch",
-      "start": "2026-10-05",
-      "end": "2026-10-23",
-      "discountPct": 5,
-      "notes": "Example pitch — edit or delete it.",
-      "lines": [
-        {
-          "id": "m1",
-          "jobId": "pdp-gallery",
-          "qty": 4,
-          "spOverride": "",
-          "baseJobId": ""
-        },
-        {
-          "id": "m2",
-          "jobId": "pdp-explainer",
-          "qty": 2,
-          "spOverride": "",
-          "baseJobId": ""
-        },
-        {
-          "id": "m3",
-          "jobId": "pdp-copy",
-          "qty": 4,
-          "spOverride": "",
-          "baseJobId": ""
-        },
-        {
-          "id": "m4",
-          "jobId": "static",
-          "qty": 10,
-          "spOverride": "",
-          "baseJobId": ""
-        },
-        {
-          "id": "m5",
-          "jobId": "carousel",
-          "qty": 3,
-          "spOverride": "",
-          "baseJobId": ""
-        }
-      ],
-      "createdAt": "2026-09-11T10:00:00.000Z",
-      "updatedAt": "2026-09-11T09:00:00.000Z"
-    }
-  }
+  "projects": {}
 };

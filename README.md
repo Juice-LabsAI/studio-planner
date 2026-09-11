@@ -33,12 +33,15 @@ Margin % = (price − internal cost) ÷ price
 - **Price ranges** (e.g. ₹2L–5L) use the midpoint. You can override the price on any quote line.
 - **"Quote per brief"** jobs (e.g. Complex CGI) suggest a price of internal cost × target markup.
 - **Complimentary** jobs are quoted at ₹0, but their effort and cost still count.
-- **Role split:** each job type splits its workdays across roles by percentage.
+- **Who does the work:** each job type's effort is production time only and goes 100% to one role: Video Editor for video, GIF and AI voiceover jobs, Graphic Designer for static and carousel jobs, and PM for artist dubbing and PDP copy.
+- **Leadership & coordination (CD, PM):** every quote also books each role's *hours per project* plus a *% of the quote's production days*. Set these in Reference rates → Team. This time is already covered by the workday rate, so it shows up in capacity but isn't added to internal cost.
 - **Capacity:** headcount × working days (Mon–Fri) × utilisation. A quote's days are spread evenly between its start and delivery dates. Pitches are optional in the view.
 
 ## Where your data lives
 
-Your edits are saved in the **browser you're using** (localStorage). They don't sync between computers or people.
+Your quotes and edits are saved in the **browser you're using**, in its localStorage for this site. There's no database or server behind the app. That means data doesn't sync between computers or people, and clearing your browser's site data deletes it.
+
+When the app changes how it stores data, it updates your saved data the next time it loads. It keeps your rates, team and quotes.
 
 - **Reference rates → Download backup** saves everything (rate card, rates, team, quotes) as a JSON file. **Restore from backup** loads one back.
 - **Reference rates → Download seed.js** exports the current rate card, rates and team without quotes. Commit it as `data/seed.js` to change the defaults for everyone who opens the repo.

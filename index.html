@@ -6,73 +6,75 @@
 <title>Juice Studio Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap">
 <style>
+/* Type scale: 12.5 · 13.5 · 15 (base) · 17 · 20 · 26 · 40 */
 :root{
   --bg:#F2F4F1; --surface:#FFFFFF; --surface-2:#E9ECE8; --surface-3:#DDE2DD;
-  --ink:#131A17; --ink-2:#465250; --ink-3:#77837F; --line:#D8DDD8; --line-2:#C5CCC6;
-  --accent:#0D6B5E; --accent-ink:#FFFFFF; --accent-soft:#D5EBE6; --accent-line:#9FCFC4;
-  --good:#1C7A4B; --good-soft:#DBF0E3; --warn:#9A5B00; --warn-soft:#FBEBCF; --bad:#B8342A; --bad-soft:#F8DEDA;
+  --ink:#111815; --ink-2:#36423E; --ink-3:#5B6863; --line:#D6DBD6; --line-2:#BCC4BE;
+  --accent:#0B6457; --accent-ink:#FFFFFF; --accent-soft:#D5EBE6; --accent-line:#9FCFC4;
+  --good:#17693F; --good-soft:#DBF0E3; --warn:#8A5000; --warn-soft:#FBEBCF; --bad:#A92E25; --bad-soft:#F8DEDA;
   --role-0:#5856CF; --role-1:#0E8A7C; --role-2:#C27405; --role-3:#C0406A; --role-4:#2F7DB5;
-  --shadow:0 1px 2px rgba(19,26,23,.06),0 8px 24px rgba(19,26,23,.08);
-  --f-display:"Bricolage Grotesque","IBM Plex Sans",system-ui,sans-serif;
-  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --shadow:0 1px 2px rgba(17,24,21,.06),0 8px 24px rgba(17,24,21,.08);
+  --f-display:"Bricolage Grotesque","Public Sans",system-ui,sans-serif;
+  --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --fs-xs:12.5px; --fs-sm:13.5px; --fs-base:15px; --fs-md:17px; --fs-lg:20px; --fs-xl:26px;
   --r:8px;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#0E1311; --surface:#161C1A; --surface-2:#1D2522; --surface-3:#27312D;
-    --ink:#E4EBE8; --ink-2:#A9B5B0; --ink-3:#7A8783; --line:#28322F; --line-2:#36423E;
-    --accent:#4CC2AE; --accent-ink:#04201B; --accent-soft:#143A33; --accent-line:#24665A;
-    --good:#5CCB8E; --good-soft:#15352A; --warn:#F0B34E; --warn-soft:#3A2D12; --bad:#F2796D; --bad-soft:#3E1D1A;
-    --role-0:#8E8CF2; --role-1:#40BFAE; --role-2:#E9A23B; --role-3:#EB7598; --role-4:#65AEE3;
+    --bg:#0E1311; --surface:#161C1A; --surface-2:#1E2623; --surface-3:#27312D;
+    --ink:#EDF2F0; --ink-2:#C3CDC9; --ink-3:#9AA7A2; --line:#2B3532; --line-2:#3B4743;
+    --accent:#52C8B3; --accent-ink:#04201B; --accent-soft:#143A33; --accent-line:#24665A;
+    --good:#66D398; --good-soft:#15352A; --warn:#F3BA58; --warn-soft:#3A2D12; --bad:#F5857A; --bad-soft:#3E1D1A;
+    --role-0:#9694F4; --role-1:#46C6B5; --role-2:#ECA843; --role-3:#EE7C9E; --role-4:#6DB3E6;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0E1311; --surface:#161C1A; --surface-2:#1D2522; --surface-3:#27312D;
-  --ink:#E4EBE8; --ink-2:#A9B5B0; --ink-3:#7A8783; --line:#28322F; --line-2:#36423E;
-  --accent:#4CC2AE; --accent-ink:#04201B; --accent-soft:#143A33; --accent-line:#24665A;
-  --good:#5CCB8E; --good-soft:#15352A; --warn:#F0B34E; --warn-soft:#3A2D12; --bad:#F2796D; --bad-soft:#3E1D1A;
-  --role-0:#8E8CF2; --role-1:#40BFAE; --role-2:#E9A23B; --role-3:#EB7598; --role-4:#65AEE3;
+  --bg:#0E1311; --surface:#161C1A; --surface-2:#1E2623; --surface-3:#27312D;
+  --ink:#EDF2F0; --ink-2:#C3CDC9; --ink-3:#9AA7A2; --line:#2B3532; --line-2:#3B4743;
+  --accent:#52C8B3; --accent-ink:#04201B; --accent-soft:#143A33; --accent-line:#24665A;
+  --good:#66D398; --good-soft:#15352A; --warn:#F3BA58; --warn-soft:#3A2D12; --bad:#F5857A; --bad-soft:#3E1D1A;
+  --role-0:#9694F4; --role-1:#46C6B5; --role-2:#ECA843; --role-3:#EE7C9E; --role-4:#6DB3E6;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
 }
 *{box-sizing:border-box}
 html,body{background:var(--bg);color:var(--ink)}
-body{font-family:var(--f-body);font-size:14px;line-height:1.45;padding-inline:20px;padding-block:0 60px;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1320px;margin:0 auto}
-h1,h2,h3{font-family:var(--f-display);font-weight:700;letter-spacing:-.01em;text-wrap:balance;margin:0}
-h2{font-size:22px} h3{font-size:16px;font-weight:600}
+body{font-family:var(--f-body);font-size:var(--fs-base);line-height:1.5;padding-inline:24px;padding-block:0 64px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.wrap{max-width:1360px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;letter-spacing:-.01em;text-wrap:balance;margin:0;line-height:1.2}
+h2{font-size:var(--fs-xl)} h3{font-size:var(--fs-md);font-weight:600}
 .num,td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .mono{font-family:var(--f-mono)}
 .muted{color:var(--ink-3)}
-.sub{font-size:12px;color:var(--ink-3)}
-.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.sub{font-size:var(--fs-xs);color:var(--ink-3);line-height:1.4;margin-top:2px}
+.eyebrow{font-size:var(--fs-xs);font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3)}
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* top bar */
-.top{position:sticky;top:0;z-index:20;background:var(--bg);padding-block:16px 0;border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:20;background:var(--bg);padding-block:18px 0;border-bottom:1px solid var(--line)}
 .top-row{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
-.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.brand h1{font-size:26px;line-height:1}
-.brand .tc{font-family:var(--f-mono);font-size:12px;color:var(--ink-3)}
-.sync{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);display:flex;align-items:center;gap:6px}
-.sync i{width:7px;height:7px;border-radius:50%;background:var(--ink-3);display:inline-block}
+.brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.brand h1{font-size:28px;line-height:1}
+.brand .tc{font-size:var(--fs-xs);font-weight:600;letter-spacing:.06em;color:var(--ink-3)}
+.sync{font-size:var(--fs-sm);color:var(--ink-2);display:flex;align-items:center;gap:8px}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--ink-3);display:inline-block}
 .sync.ok i{background:var(--good)} .sync.warn i{background:var(--warn)}
 .tabs{display:flex;gap:4px;margin-top:14px;overflow-x:auto;scrollbar-width:none}
-.tab{appearance:none;border:0;background:none;padding:10px 14px;border-bottom:2px solid transparent;color:var(--ink-2);font-weight:500;cursor:pointer;white-space:nowrap}
+.tab{appearance:none;border:0;background:none;padding:11px 16px;border-bottom:3px solid transparent;color:var(--ink-2);font-size:var(--fs-base);font-weight:500;cursor:pointer;white-space:nowrap}
 .tab:hover{color:var(--ink)}
-.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
-.banner{margin-top:16px;padding:10px 14px;border-radius:var(--r);background:var(--warn-soft);color:var(--warn);font-size:13px}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.banner{margin-top:16px;padding:12px 16px;border-radius:var(--r);background:var(--warn-soft);color:var(--warn);font-size:var(--fs-sm)}
 
-main{padding-top:22px}
-.section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:14px}
-.section-head p{margin:4px 0 0;color:var(--ink-2);max-width:68ch}
+main{padding-top:26px}
+.section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.section-head p{margin:6px 0 0;color:var(--ink-2);max-width:70ch}
 
 /* controls */
-.btn{appearance:none;border:1px solid var(--line-2);background:var(--surface);padding:7px 12px;border-radius:6px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn{appearance:none;border:1px solid var(--line-2);background:var(--surface);padding:8px 14px;border-radius:7px;cursor:pointer;font-weight:600;font-size:var(--fs-sm);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .btn:hover{border-color:var(--ink-3)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .btn.primary:hover{filter:brightness(1.06)}
@@ -80,149 +82,160 @@ main{padding-top:22px}
 .btn.ghost:hover{background:var(--surface-2);color:var(--ink)}
 .btn.danger{color:var(--bad)}
 .btn.danger.armed{background:var(--bad);border-color:var(--bad);color:#fff}
-.btn.sm{padding:4px 8px;font-size:12px}
+.btn.sm{padding:5px 10px;font-size:var(--fs-xs)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
-.field{display:flex;flex-direction:column;gap:4px;min-width:0}
-.field label,.lbl{font-size:12px;color:var(--ink-2);font-weight:500}
-.inp{border:1px solid var(--line-2);background:var(--surface);border-radius:6px;padding:7px 9px;min-width:0;width:100%}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label,.lbl{font-size:var(--fs-sm);color:var(--ink-2);font-weight:600}
+.inp{border:1px solid var(--line-2);background:var(--surface);border-radius:7px;padding:8px 10px;min-width:0;width:100%;font-size:var(--fs-base)}
 .inp:hover{border-color:var(--ink-3)}
 .inp:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
 .inp.numi{text-align:right;font-variant-numeric:tabular-nums}
-.inp.xs{padding:4px 6px}
-textarea.inp{resize:vertical;min-height:60px}
-.toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--ink-2)}
-.toggle input{accent-color:var(--accent);width:16px;height:16px}
+.inp.xs{padding:6px 8px;font-size:var(--fs-sm)}
+textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
+.toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:var(--fs-sm);color:var(--ink-2);font-weight:500}
+.toggle input{accent-color:var(--accent);width:17px;height:17px}
 
 /* chips */
-.chip{display:inline-block;font-family:var(--f-mono);font-size:12px;font-weight:500;padding:2px 7px;border-radius:999px;background:var(--surface-2);color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip{display:inline-block;font-size:var(--fs-sm);font-weight:700;padding:3px 9px;border-radius:999px;background:var(--surface-2);color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.3}
 .chip.good{background:var(--good-soft);color:var(--good)}
 .chip.warn{background:var(--warn-soft);color:var(--warn)}
 .chip.bad{background:var(--bad-soft);color:var(--bad)}
-.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:2px 9px;border-radius:999px;white-space:nowrap}
-.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-xs);font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
 .st-pitch{border:1px dashed var(--line-2);color:var(--ink-2)}
 .st-confirmed{background:var(--accent-soft);color:var(--accent)}
 .st-production{background:var(--warn-soft);color:var(--warn)}
 .st-delivered{background:var(--surface-2);color:var(--ink-3)}
 
 /* panels */
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px}
-.panel-pad{padding:16px 18px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.panel-pad{padding:18px 20px}
 .table-wrap{overflow-x:auto}
 table{border-collapse:collapse;width:100%}
-th{font-size:11px;font-family:var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
-td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:var(--fs-xs);letter-spacing:.02em;color:var(--ink-3);font-weight:600;text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:bottom}
+td{padding:13px 12px;border-bottom:1px solid var(--line);vertical-align:top}
 tr:last-child td{border-bottom:0}
 tbody tr:hover td{background:color-mix(in srgb,var(--surface-2) 45%,transparent)}
 
 /* quote builder */
-.quote-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
-@media (max-width:1000px){.quote-grid{grid-template-columns:1fr}}
-.proj-bar{display:grid;grid-template-columns:2fr 1.4fr 1fr 1fr 1fr .7fr;gap:10px;align-items:end}
+.quote-grid{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:22px;align-items:start}
+@media (max-width:1080px){.quote-grid{grid-template-columns:1fr}}
+.proj-bar{display:grid;grid-template-columns:2fr 1.4fr 1fr 1.1fr 1.1fr .7fr;gap:12px;align-items:end}
 @media (max-width:900px){.proj-bar{grid-template-columns:1fr 1fr}}
-.proj-switch{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
-.proj-switch select{max-width:340px}
-.add-row{display:flex;gap:8px;align-items:end;flex-wrap:wrap;padding:14px 18px;border-top:1px solid var(--line);background:var(--surface-2);border-radius:0 0 10px 10px}
-.add-row .field:first-child{flex:1 1 280px}
+.proj-switch{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.proj-switch select{max-width:380px}
+.add-row{display:flex;gap:10px;align-items:end;flex-wrap:wrap;padding:16px 20px;border-top:1px solid var(--line);background:var(--surface-2);border-radius:0 0 12px 12px}
+.add-row .field:first-child{flex:1 1 300px}
 .lines td{vertical-align:middle}
-.line-name{font-weight:600}
-.line-cat{font-size:11px;color:var(--ink-3);font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.05em}
-.base-sel{margin-top:6px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2)}
-.base-sel select{max-width:230px}
-.empty{padding:36px 18px;text-align:center;color:var(--ink-3)}
-.empty strong{display:block;color:var(--ink-2);font-size:15px;margin-bottom:4px}
+.line-name{font-weight:600;font-size:var(--fs-base);line-height:1.35}
+.line-name .muted{font-weight:500}
+.line-cat{font-size:var(--fs-xs);color:var(--ink-3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px}
+.base-sel{margin-top:8px;display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-size:var(--fs-xs);color:var(--ink-2);font-weight:600}
+.base-sel select{max-width:100%;min-width:200px;flex:1}
+.empty{padding:40px 20px;text-align:center;color:var(--ink-3)}
+.empty strong{display:block;color:var(--ink-2);font-size:var(--fs-md);margin-bottom:4px}
 
-.summary{position:sticky;top:120px;display:flex;flex-direction:column;gap:14px}
-.sum-hero{padding:18px}
-.sum-hero .big{font-family:var(--f-display);font-size:38px;font-weight:700;letter-spacing:-.02em;line-height:1.05;font-variant-numeric:tabular-nums}
-.kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:13px}
-.kv dt{color:var(--ink-2)} .kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
-.kv .tot{font-weight:600;color:var(--ink);border-top:1px solid var(--line);padding-top:6px}
+.summary{position:sticky;top:124px;display:flex;flex-direction:column;gap:16px}
+.sum-hero{padding:20px}
+.sum-hero .big{font-family:var(--f-display);font-size:42px;font-weight:700;letter-spacing:-.02em;line-height:1.05;font-variant-numeric:tabular-nums;margin-top:4px}
+.kv{display:grid;grid-template-columns:1fr auto;gap:8px 14px;font-size:var(--fs-sm)}
+.kv dt{color:var(--ink-2)} .kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+.kv .tot{font-weight:700;color:var(--ink);border-top:1px solid var(--line);padding-top:8px;font-size:var(--fs-base)}
 .metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-top:1px solid var(--line)}
-.metric{background:var(--surface);padding:10px 14px}
-.metric .v{font-family:var(--f-display);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
-.metric:first-child{border-bottom-left-radius:10px}.metric:last-child{border-bottom-right-radius:10px}
-.role-line{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:center;font-size:13px}
-.dot{width:9px;height:9px;border-radius:2px;display:inline-block}
-.bar{height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;grid-column:1/-1}
-.bar>span{display:block;height:100%;border-radius:3px}
-.callout{font-size:13px;padding:10px 12px;border-radius:8px;background:var(--surface-2);color:var(--ink-2)}
+.metric{background:var(--surface);padding:12px 16px}
+.metric .v{font-family:var(--f-display);font-size:var(--fs-lg);font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
+.metric:first-child{border-bottom-left-radius:12px}.metric:last-child{border-bottom-right-radius:12px}
+.role-line{display:grid;grid-template-columns:auto 1fr auto;gap:5px 10px;align-items:center;font-size:var(--fs-sm)}
+.role-line>span:nth-child(2){font-weight:500}
+.role-line .num{font-weight:600}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+.bar{height:7px;background:var(--surface-2);border-radius:4px;overflow:hidden;grid-column:1/-1}
+.bar>span{display:block;height:100%;border-radius:4px}
+.callout{font-size:var(--fs-sm);padding:11px 13px;border-radius:9px;background:var(--surface-2);color:var(--ink-2);line-height:1.45}
 .callout b{color:var(--ink)}
 .callout.warn{background:var(--warn-soft);color:var(--warn)} .callout.warn b{color:inherit}
 .callout.bad{background:var(--bad-soft);color:var(--bad)} .callout.bad b{color:inherit}
+.group-label{font-size:var(--fs-xs);font-weight:700;color:var(--ink-2);letter-spacing:.03em;text-transform:uppercase;padding-top:4px;border-top:1px dashed var(--line);margin-top:2px}
+.group-label:first-child{border-top:0;padding-top:0;margin-top:0}
 
-/* split bar */
-.split{display:flex;height:8px;width:110px;border-radius:2px;overflow:hidden;background:var(--surface-2)}
-.split>span{height:100%}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-2)}
+/* role tag */
+.doer{display:inline-flex;align-items:center;gap:7px;font-size:var(--fs-sm);font-weight:500;white-space:nowrap}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:var(--fs-sm);color:var(--ink-2);align-items:center}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 
 /* rate card */
-.cat-head td{background:var(--surface-2);padding:12px 10px}
+.cat-head td{background:var(--surface-2);padding:14px 12px}
 tbody tr.cat-head:hover td{background:var(--surface-2)}
-.cat-head .cn{font-family:var(--f-display);font-weight:600;font-size:15px}
-.cat-head .cb{font-size:12px;color:var(--ink-2);margin-top:2px}
-.asset{font-weight:600}
-.desc{font-size:12px;color:var(--ink-3);max-width:44ch;margin-top:2px}
+.cat-head .cn{font-family:var(--f-display);font-weight:600;font-size:var(--fs-md)}
+.cat-head .cb{font-size:var(--fs-sm);color:var(--ink-2);margin-top:2px}
+.asset{font-weight:600;font-size:var(--fs-base)}
+.variant{font-size:var(--fs-sm);color:var(--ink-2);font-weight:500}
+.desc{font-size:var(--fs-sm);color:var(--ink-3);max-width:52ch;margin-top:4px;line-height:1.45}
 .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
 /* capacity */
 .cap-grid td,.cap-grid th{text-align:right}
 .cap-grid td:first-child,.cap-grid th:first-child{text-align:left}
-.cell{min-width:118px}
-.cell .top-n{font-variant-numeric:tabular-nums;font-size:13px}
-.cell .top-n b{font-weight:600}
-.cbar{height:8px;background:var(--surface-2);border-radius:2px;margin-top:6px;position:relative;overflow:hidden;display:flex}
+.cell{min-width:132px}
+.cell .top-n{font-variant-numeric:tabular-nums;font-size:var(--fs-base)}
+.cell .top-n b{font-weight:700}
+.cbar{height:9px;background:var(--surface-2);border-radius:3px;margin-top:7px;position:relative;overflow:hidden;display:flex}
 .cbar .s{height:100%}
 .cbar .h{height:100%;background-image:repeating-linear-gradient(135deg,currentColor 0 2px,transparent 2px 5px);opacity:.6}
-.pct{font-family:var(--f-mono);font-size:11px}
+.pct{font-size:var(--fs-xs);font-weight:600;color:var(--ink-3);margin-top:4px}
 .pct.good{color:var(--good)} .pct.warn{color:var(--warn)} .pct.bad{color:var(--bad)}
 .month-nav{display:flex;gap:6px;align-items:center}
-.gantt{position:relative;height:10px;background:var(--surface-2);border-radius:2px;min-width:160px}
-.gantt span{position:absolute;top:0;bottom:0;border-radius:2px;background:var(--accent)}
-.gantt span.pitch{background:transparent;border:1px dashed var(--ink-3)}
+.gantt{position:relative;height:12px;background:var(--surface-2);border-radius:3px;min-width:170px}
+.gantt span{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--accent)}
+.gantt span.pitch{background:transparent;border:1.5px dashed var(--ink-3)}
+.grid-title{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;padding:16px 20px 4px}
+.grid-title p{margin:0;font-size:var(--fs-sm);color:var(--ink-3)}
 
 /* reference */
-.ref-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.ref-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
 @media (max-width:900px){.ref-grid{grid-template-columns:1fr}}
 .ref-card h3{margin-bottom:4px}
-.ref-card p.hint{margin:0 0 12px;font-size:12px;color:var(--ink-3)}
-.rows{display:flex;flex-direction:column;gap:8px}
-.r-row{display:grid;gap:8px;align-items:end}
-.savebar{position:sticky;bottom:12px;z-index:10;margin-top:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-radius:10px;background:var(--ink);color:var(--bg);box-shadow:var(--shadow)}
+.ref-card p.hint{margin:0 0 14px;font-size:var(--fs-sm);color:var(--ink-3);max-width:80ch}
+.rows{display:flex;flex-direction:column;gap:10px}
+.r-row{display:grid;gap:10px;align-items:end}
+.team-row{grid-template-columns:auto minmax(150px,1.6fr) minmax(130px,1fr) .7fr .8fr .8fr .8fr auto}
+@media (max-width:980px){.team-row{grid-template-columns:auto 1fr 1fr;}.team-row>.dot{grid-row:span 3}}
+.savebar{position:sticky;bottom:12px;z-index:10;margin-top:18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 18px;border-radius:12px;background:var(--ink);color:var(--bg);box-shadow:var(--shadow);font-weight:500}
 .savebar .btn{background:transparent;color:var(--bg);border-color:color-mix(in srgb,var(--bg) 40%,transparent)}
 .savebar .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .delta-up{color:var(--bad)} .delta-down{color:var(--good)}
-.compact th,.compact td{padding:6px 6px;font-size:12px}
-.compact td:first-child{white-space:nowrap}
-.hist li{padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.compact th,.compact td{padding:8px 4px;font-size:var(--fs-sm)}
+.compact th:first-child,.compact td:first-child{padding-left:0}
+.compact th:last-child,.compact td:last-child{padding-right:0}
+.compact .pct{margin-top:0;font-size:var(--fs-sm)}
+.hist li{padding:10px 0;border-bottom:1px solid var(--line);font-size:var(--fs-sm)}
 .hist li:last-child{border-bottom:0}
 .hist ul{list-style:none;margin:0;padding:0}
-.formula{font-family:var(--f-mono);font-size:12px;background:var(--surface-2);border-radius:8px;padding:10px 12px;color:var(--ink-2);line-height:1.7;overflow-x:auto}
+.formula{font-family:var(--f-mono);font-size:13px;background:var(--surface-2);border-radius:9px;padding:12px 14px;color:var(--ink-2);line-height:1.8;overflow-x:auto}
 .formula b{color:var(--ink);font-weight:500}
 
 /* modal */
 .overlay{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--ink) 38%,transparent);display:flex;justify-content:flex-end}
-.drawer{width:min(620px,100%);height:100%;background:var(--surface);box-shadow:var(--shadow);display:flex;flex-direction:column}
-.drawer-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
-.drawer-body{padding:18px 20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:18px}
-.drawer-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.drawer{width:min(640px,100%);height:100%;background:var(--surface);box-shadow:var(--shadow);display:flex;flex-direction:column}
+.drawer-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.drawer-body{padding:20px 22px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:20px}
+.drawer-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .fgrid .full{grid-column:1/-1}
 @media (max-width:520px){.fgrid{grid-template-columns:1fr}}
-fieldset{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:0}
-legend{font-size:12px;font-weight:600;color:var(--ink-2);padding:0 6px}
+fieldset{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:0}
+legend{font-size:var(--fs-sm);font-weight:700;color:var(--ink);padding:0 6px}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
-.seg label{position:relative;border:1px solid var(--line-2);border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer}
+.seg label{position:relative;border:1px solid var(--line-2);border-radius:7px;padding:6px 12px;font-size:var(--fs-sm);font-weight:500;cursor:pointer}
 .seg input{position:absolute;opacity:0;pointer-events:none}
-.seg label:has(input:checked){background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent);font-weight:500}
+.seg label:has(input:checked){background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent);font-weight:600}
 .seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
-.preview{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-radius:8px;overflow:hidden;border:1px solid var(--line)}
-.preview div{background:var(--surface-2);padding:10px 12px}
-.preview .v{font-family:var(--f-display);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
+.preview{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.preview div{background:var(--surface-2);padding:12px 14px}
+.preview .v{font-family:var(--f-display);font-weight:600;font-size:var(--fs-lg);font-variant-numeric:tabular-nums;margin-top:2px}
 @media (max-width:520px){.preview{grid-template-columns:1fr 1fr}}
 
-#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:13px;box-shadow:var(--shadow);transition:opacity .2s;pointer-events:none}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:9px;font-size:var(--fs-sm);font-weight:500;box-shadow:var(--shadow);transition:opacity .2s;pointer-events:none}
 #toast[hidden]{display:none!important}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -339,6 +352,12 @@ function projectCalc(p,s){
     for(const k in c.roleDays)out.roleDays[k]=(out.roleDays[k]||0)+c.roleDays[k];
     for(const k in c.credits){out.credits[k]=(out.credits[k]||0)+c.credits[k];out.creditCostBy[k]=(out.creditCostBy[k]||0)+c.credits[k]*creditRate(k,s);}
   });
+  out.prodRoleDays=Object.assign({},out.roleDays);out.overRoleDays={};
+  const hasWork=out.lines.some(x=>x.c&&x.c.qty>0);
+  (s.roles||[]).forEach(r=>{
+    const d=hasWork?(+r.perProjectHours||0)/((+s.hoursPerDay)||8)+out.days*(+r.pctOfProduction||0)/100:0;
+    out.overRoleDays[r.id]=d;out.roleDays[r.id]=(out.roleDays[r.id]||0)+d;
+  });
   out.discount=out.gross*((+p.discountPct||0)/100);
   out.sp=out.gross-out.discount;
   out.margin=out.sp-out.cost;
@@ -364,6 +383,10 @@ const counted=p=>p.status!=="pitch"||state.includePitches;
 function projDates(p){const a=D(p.start),b=D(p.end);return a&&b&&a<=b?{a,b,n:wd(a,b)}:null;}
 
 function roleColor(i){return `var(--role-${i%5})`;}
+const isLead=r=>!!r&&r.group==="leadership";
+const abbr=n=>{const w=String(n||"").trim().split(/\s+/);return w.length>1?w.map(x=>x[0]).join("").toUpperCase():String(n||"").slice(0,4);};
+function doerOf(j){const sp=j.split||{};let best=null,bv=0,n=0;for(const k in sp){if(+sp[k]>0)n++;if(+sp[k]>bv){bv=+sp[k];best=k;}}return {id:best,mixed:n>1};}
+function doerTag(j){const roles=S().roles||[];const d=doerOf(j);if(d.mixed)return '<span class="doer muted">Mixed</span>';const i=roles.findIndex(r=>r.id===d.id);if(i<0)return '<span class="doer muted">—</span>';return `<span class="doer"><span class="dot" style="background:${roleColor(i)}"></span>${esc(roles[i].name)}</span>`;}
 
 /* ---------- local storage (this browser) ---------- */
 const STORE_KEY="juice-studio-planner-v1";
@@ -378,6 +401,30 @@ function toShape(){
   const obj=arr=>Object.fromEntries(arr.map(x=>{const c=clone(x);const id=c.id;delete c.id;return [id,c];}));
   return {version:1,exportedAt:new Date().toISOString(),settings:clone(state.settings||EMPTY_SETTINGS),jobs:obj(state.jobs),projects:obj(state.projects)};
 }
+const SCHEMA=2;
+function migrateState(){
+  const s=state.settings;if(!s||(+s.schema||1)>=SCHEMA)return false;
+  const roles=s.roles=s.roles||[];
+  const find=(id,re)=>roles.find(r=>r.id===id)||roles.find(r=>re.test(String(r.name||"").trim()));
+  const ve=find("ve",/editor/i),gd=find("gd",/designer/i),cd=find("cd",/creative\s*dir|^cd$/i);
+  let pm=find("pm",/^pm$|^pm\b|project\s*man|producer/i);
+  if(!pm){pm={id:"pm",name:"PM",headcount:1,utilisation:80};roles.push(pm);}
+  roles.forEach(r=>{
+    if(!r.group)r.group=(r===cd||r===pm)?"leadership":"production";
+    if(r.perProjectHours==null)r.perProjectHours=r===cd?4:r===pm?3:0;
+    if(r.pctOfProduction==null)r.pctOfProduction=r===cd?15:r===pm?10:0;
+  });
+  const byId={"dub-artist":pm,"pdp-copy":pm,"static":gd,"static-var":gd,"carousel":gd,"ratio":gd,"pdp-gallery":gd,"gif":ve,"ai-vo":ve,"pdp-explainer":ve,"adapt-same":ve,"adapt-cross":ve,"cgi-15":ve};
+  state.jobs.forEach(j=>{
+    let r=byId[j.id];
+    if(!r){const n=String(j.name||"");
+      r=/dubbing|artist\s*voice/i.test(n)?pm:/\bcopy\b/i.test(n)?pm:/gif|video|film|promo|voice|adapt|cgi|explainer|motion|reel/i.test(n)?ve:/static|carousel|ratio|gallery|banner|image|a\+/i.test(n+" "+(j.category||""))?gd:ve;}
+    r=r||ve||gd;if(r)j.split={[r.id]:100};
+  });
+  s.schema=SCHEMA;
+  s.history=[{at:new Date().toISOString(),changes:[{label:"Role split",from:"% across roles",to:"100% to the production role"},{label:"CD / PM time",from:"part of job split",to:"hours per project + % of production"}]}].concat(s.history||[]).slice(0,25);
+  return true;
+}
 let storeOK=true;
 function persist(){
   try{localStorage.setItem(STORE_KEY,JSON.stringify(toShape()));if(state.curId)localStorage.setItem("sp-cur",state.curId);storeOK=true;}
@@ -389,6 +436,7 @@ function loadStore(){
   try{const raw=localStorage.getItem(STORE_KEY);if(raw)d=JSON.parse(raw);}catch(e){storeOK=false;}
   if(!d&&SEED)d=SEED;
   if(d)fromShape(d);
+  if(migrateState()){persist();setTimeout(()=>toast("Role splits updated: CD and PM time is now tracked per project"),400);}
   state.loaded={settings:true,jobs:true,projects:true};
   state.dbState="live";
   let last=null;try{last=localStorage.getItem("sp-cur");}catch(e){}
@@ -404,7 +452,7 @@ function banner(){
   const b=$("#banner");
   b.innerHTML=!SEED&&!state.jobs.length?'<div class="banner">No rate card loaded. Keep <b>data/seed.js</b> next to this file, or restore a backup from Reference rates.</div>':"";
 }
-window.addEventListener("storage",e=>{if(e.key!==STORE_KEY||!e.newValue)return;try{fromShape(JSON.parse(e.newValue));if(state.curId){const f=state.projects.find(p=>p.id===state.curId);state.cur=f?clone(f):null;}render();}catch(err){}});
+window.addEventListener("storage",e=>{if(e.key!==STORE_KEY||!e.newValue)return;try{fromShape(JSON.parse(e.newValue));migrateState();if(state.curId){const f=state.projects.find(p=>p.id===state.curId);state.cur=f?clone(f):null;}render();}catch(err){}});
 async function dbSet(){persist();}
 async function dbDel(){persist();}
 function downloadFile(name,text,type){
@@ -518,7 +566,7 @@ function viewQuote(){
       <td class="num" style="width:130px"><input class="inp numi xs" inputmode="decimal" id="ln-sp-${esc(l.id)}" data-k="line.spOverride" data-id="${esc(l.id)}" data-num data-opt value="${c.hasOv?esc(l.spOverride):""}" placeholder="${esc(num(c.p.sp))}" aria-label="Unit price override">${c.hasOv?'<div class="sub">custom price</div>':note}</td>
       <td class="num">${inr(c.sp)}</td>
       <td class="num">${inr(c.cost)}</td>
-      <td class="num">${markupChip(c.sp,c.cost)}</td>
+      <td class="num">${c.p.kind==="free"&&!c.hasOv?'<span class="chip">free</span>':markupChip(c.sp,c.cost)}</td>
       <td class="num">${days(c.days)}</td>
       <td class="num">${c.c.credits?num(c.c.credits*c.qty):"—"}${c.c.credits?`<div class="sub">${esc(creditName(c.c.creditType))}</div>`:""}</td>
       <td class="num"><button class="btn ghost sm" data-action="rm-line" data-id="${esc(l.id)}" aria-label="Remove line">✕</button></td>
@@ -546,19 +594,21 @@ function viewQuote(){
 }
 
 function viewSummary(p,pc){
-  const s=S();const roles=s.roles||[];
+  const s=S();const roles=s.roles||[];const hpd=+s.hoursPerDay||8;
+  const prod=roles.filter(r=>!isLead(r)),lead=roles.filter(isLead);
   const maxRole=Math.max(0.0001,...roles.map(r=>pc.roleDays[r.id]||0));
   // delivery estimate
   let bottleneck=null,minDays=0;
   roles.forEach(r=>{const d=pc.roleDays[r.id]||0;if(d<=0)return;const cap=(+r.headcount||0)*((+r.utilisation||0)/100);const need=cap>0?d/cap:Infinity;if(need>minDays){minDays=need;bottleneck=r;}});
-  const splitSum=pc.lines.reduce((a,{c})=>a+(c?c.days:0),0);
-  const assigned=Object.values(pc.roleDays).reduce((a,b)=>a+b,0);
-  const unassigned=splitSum-assigned;
-  const roleRows=roles.map((r,i)=>{
-    const d=pc.roleDays[r.id]||0;
-    return `<div class="role-line"><span class="dot" style="background:${roleColor(i)}"></span><span>${esc(r.name)}</span><span class="num">${days(d)} d <span class="sub">· ${hrs(d*(+s.hoursPerDay||8))} h</span></span>
+  const assigned=Object.values(pc.prodRoleDays||{}).reduce((a,b)=>a+b,0);
+  const unassigned=pc.days-assigned;
+  const line=r=>{
+    const i=roles.indexOf(r);const d=pc.roleDays[r.id]||0;const own=pc.prodRoleDays[r.id]||0;
+    const note=isLead(r)&&d>0?`<div class="sub" style="grid-column:1/-1;margin-top:-2px">${nf2.format(+r.perProjectHours||0)} h per project + ${nf2.format(+r.pctOfProduction||0)}% of production${own>0?` + ${days(own)} d own jobs`:""}</div>`:"";
+    return `<div class="role-line"><span class="dot" style="background:${roleColor(i)}"></span><span>${esc(r.name)}</span><span class="num">${days(d)} d <span class="sub">· ${hrs(d*hpd)} h</span></span>${note}
       <div class="bar"><span style="width:${(d/maxRole)*100}%;background:${roleColor(i)}"></span></div></div>`;
-  }).join("");
+  };
+  const leadDays=lead.reduce((a,r)=>a+(pc.overRoleDays[r.id]||0),0);
   let est="";
   if(minDays===Infinity)est=`<div class="callout bad">No <b>${esc(bottleneck.name)}</b> on the team. Add headcount in Reference rates.</div>`;
   else if(minDays>0)est=`<div class="callout">Fastest delivery with the current team: <b>${Math.ceil(minDays)} working days</b>. ${esc(bottleneck.name)} is the bottleneck.</div>`;
@@ -566,7 +616,8 @@ function viewSummary(p,pc){
   let win="";
   const pd=projDates(p);
   if(pd&&roles.length){
-    const rowsW=roles.map((r,i)=>{
+    const rowsW=[...prod,...lead].map(r=>{
+      const i=roles.indexOf(r);
       const cap=(+r.headcount||0)*pd.n*((+r.utilisation||0)/100);
       let other=0;
       state.projects.forEach(q=>{if(q.id===p.id||!counted(q))return;const qd=projDates(q);if(!qd)return;const ov=overlapWd(pd.a,pd.b,qd.a,qd.b);if(!ov)return;const qc=projectCalc(q,s);other+=(qc.roleDays[r.id]||0)*ov/qd.n;});
@@ -574,9 +625,9 @@ function viewSummary(p,pc){
       const cls=load>1?"bad":load>.85?"warn":"good";
       return `<tr><td><span class="dot" style="background:${roleColor(i)}"></span> ${esc(r.name)}</td><td class="num">${days(mine)}</td><td class="num">${days(other)}</td><td class="num">${days(cap)}</td><td class="num"><span class="pct ${cls}">${isFinite(load)?pct(load):"no team"}</span></td></tr>`;
     }).join("");
-    win=`<div class="panel panel-pad"><div class="eyebrow" style="margin-bottom:6px">Team load · ${esc(fmtDate(p.start))} – ${esc(fmtDate(p.end))} · ${pd.n} working days</div>
-      <div class="table-wrap"><table class="compact"><thead><tr><th>Role</th><th class="num">This</th><th class="num">Others</th><th class="num">Capacity</th><th class="num">Load</th></tr></thead><tbody>${rowsW}</tbody></table></div>
-      <div class="sub" style="margin-top:6px">"Others" = overlapping ${state.includePitches?"confirmed, in-production and pitch":"confirmed and in-production"} quotes, spread evenly across their dates.</div></div>`;
+    win=`<div class="panel panel-pad"><div class="eyebrow" style="margin-bottom:8px">Team load · ${esc(fmtDate(p.start))} – ${esc(fmtDate(p.end))} · ${pd.n} working days</div>
+      <div class="table-wrap"><table class="compact"><thead><tr><th>Role</th><th class="num">This</th><th class="num">Others</th><th class="num">Cap.</th><th class="num">Load</th></tr></thead><tbody>${rowsW}</tbody></table></div>
+      <div class="sub" style="margin-top:8px">"Others" = overlapping ${state.includePitches?"confirmed, in-production and pitch":"confirmed and in-production"} quotes, spread evenly across their dates.</div></div>`;
   }else if(p.lines&&p.lines.length){
     win=`<div class="callout">Add start and delivery dates to check this against the rest of your pipeline.</div>`;
   }
@@ -587,7 +638,7 @@ function viewSummary(p,pc){
         <div class="eyebrow">Quote value · excl. taxes</div>
         <div class="big">${inr(pc.sp)}</div>
         ${pc.discount?`<div class="sub">${inr(pc.gross)} less ${nf2.format(+p.discountPct)}% discount (${inr(pc.discount)})</div>`:""}
-        <dl class="kv" style="margin-top:14px">
+        <dl class="kv" style="margin-top:16px">
           <dt>Team time · ${days(pc.days)} d × ${inr(s.dayRate)}</dt><dd>${inr(pc.people)}</dd>
           ${creditRows}
           ${pc.ext?`<dt>External (artists, vendors)</dt><dd>${inr(pc.ext)}</dd>`:""}
@@ -600,10 +651,12 @@ function viewSummary(p,pc){
         <div class="metric"><div class="eyebrow">Markup</div><div class="v">${xfmt(pc.markup)}</div></div>
       </div>
     </div>
-    <div class="panel panel-pad" style="display:flex;flex-direction:column;gap:10px">
-      <div class="eyebrow">Bandwidth · ${days(pc.days)} workdays</div>
-      ${roleRows||'<div class="sub">Add roles in Reference rates.</div>'}
-      ${unassigned>0.001?`<div class="callout warn"><b>${days(unassigned)} d</b> not assigned to a role. Fix the role split on those job types.</div>`:""}
+    <div class="panel panel-pad" style="display:flex;flex-direction:column;gap:12px">
+      <div class="eyebrow">Bandwidth</div>
+      ${roles.length?"":'<div class="sub">Add roles in Reference rates.</div>'}
+      ${prod.length?`<div class="group-label">Production · ${days(pc.days)} workdays</div>${prod.map(line).join("")}`:""}
+      ${lead.length?`<div class="group-label">Leadership &amp; coordination · ${days(leadDays)} d</div>${lead.map(line).join("")}<div class="sub">Already covered by the ${inr(s.dayRate)} workday rate, so not added to internal cost.</div>`:""}
+      ${unassigned>0.001?`<div class="callout warn"><b>${days(unassigned)} d</b> not assigned to a role. Set who does the work on those job types.</div>`:""}
       ${est}
     </div>
     ${win}
@@ -618,7 +671,7 @@ function viewPipeline(){
   const calcs={};state.projects.forEach(p=>calcs[p.id]=projectCalc(p,s));
   const load=(roleId,m,filter)=>{let t=0;state.projects.forEach(p=>{if(!filter(p))return;const pd=projDates(p);if(!pd)return;const ov=overlapWd(pd.a,pd.b,m.a,m.b);if(ov)t+=(calcs[p.id].roleDays[roleId]||0)*ov/pd.n;});return t;};
   const firm=p=>p.status!=="pitch";const pitch=p=>p.status==="pitch";
-  const roleRows=roles.map((r,i)=>{
+  const roleRow=r=>{const i=roles.indexOf(r);
     const cells=months.map(m=>{
       const cap=(+r.headcount||0)*m.n*((+r.utilisation||0)/100);
       const f=load(r.id,m,firm),pi=state.includePitches?load(r.id,m,pitch):0;
@@ -630,7 +683,10 @@ function viewPipeline(){
         <div class="pct ${tot?cls:""}">${tot?(isFinite(l)?pct(l)+" booked":"no team"):"free"}${l>1&&isFinite(l)?` · short ${days(tot-cap)} d`:""}</div></td>`;
     }).join("");
     return `<tr><td><div style="display:flex;gap:8px;align-items:center"><span class="dot" style="background:${roleColor(i)}"></span><b>${esc(r.name)}</b></div><div class="sub">${esc(r.headcount)} × ${esc(r.utilisation)}% utilisation</div></td>${cells}</tr>`;
-  }).join("");
+  };
+  const prodRoles=roles.filter(r=>!isLead(r)),leadRoles=roles.filter(isLead);
+  const roleRows=prodRoles.map(roleRow).join(""),leadRows=leadRoles.map(roleRow).join("");
+  const monthHead=`<thead><tr><th>Role</th>${months.map(m=>`<th>${m.label}<div class="sub" style="font-weight:500">${m.n} working days</div></th>`).join("")}</tr></thead>`;
   const creditRows=(s.credits||[]).map(c=>{
     const cells=months.map(m=>{let t=0;state.projects.forEach(p=>{if(!counted(p))return;const pd=projDates(p);if(!pd)return;const ov=overlapWd(pd.a,pd.b,m.a,m.b);if(ov)t+=(calcs[p.id].credits[c.id]||0)*ov/pd.n;});
       return `<td class="cell"><div class="top-n"><b>${num(t)}</b><span class="muted"> cr</span></div><div class="sub">${inr(t*(+c.rate||0))}</div></td>`;}).join("");
@@ -649,7 +705,7 @@ function viewPipeline(){
       <td>${pd?`${esc(fmtDate(p.start))} – ${esc(fmtDate(p.end))}<div class="sub">${pd.n} working days</div>`:'<span class="chip warn">No dates · not counted</span>'}</td>
       <td style="min-width:170px"><div class="gantt">${g}</div></td>
       <td class="num">${inr(c.sp)}</td><td class="num">${inr(c.cost)}</td><td class="num">${markupChip(c.sp,c.cost)}</td>
-      ${roles.map(r=>`<td class="num">${days(c.roleDays[r.id]||0)}</td>`).join("")}
+      ${[...prodRoles,...leadRoles].map(r=>`<td class="num">${days(c.roleDays[r.id]||0)}</td>`).join("")}
     </tr>`;
   }).join("");
   const tot=plist.filter(p=>p.status!=="delivered").reduce((a,p)=>{const c=calcs[p.id];a.sp+=c.sp;a.cost+=c.cost;if(p.status==="pitch")a.pitch+=c.sp;else a.firm+=c.sp;return a;},{sp:0,cost:0,pitch:0,firm:0});
@@ -659,14 +715,15 @@ function viewPipeline(){
       <label class="toggle"><input type="checkbox" id="pipe-pitch" data-k="includePitches" ${state.includePitches?"checked":""}> Include pitches <span class="muted">(hatched)</span></label>
       <div class="month-nav"><button class="btn sm" data-action="month" data-d="-1" aria-label="Earlier months">←</button><button class="btn sm" data-action="month" data-d="0">Today</button><button class="btn sm" data-action="month" data-d="1" aria-label="Later months">→</button></div>
     </div></div>
-  <div class="panel" style="margin-bottom:18px"><div class="table-wrap"><table class="cap-grid">
-    <thead><tr><th>Role</th>${months.map(m=>`<th>${m.label}<div class="sub" style="text-transform:none;letter-spacing:0">${m.n} working days</div></th>`).join("")}</tr></thead>
-    <tbody>${roleRows||`<tr><td colspan="7" class="muted">Add roles in Reference rates.</td></tr>`}${creditRows?`<tr class="cat-head"><td colspan="7"><span class="eyebrow">Credits to buy</span></td></tr>`+creditRows:""}</tbody>
+  <div class="panel" style="margin-bottom:18px"><div class="grid-title"><h3>Production</h3><p>Days from job effort in the rate card.</p></div><div class="table-wrap"><table class="cap-grid">
+    ${monthHead}
+    <tbody>${roleRows||`<tr><td colspan="7" class="muted">Add production roles in Reference rates.</td></tr>`}${creditRows?`<tr class="cat-head"><td colspan="7"><span class="eyebrow">Credits to buy</span></td></tr>`+creditRows:""}</tbody>
   </table></div></div>
+  ${leadRows?`<div class="panel" style="margin-bottom:22px"><div class="grid-title"><h3>Leadership &amp; coordination</h3><p>Hours per project plus a share of each quote's production days, set in Reference rates → Team.</p></div><div class="table-wrap"><table class="cap-grid">${monthHead}<tbody>${leadRows}</tbody></table></div></div>`:""}
   <div class="section-head" style="margin-bottom:10px"><h3>Quotes</h3>
     <div class="legend"><span>Open pipeline <b>${inr(tot.sp)}</b></span><span>Confirmed <b>${inr(tot.firm)}</b></span><span>Pitching <b>${inr(tot.pitch)}</b></span><button class="btn sm primary" data-action="new-project">+ New quote</button></div></div>
   <div class="panel"><div class="table-wrap"><table>
-    <thead><tr><th>Quote</th><th>Status</th><th>Dates</th><th>${esc(months[0].label)} – ${esc(months[5].label)}</th><th class="num">Price</th><th class="num">Cost</th><th class="num">Markup</th>${roles.map((r,i)=>`<th class="num"><span class="dot" style="background:${roleColor(i)}"></span> ${esc(r.name.split(" ").map(w=>w[0]).join(""))} d</th>`).join("")}</tr></thead>
+    <thead><tr><th>Quote</th><th>Status</th><th>Dates</th><th>${esc(months[0].label)} – ${esc(months[5].label)}</th><th class="num">Price</th><th class="num">Cost</th><th class="num">Markup</th>${[...prodRoles,...leadRoles].map(r=>`<th class="num" title="${esc(r.name)}"><span class="dot" style="background:${roleColor(roles.indexOf(r))}"></span> ${esc(abbr(r.name))} d</th>`).join("")}</tr></thead>
     <tbody>${prow||`<tr><td colspan="${7+roles.length}"><div class="empty"><strong>No quotes yet</strong>Create one in the Quote builder.</div></td></tr>`}</tbody>
   </table></div></div>`;
 }
@@ -699,14 +756,14 @@ function viewRates(){
       const creditsCell=isAdapt(j)?`${Math.round((+j.adaptShare||0)*100)}% of base<div class="sub">${base?num(c.credits)+" cr on example":""}</div>`:(jobCredits(j)?`${nf2.format(+j.credits||0)} <span class="muted">+ ${nf2.format(+j.buffer||0)}</span><div class="sub">${esc(creditName(j.creditType))}</div>`:"—");
       const effort=(+j.effortDays||0)?`${days(j.effortDays)} d<div class="sub">${hrs((+j.effortDays||0)*(+s.hoursPerDay||8))} h</div>`:(j.externalCost?'<span class="muted">external</span>':"—");
       return `<tr>
-        <td><div class="asset">${esc(j.name)}</div>${j.variant?`<div class="sub" style="color:var(--ink-2)">${esc(j.variant)}</div>`:""}${j.description?`<div class="desc">${esc(j.description)}</div>`:""}</td>
+        <td><div class="asset">${esc(j.name)}</div>${j.variant?`<div class="variant">${esc(j.variant)}</div>`:""}${j.description?`<div class="desc">${esc(j.description)}</div>`:""}</td>
         <td class="num">${priceCell(j,base)}</td>
         <td class="num">${inr(c.total)}${c.ext?`<div class="sub">incl. ${inr(c.ext)} external</div>`:""}</td>
         <td class="num">${(j.pricing||{}).type==="tbd"?'<span class="chip">'+xfmt(+s.targetMarkup)+'</span>':(j.pricing||{}).type==="free"?'<span class="chip">free</span>':markupChip(sp,c.total)}</td>
         <td class="num">${marginTxt(sp,c.total)}</td>
         <td class="num">${effort}</td>
         <td class="num">${creditsCell}</td>
-        <td>${splitBar(j)}</td>
+        <td>${doerTag(j)}</td>
         <td class="num"><button class="btn sm" data-action="edit-job" data-id="${esc(j.id)}">Edit</button></td>
       </tr>`;}).join("");
   }).join("");
@@ -719,7 +776,7 @@ function viewRates(){
     <div class="base-sel" style="margin:0"><label for="ex-base">Adapt examples use</label><select class="inp xs" id="ex-base" data-k="exampleBaseId">${jobOptions(exBase&&exBase.id,nonAdapt)}</select></div>
   </div>
   <div class="panel"><div class="table-wrap"><table>
-    <thead><tr><th>Job type</th><th class="num">Selling price</th><th class="num">Internal cost</th><th class="num">Markup</th><th class="num">Margin</th><th class="num">Effort</th><th class="num">Credits + buffer</th><th>Role split</th><th></th></tr></thead>
+    <thead><tr><th>Job type</th><th class="num">Selling price</th><th class="num">Internal cost</th><th class="num">Markup</th><th class="num">Margin</th><th class="num">Effort</th><th class="num">Credits + buffer</th><th>Done by</th><th></th></tr></thead>
     <tbody>${body||`<tr><td colspan="9"><div class="empty"><strong>No job types yet</strong>Add your first job type to start quoting.</div></td></tr>`}</tbody>
   </table></div></div>
   <p class="sub" style="margin-top:12px;max-width:90ch">Rates exclude applicable taxes. Talent licensing, third-party music and stock assets are billed at cost. Two revision rounds are included per deliverable.</p>`;
@@ -733,7 +790,6 @@ function viewJobDrawer(){
   const exBase=jobById(state.exampleBaseId)&&!isAdapt(jobById(state.exampleBaseId))?jobById(state.exampleBaseId):jobById(defaultBaseId(null));
   const base=ad?exBase:null;
   const c=jobCost(j,base);const sp=jobSP(j,base).sp;
-  const splitTotal=(s.roles||[]).reduce((a,r)=>a+(+(j.split||{})[r.id]||0),0);
   const priceFields={
     fixed:`<div class="field"><label for="jd-sp">Selling price (₹)</label><input class="inp numi" inputmode="decimal" id="jd-sp" data-k="job.pricing.sp" data-num value="${esc(p.sp??"")}"></div>`,
     range:`<div class="field"><label for="jd-min">From (₹)</label><input class="inp numi" inputmode="decimal" id="jd-min" data-k="job.pricing.min" data-num value="${esc(p.min??"")}"></div><div class="field"><label for="jd-max">To (₹)</label><input class="inp numi" inputmode="decimal" id="jd-max" data-k="job.pricing.max" data-num value="${esc(p.max??"")}"></div>`,
@@ -771,9 +827,9 @@ function viewJobDrawer(){
           <div class="field"><label for="jd-buf">Buffer credits</label><input class="inp numi" inputmode="decimal" id="jd-buf" data-k="job.buffer" data-num value="${esc(j.buffer??0)}"><span class="sub">${num(jobCredits(j))} cr × ${inr2(creditRate(j.creditType,s))} = ${inr(c.creditCost)}</span></div>`}
         </div>
       </fieldset>
-      <fieldset><legend>Who does the work · % of effort</legend>
-        <div class="fgrid">${(s.roles||[]).map((r,i)=>`<div class="field"><label for="jd-sp-${esc(r.id)}"><span class="dot" style="background:${roleColor(i)}"></span> ${esc(r.name)}</label><input class="inp numi" inputmode="decimal" id="jd-sp-${esc(r.id)}" data-k="job.split.${esc(r.id)}" data-num value="${esc((j.split||{})[r.id]??0)}"><span class="sub">${days((+j.effortDays||0)*((+(j.split||{})[r.id]||0)/100))} d</span></div>`).join("")}</div>
-        <div class="${Math.abs(splitTotal-100)>0.01&&(+j.effortDays||0)>0?"callout warn":"sub"}" style="margin-top:10px">Split totals ${nf2.format(splitTotal)}%${Math.abs(splitTotal-100)>0.01&&(+j.effortDays||0)>0?" — it should add up to 100%.":""}</div>
+      <fieldset><legend>Who does the work</legend>
+        <div class="fgrid"><div class="field"><label for="jd-doer">Production role</label><select class="inp" id="jd-doer" data-k="job.doer">${doerOf(j).mixed||!doerOf(j).id?'<option value="" selected>Choose…</option>':""}${(s.roles||[]).map(r=>`<option value="${esc(r.id)}" ${!doerOf(j).mixed&&doerOf(j).id===r.id?"selected":""}>${esc(r.name)}</option>`).join("")}</select><span class="sub">Gets 100% of the ${days(j.effortDays)} d effort.</span></div></div>
+        <div class="sub" style="margin-top:10px">Creative Director and PM time is added per project in Reference rates → Team.</div>
       </fieldset>
       ${state.jobErr?`<div class="callout bad">${esc(state.jobErr)}</div>`:""}
     </div>
@@ -791,7 +847,8 @@ function flat(s){
   (s.credits||[]).forEach(c=>{m["cr:"+c.id]=[`${c.name} credit`,inr2(c.rate)];});
   m.dayRate=["Workday cost",inr(s.dayRate)];m.hours=["Hours per workday",String(s.hoursPerDay)];
   m.floor=["Markup floor",xfmt(+s.markupFloor)];m.target=["Target markup",xfmt(+s.targetMarkup)];
-  (s.roles||[]).forEach(r=>{m["rn:"+r.id]=["Role name",r.name];m["rh:"+r.id]=[`${r.name} headcount`,String(r.headcount)];m["ru:"+r.id]=[`${r.name} utilisation`,r.utilisation+"%"];});
+  (s.roles||[]).forEach(r=>{m["rn:"+r.id]=["Role name",r.name];m["rh:"+r.id]=[`${r.name} headcount`,String(r.headcount)];m["ru:"+r.id]=[`${r.name} utilisation`,r.utilisation+"%"];
+    m["rg:"+r.id]=[`${r.name} type`,isLead(r)?"Leadership & coordination":"Production"];m["rp:"+r.id]=[`${r.name} hours per project`,String(+r.perProjectHours||0)];m["rq:"+r.id]=[`${r.name} % of production`,(+r.pctOfProduction||0)+"%"];});
   return m;
 }
 function viewReference(){
@@ -803,12 +860,15 @@ function viewReference(){
       <div class="field"><label for="st-cr-${i}">₹ per credit</label><input class="inp numi" inputmode="decimal" id="st-cr-${i}" data-k="set.credits.${i}.rate" data-num value="${esc(c.rate)}"></div>
       <span class="sub" style="padding-bottom:9px">${used(c.id)} job${used(c.id)===1?"":"s"}</span>
       <button class="btn ghost sm" data-action="rm-credit" data-i="${i}" ${used(c.id)?"disabled title=\"In use by job types\"":""} aria-label="Remove provider" style="margin-bottom:5px">✕</button></div>`).join("");
-  const roles=(d.roles||[]).map((r,i)=>`<div class="r-row" style="grid-template-columns:auto 1.6fr .8fr .9fr auto">
-      <span class="dot" style="background:${roleColor(i)};margin-bottom:12px"></span>
+  const roles=(d.roles||[]).map((r,i)=>`<div class="r-row team-row">
+      <span class="dot" style="background:${roleColor(i)};margin-bottom:14px"></span>
       <div class="field"><label for="st-rn-${i}">Role</label><input class="inp" id="st-rn-${i}" data-k="set.roles.${i}.name" value="${esc(r.name)}"></div>
+      <div class="field"><label for="st-rg-${i}">Type</label><select class="inp" id="st-rg-${i}" data-k="set.roles.${i}.group"><option value="production" ${!isLead(r)?"selected":""}>Production</option><option value="leadership" ${isLead(r)?"selected":""}>Leadership &amp; coordination</option></select></div>
       <div class="field"><label for="st-rh-${i}">Headcount</label><input class="inp numi" inputmode="decimal" id="st-rh-${i}" data-k="set.roles.${i}.headcount" data-num value="${esc(r.headcount)}"></div>
       <div class="field"><label for="st-ru-${i}">Utilisation %</label><input class="inp numi" inputmode="decimal" id="st-ru-${i}" data-k="set.roles.${i}.utilisation" data-num value="${esc(r.utilisation)}"></div>
-      <button class="btn ghost sm" data-action="rm-role" data-i="${i}" aria-label="Remove role" style="margin-bottom:5px">✕</button></div>`).join("");
+      <div class="field"><label for="st-rp-${i}">Hours / project</label><input class="inp numi" inputmode="decimal" id="st-rp-${i}" data-k="set.roles.${i}.perProjectHours" data-num value="${esc(r.perProjectHours||0)}"></div>
+      <div class="field"><label for="st-rq-${i}">% of production</label><input class="inp numi" inputmode="decimal" id="st-rq-${i}" data-k="set.roles.${i}.pctOfProduction" data-num value="${esc(r.pctOfProduction||0)}"></div>
+      <button class="btn ghost sm" data-action="rm-role" data-i="${i}" aria-label="Remove role" style="margin-bottom:6px">✕</button></div>`).join("");
   // impact
   let impact="";
   if(state.sDirty){
@@ -835,6 +895,7 @@ function viewReference(){
         <div class="field"><label for="st-target">Target (×)</label><input class="inp numi" inputmode="decimal" id="st-target" data-k="set.targetMarkup" data-num value="${esc(d.targetMarkup)}"></div>
       </div></section>
     <section class="panel panel-pad ref-card" style="grid-column:1/-1"><h3>Team</h3><p class="hint">Headcount × working days × utilisation = capacity. Utilisation is the share of a day spent on billable production (leave room for reviews, pitches and admin).</p>
+      <p class="hint">Job effort in the rate card is production time only, booked to the role that does the job. Each quote also books every role's <b>hours per project</b> (strategy, kickoff, setup) plus <b>% of production</b> (reviews, coordination) on top of the quote's production days. That extra time is already priced into the workday rate, so it isn't added to internal cost.</p>
       <div class="rows">${roles}</div><button class="btn sm" style="margin-top:10px" data-action="add-role">+ Add role</button></section>
   </div>
   ${state.sDirty?`<div class="savebar"><span>You have unsaved changes to reference rates.</span><div style="display:flex;gap:8px"><button class="btn" data-action="discard-settings">Discard</button><button class="btn primary" data-action="save-settings">Save changes</button></div></div>`:""}
@@ -846,7 +907,7 @@ function viewReference(){
     <input type="file" id="restore-file" accept=".json,.js,application/json" hidden>
   </section>
   <section class="panel panel-pad hist" style="margin-top:16px"><h3>Change history</h3>
-    ${hist.length?`<ul>${hist.map(h=>`<li><span class="sub mono">${esc(new Date(h.at).toLocaleString("en-IN",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))}</span><div>${h.changes.map(c=>`${esc(c.label)}: <span class="muted">${esc(c.from)}</span> → <b>${esc(c.to)}</b>`).join(" · ")}</div></li>`).join("")}</ul>`:'<p class="sub" style="margin:6px 0 0">No changes yet.</p>'}
+    ${hist.length?`<ul>${hist.map(h=>`<li><span class="sub">${esc(new Date(h.at).toLocaleString("en-IN",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))}</span><div>${h.changes.map(c=>`${esc(c.label)}: <span class="muted">${esc(c.from)}</span> → <b>${esc(c.to)}</b>`).join(" · ")}</div></li>`).join("")}</ul>`:'<p class="sub" style="margin:6px 0 0">No changes yet.</p>'}
   </section>`;
 }
 
@@ -873,6 +934,7 @@ function onField(e){
     const path=k.slice(4);
     if(path==="pricing.pctView")setPath(state.jobDraft,"pricing.pct",(+v||0)/100);
     else if(path==="adaptShareView")state.jobDraft.adaptShare=(+v||0)/100;
+    else if(path==="doer")state.jobDraft.split=v?{[v]:100}:{};
     else setPath(state.jobDraft,path,v);
     if(path==="pricing.type"&&v==="adapt"){if(state.jobDraft.pricing.pct==null)state.jobDraft.pricing.pct=.5;if(state.jobDraft.adaptShare==null)state.jobDraft.adaptShare=.2;}
     state.jobErr="";render();return;
@@ -885,7 +947,7 @@ document.addEventListener("change",e=>{
   if(e.target.id!=="restore-file")return;const f=e.target.files&&e.target.files[0];if(!f)return;
   f.text().then(t=>{let d;try{d=JSON.parse(t.replace(/^[^{]*?(\{)/,"$1").replace(/;\s*$/,""));}catch(err){toast("That file isn't a planner backup");return;}
     if(!d||!d.settings||!d.jobs){toast("That file isn't a planner backup");return;}
-    fromShape(d);state.sDraft=null;state.sDirty=false;const p=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];state.curId=p?p.id:null;state.cur=p?clone(p):null;persist();render();toast("Backup restored");});
+    fromShape(d);migrateState();state.sDraft=null;state.sDirty=false;const p=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];state.curId=p?p.id:null;state.cur=p?clone(p):null;persist();render();toast("Backup restored");});
   e.target.value="";
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&state.jobDraft){state.jobDraft=null;state.armed=null;render();}});
@@ -899,7 +961,7 @@ const actions={
   "add-line"(){const id=state.addJobId&&jobById(state.addJobId)?state.addJobId:(state.jobs[0]&&state.jobs[0].id);const j=jobById(id);if(!j)return;const qty=+state.addQty>0?+state.addQty:1;updateProject(p=>{p.lines=p.lines||[];p.lines.push({id:uid("l"),jobId:id,qty,spOverride:"",baseJobId:isAdapt(j)?defaultBaseId(p):""});});},
   "rm-line"(el){updateProject(p=>{p.lines=(p.lines||[]).filter(l=>l.id!==el.dataset.id);});},
   month(el){const d=+el.dataset.d;state.monthOffset=d===0?0:state.monthOffset+d;render();},
-  "new-job"(){const s=S();const split={};(s.roles||[]).forEach(r=>split[r.id]=0);state.jobDraft={id:uid("j"),category:"",name:"",variant:"",description:"",pricing:{type:"fixed",sp:0},effortDays:1,creditType:(s.credits[0]||{}).id||"",credits:0,buffer:0,externalCost:0,split,order:(Math.max(0,...state.jobs.map(j=>+j.order||0))+10)};state.jobDraftNew=true;state.jobErr="";state.armed=null;render();setTimeout(()=>$("#jd-cat")&&$("#jd-cat").focus(),20);},
+  "new-job"(){const s=S();const pr=(s.roles||[]).find(r=>!isLead(r));const split=pr?{[pr.id]:100}:{};state.jobDraft={id:uid("j"),category:"",name:"",variant:"",description:"",pricing:{type:"fixed",sp:0},effortDays:1,creditType:(s.credits[0]||{}).id||"",credits:0,buffer:0,externalCost:0,split,order:(Math.max(0,...state.jobs.map(j=>+j.order||0))+10)};state.jobDraftNew=true;state.jobErr="";state.armed=null;render();setTimeout(()=>$("#jd-cat")&&$("#jd-cat").focus(),20);},
   "edit-job"(el){const j=jobById(el.dataset.id);if(!j)return;state.jobDraft=clone(j);state.jobDraftNew=false;state.jobErr="";state.armed=null;render();},
   "dup-job"(){const j=clone(state.jobDraft);j.id=uid("j");j.name=(j.name||"")+" (copy)";j.order=(+j.order||0)+1;state.jobDraft=j;state.jobDraftNew=true;state.armed=null;render();},
   "close-drawer"(){state.jobDraft=null;state.armed=null;render();},
@@ -908,7 +970,7 @@ const actions={
   async "del-job"(){if(state.armed!=="del-job"){state.armed="del-job";render();return;}const id=state.jobDraft.id;state.jobs=state.jobs.filter(j=>j.id!==id);state.jobDraft=null;state.armed=null;render();await dbDel("jobs/"+id);toast("Job type deleted");},
   "add-credit"(){state.sDraft.credits.push({id:uid("c"),name:"New provider",rate:0});state.sDirty=true;render();},
   "rm-credit"(el){state.sDraft.credits.splice(+el.dataset.i,1);state.sDirty=true;render();},
-  "add-role"(){state.sDraft.roles.push({id:uid("r"),name:"New role",headcount:1,utilisation:80});state.sDirty=true;render();},
+  "add-role"(){state.sDraft.roles.push({id:uid("r"),name:"New role",group:"production",headcount:1,utilisation:80,perProjectHours:0,pctOfProduction:0});state.sDirty=true;render();},
   "rm-role"(el){state.sDraft.roles.splice(+el.dataset.i,1);state.sDirty=true;render();},
   "discard-settings"(){state.sDraft=null;state.sDirty=false;render();},
   async "save-settings"(){
@@ -922,7 +984,7 @@ const actions={
   "backup"(){const d=new Date().toISOString().slice(0,10);downloadFile(`studio-planner-backup-${d}.json`,JSON.stringify(toShape(),null,2),"application/json");toast("Backup downloaded");},
   "export-seed"(){const d=toShape();d.projects={};downloadFile("seed.js","/* Juice Studio Planner — default rate card. Generated "+d.exportedAt+". Commit this to data/seed.js. */\nwindow.STUDIO_SEED = "+JSON.stringify(d,null,2)+";\n","text/javascript");toast("seed.js downloaded — replace data/seed.js in the repo");},
   "restore"(){$("#restore-file").click();},
-  "reset-defaults"(){if(!SEED){toast("No data/seed.js found next to this file");return;}if(state.armed!=="reset"){state.armed="reset";render();return;}state.armed=null;fromShape(SEED);state.sDraft=null;state.sDirty=false;const p=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];state.curId=p?p.id:null;state.cur=p?clone(p):null;persist();render();toast("Reset to the rate card in data/seed.js");},
+  "reset-defaults"(){if(!SEED){toast("No data/seed.js found next to this file");return;}if(state.armed!=="reset"){state.armed="reset";render();return;}state.armed=null;fromShape(SEED);migrateState();state.sDraft=null;state.sDirty=false;const p=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];state.curId=p?p.id:null;state.cur=p?clone(p):null;persist();render();toast("Reset to the rate card in data/seed.js");},
   async "export-quote"(){if(!state.cur)return;const p=state.cur,s=S(),pc=projectCalc(p,s);
     const rows=[["Project",p.name],["Client",p.client],["Status",STATUS_LABEL[p.status]],["Start",p.start],["Delivery",p.end],[],["Category","Job","Variant","Base film","Qty","Unit price","Line price","Internal cost","Markup","Margin %","Workdays",...(s.roles||[]).map(r=>r.name+" days"),"Credits","Credit provider"]];
     pc.lines.forEach(({l,c})=>{if(!c)return;rows.push([c.j.category,c.j.name,c.j.variant,c.base?c.base.name+" "+(c.base.variant||""):"",c.qty,Math.round(c.unitSP),Math.round(c.sp),Math.round(c.cost),c.cost>0?(c.sp/c.cost).toFixed(2):"",c.sp>0?((c.sp-c.cost)/c.sp*100).toFixed(1):"",c.days,...(s.roles||[]).map(r=>+(c.roleDays[r.id]||0).toFixed(3)),Math.round(c.c.credits*c.qty),c.c.credits?creditName(c.c.creditType):""]);});
