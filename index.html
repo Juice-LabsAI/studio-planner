@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
 <title>Juice Studio Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -545,8 +546,11 @@ async function boot(){
   if(CFG.supabaseUrl&&CFG.supabaseAnonKey){
     state.mode="cloud";
     if(!(window.supabase&&window.supabase.createClient)){state.cloudView="error";state.cloudMsg="Couldn't load the database library. Check your connection and reload the page.";render();return;}
-    cloud.sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    const open=CFG.requireLogin===false;
+    cloud.sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:!open,autoRefreshToken:!open,detectSessionInUrl:!open}});
     state.cloudView="loading";render();
+    document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.cloudView==="live")cloudLoad(true);});
+    if(open){cloud.open=true;await cloudLoad();return;}
     cloud.sb.auth.onAuthStateChange((ev,sess)=>{
       if(sess&&sess.user)cloud.user=sess.user;
       if(ev==="SIGNED_IN"&&state.cloudView==="signin"){cloud.user=sess.user;setTimeout(afterSignIn,0);}
@@ -556,7 +560,6 @@ async function boot(){
     try{session=(await cloud.sb.auth.getSession()).data.session;}catch(e){}
     if(session){cloud.user=session.user;await afterSignIn();}
     else{state.cloudView="signin";render();}
-    document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.cloudView==="live")cloudLoad(true);});
   }else{
     state.mode="local";loadStore();render();
   }
@@ -585,7 +588,7 @@ function setSync(){
   if(cloudOn()){
     if(state.cloudView!=="live"){cls=state.cloudView==="error"?"warn":"";txt={signin:"Signed out",setup:"Signed in · database empty",denied:"Not allowed",error:"Not connected"}[state.cloudView]||"Connecting…";}
     else if(cloud.err){cls="warn";txt="Not saved — "+cloud.err;}
-    else txt=(state.dirty||cloud.pending)?"Saving…":"Synced with your team";
+    else txt=(state.dirty||cloud.pending)?"Saving…":"Saved · shared with your team";
   }else{cls=storeOK?"ok":"warn";txt=!storeOK?"Not saving — download a backup":(state.dirty?"Saving…":"Saved in this browser");}
   el.className="sync "+cls;el.querySelector("span").textContent=txt;
   const a=$("#account");if(a)a.innerHTML=cloudOn()&&cloud.user?`<span>${esc(cloud.user.email)}</span><button class="btn ghost sm" data-action="sign-out">Sign out</button>`:"";
@@ -1142,7 +1145,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&state.jobDraft){sta
 
 const actions={
   "sign-out"(){flushProject();if(cloud.channel){cloud.sb.removeChannel(cloud.channel);cloud.channel=null;}cloud.sb.auth.signOut();cloud.user=null;state.cloudView="signin";state.otpSent=false;render();},
-  retry(){if(cloud.user)afterSignIn();else location.reload();},
+  retry(){if(cloud.open)cloudLoad();else if(cloud.user)afterSignIn();else location.reload();},
   async "setup-import"(){const d=localBackupData();if(!d)return;state.setupBusy=true;render();fromShape(d);migrateState();state.cloudView="live";await cloudReplaceAll();state.setupBusy=false;await cloudLoad();toast("Imported into the shared database");},
   async "setup-seed"(){if(!SEED)return;state.setupBusy=true;render();fromShape(SEED);migrateState();state.cloudView="live";await cloudReplaceAll();state.setupBusy=false;await cloudLoad();toast("Shared database set up from the repo defaults");},
   tab(el){flushProject();state.tab=el.dataset.tab;state.armed=null;try{localStorage.setItem("sp-tab",state.tab);}catch(e){}render();},

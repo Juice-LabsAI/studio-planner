@@ -39,7 +39,7 @@ Margin % = (price − internal cost) ÷ price
 
 ## Where your data lives
 
-The planner saves to a shared **Supabase** database (Postgres), set in `data/config.js`. Anyone signed in with a @juicelabs.ai email sees and edits the same rate card, rates, team and quotes, and open planners update live.
+The planner saves to a shared **Supabase** database (Postgres), set in `data/config.js`. There's no sign-in: anyone who opens the page sees and edits the same rate card, rates, team and quotes, and open planners update live. **Share the address only with admins.** Anyone who has it, or who reads the key in the page source, can change the data.
 
 It uses three tables, all prefixed `sp_` so other apps can share the same Supabase project:
 
@@ -53,12 +53,10 @@ Each row stores one JSON document (`data`), plus `updated_at` and `updated_by`.
 
 ### One-time setup
 
-1. In Supabase, open **SQL Editor**, paste `supabase/schema.sql`, and click **Run**. This creates the tables and the rule that only @juicelabs.ai accounts can read or write.
-2. Go to **Authentication → URL Configuration**. Set **Site URL** to `https://juice-labsai.github.io/studio-planner/` and add the same URL under **Redirect URLs**.
-3. Optional: under **Authentication → Emails → Magic Link**, add `{{ .Token }}` to the template. People can then type the 6-digit code instead of clicking the link, which helps when email opens on a different device.
-4. Open the planner **in the browser that has your existing data** and sign in. The database is empty the first time, so choose **Import from this browser**.
+1. In Supabase, open **SQL Editor** and run `supabase/schema.sql`, which creates the tables. Then run `supabase/open-access.sql`, which allows access without signing in.
+2. Open the planner **in the browser that has your existing data**. The database is empty the first time, so choose **Import from this browser**.
 
-Sign-in uses an emailed link, so there are no passwords. Supabase's built-in email service only sends a few emails per hour. That's fine for a small team because sessions last, but add your own SMTP server under **Authentication → Emails** if it becomes a problem.
+To lock it down later, set `requireLogin: true` in `data/config.js` and re-run `schema.sql`. Only @juicelabs.ai emails will then get in, by emailed sign-in link. You'll also need to set the Site URL under Authentication → URL Configuration.
 
 ### Backups and defaults
 
