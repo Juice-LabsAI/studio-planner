@@ -253,9 +253,17 @@ tbody tr.cat-head:hover td{background:var(--surface-2)}
 th.now{color:var(--accent)}
 .nowtag{display:inline-block;font-size:11px;font-weight:700;padding:1px 6px;border-radius:999px;background:var(--accent-soft);color:var(--accent);vertical-align:1px}
 .cap-grid td:nth-child(1){min-width:180px}
-.gantt{position:relative;height:12px;background:var(--surface-2);border-radius:3px;min-width:170px}
-.gantt span{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--accent)}
-.gantt span.pitch{background:transparent;border:1.5px dashed var(--ink-3)}
+.gantt{position:relative;height:14px;background:var(--surface-2);border-radius:5px;min-width:210px;overflow:hidden}
+.gantt span.bar{position:absolute;top:0;bottom:0;border-radius:5px;min-width:5px;background:var(--accent)}
+.gantt span.bar.pitch{background:transparent;border:1.5px dashed currentColor;opacity:.85}
+.gantt i.today{position:absolute;top:0;bottom:0;width:2px;background:var(--ink-3);opacity:.55}
+.datecell{white-space:nowrap}
+.icon-btn{appearance:none;border:1px solid var(--line-2);background:var(--surface);border-radius:7px;width:32px;height:30px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-2);padding:0}
+.icon-btn:hover{border-color:var(--ink-3);color:var(--ink)}
+.icon-btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+.icon-btn.armed{background:var(--bad);border-color:var(--bad);color:#fff}
+.icon-btn svg{width:15px;height:15px;display:block}
+.row-acts{display:inline-flex;gap:6px}
 .grid-title{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;padding:16px 20px 4px}
 .grid-title p{margin:0;font-size:var(--fs-sm);color:var(--ink-3)}
 
@@ -474,6 +482,13 @@ const D=s=>s?new Date(s+"T12:00:00"):null;
 function wd(a,b){if(!a||!b||a>b)return 0;let n=0;const x=new Date(a);while(x<=b){const w=x.getDay();if(w!==0&&w!==6)n++;x.setDate(x.getDate()+1);}return n;}
 function overlapWd(a1,b1,a2,b2){const a=a1>a2?a1:a2,b=b1<b2?b1:b2;return wd(a,b);}
 const fmtDate=s=>{const d=D(s);return d?d.toLocaleDateString("en-IN",{day:"numeric",month:"short"}):"";};
+function fmtRange(a,b){
+  const x=D(a),y=D(b);if(!x||!y)return "";
+  const mon=d=>d.toLocaleDateString("en-IN",{month:"short"});
+  return x.getMonth()===y.getMonth()&&x.getFullYear()===y.getFullYear()
+    ?`${x.getDate()}–${y.getDate()} ${mon(y)}`
+    :`${x.getDate()} ${mon(x)} – ${y.getDate()} ${mon(y)}`;
+}
 const counted=p=>p.status!=="pitch"||state.includePitches;
 function projDates(p){const a=D(p.start),b=D(p.end);return a&&b&&a<=b?{a,b,n:wd(a,b)}:null;}
 
@@ -1019,6 +1034,15 @@ function allocIn(map,a,b){
   return t;
 }
 const projById=id=>state.projects.find(p=>p.id===id);
+const ICON={
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>'
+};
+function rowActions(p){
+  const armed=state.armed==="del:"+p.id;
+  return `<div class="row-acts"><button class="icon-btn" data-action="open-project" data-id="${esc(p.id)}" title="Open in quote builder" aria-label="Edit ${esc(p.name||"quote")}">${ICON.edit}</button>
+    <button class="icon-btn danger ${armed?"armed":""}" data-action="del-row" data-id="${esc(p.id)}" title="${armed?"Click again to delete":"Delete"}" aria-label="Delete ${esc(p.name||"quote")}">${ICON.trash}</button></div>`;
+}
 
 /* ----- schedule view ----- */
 function viewSchedule(){
@@ -1046,7 +1070,7 @@ function viewSchedule(){
       }).join("");
       const left=(over[key]||{})[p.id];
       return `<tr><td><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${priPill(p)}<button class="btn ghost sm" style="padding:0;font-weight:600;color:var(--ink)" data-action="open-project" data-id="${esc(p.id)}">${esc(p.name||"Untitled")}</button></div>
-        <div class="sub">${esc(p.client||"")}${p.start?` · ${esc(fmtDate(p.start))} – ${esc(fmtDate(p.end))}`:""}</div>
+        <div class="sub">${esc(p.client||"")}${p.start?` · ${esc(fmtRange(p.start,p.end))}`:""}</div>
         ${left?`<div class="sub" style="color:var(--bad);font-weight:600">${days(left)} d won't fit by ${esc(fmtDate(p.end))}</div>`:""}</td>${cells}</tr>`;
     }).join("");
     const totals=periods.map(m=>{
@@ -1097,7 +1121,7 @@ function viewProjects(){
       <td class="tr-dt"><input class="inp xs" type="date" id="tr-b-${esc(p.id)}" data-k="tp.end" data-id="${esc(p.id)}" value="${esc(p.end||"")}" aria-label="Delivery">${pd?`<div class="sub">${pd.n} working days</div>`:'<div class="sub" style="color:var(--warn)">not scheduled</div>'}</td>
       <td>${names.length?esc(names.join(", ")):'<span class="muted">—</span>'}${un?' <span class="chip warn">unassigned</span>':""}</td>
       <td class="num"><button class="btn sm" data-action="comments" data-id="${esc(p.id)}">${cmts.length?`${cmts.length} comment${cmts.length===1?"":"s"}`:"Comment"}</button></td>
-      <td class="num" style="white-space:nowrap"><button class="btn sm" data-action="open-project" data-id="${esc(p.id)}">Edit</button> <button class="btn ghost sm danger ${state.armed==="del:"+p.id?"armed":""}" data-action="del-row" data-id="${esc(p.id)}">${state.armed==="del:"+p.id?"Sure?":"Delete"}</button></td>
+      <td>${rowActions(p)}</td>
     </tr>${open?`<tr class="tr-open"><td colspan="8">
       <div class="cmt-list">${cmts.length?cmts.slice().reverse().map(c=>`<div class="cmt"><div class="who">${esc(c.by||"Someone")} · ${esc(new Date(c.at).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</div>${esc(c.text)}</div>`).join(""):'<div class="sub">No comments yet.</div>'}</div>
       <div class="cmt-form">
@@ -1165,7 +1189,13 @@ function viewPipeline(){
   const unKeys=[...new Set(Object.values(calcs).flatMap(c=>Object.keys(c.personDays).filter(k=>k.startsWith("u:")||!personById(k,s))))];
   const unRows=unKeys.filter(k=>months.some(m=>load(k,m,p=>counted(p))>0)).map(keyRow).join("");
   const prodRoles=roles.filter(r=>!isLead(r)),leadRoles=roles.filter(isLead);
-  const peopleCell=c=>{const ks=Object.keys(c.personDays);if(!ks.length)return '<span class="muted">—</span>';const named=ks.filter(k=>!k.startsWith("u:")&&personById(k,s)).map(k=>esc(personById(k,s).name));const un=ks.some(k=>k.startsWith("u:")||!personById(k,s));return (named.join(", ")||"")+(un?`${named.length?" ":""}<span class="chip warn">unassigned</span>`:"");};
+  const peopleCell=c=>{
+    const ks=Object.keys(c.personDays);if(!ks.length)return '<span class="muted">—</span>';
+    const named=ks.filter(k=>!k.startsWith("u:")&&personById(k,s)).map(k=>personById(k,s).name);
+    const un=ks.some(k=>k.startsWith("u:")||!personById(k,s));
+    const shown=named.slice(0,2).map(esc).join(", ");
+    const more=named.length>2?` <span class="muted">+${named.length-2}</span>`:"";
+    return `<span title="${esc(named.join(", "))}" style="white-space:nowrap">${shown}${more}</span>`+(un?`${named.length?"<br>":""}<span class="chip warn">unassigned</span>`:"");};
   const monthHead=`<thead><tr><th>Person</th>${months.map(m=>`<th${m.now?' class="now"':""}>${m.label}${m.now?' <span class="nowtag">now</span>':""}<div class="sub" style="font-weight:500">${m.n} working day${m.n===1?"":"s"}</div></th>`).join("")}</tr></thead>`;
   const creditRows=(s.credits||[]).map(c=>{
     const cells=months.map(m=>{let t=0;state.projects.forEach(p=>{if(!counted(p))return;const pd=projDates(p);if(!pd)return;const ov=overlapWd(pd.a,pd.b,m.a,m.b);if(ov)t+=(calcs[p.id].credits[c.id]||0)*ov/pd.n;});
@@ -1175,19 +1205,24 @@ function viewPipeline(){
 
   // projects table
   const last=months[months.length-1];const rangeA=months[0].a,rangeB=last.b;const span=(rangeB-rangeA)||1;
+  const tNow=new Date();tNow.setHours(12,0,0,0);
+  const todayPos=(tNow>=rangeA&&tNow<=rangeB)?(tNow-rangeA)/span*100:null;
   const plist=[...state.projects].sort((a,b)=>(a.start||"9").localeCompare(b.start||"9"));
   const prow=plist.map(p=>{
     const c=calcs[p.id];const pd=projDates(p);
-    let g="";if(pd){const a=Math.max(pd.a,rangeA),b=Math.min(pd.b,rangeB);if(a<=b){g=`<span class="${p.status==="pitch"?"pitch":""}" style="left:${(a-rangeA)/span*100}%;width:${Math.max(1.2,(b-a)/span*100)}%"></span>`;}}
+    let g="";
+    if(pd){const a=Math.max(pd.a,rangeA),b=Math.min(pd.b,rangeB);
+      if(a<=b)g=`<span class="bar ${p.status==="pitch"?"pitch":""}" style="left:${(a-rangeA)/span*100}%;width:${Math.max(2,(b-a)/span*100)}%;${p.status==="pitch"?"color":"background"}:${priColor(p)}" title="${esc(fmtRange(p.start,p.end))}"></span>`;}
+    if(todayPos!=null)g+=`<i class="today" style="left:${todayPos}%" title="Today"></i>`;
     return `<tr>
       <td><button class="btn ghost sm" style="padding-left:0;font-weight:600;color:var(--ink)" data-action="open-project" data-id="${esc(p.id)}">${esc(p.name||"Untitled")}</button><div class="sub">${esc(p.client||"")}</div></td>
       <td><span class="pill st-${esc(p.status)}">${esc(STATUS_LABEL[p.status]||p.status)}</span><div style="margin-top:5px">${priPill(p)}</div></td>
-      <td>${pd?`${esc(fmtDate(p.start))} – ${esc(fmtDate(p.end))}<div class="sub">${pd.n} working days</div>`:'<span class="chip warn">No dates · not counted</span>'}</td>
-      <td style="min-width:170px"><div class="gantt">${g}</div></td>
+      <td class="datecell">${pd?`${esc(fmtRange(p.start,p.end))}<div class="sub">${pd.n} working days</div>`:'<span class="chip warn">No dates</span>'}</td>
+      <td style="min-width:160px"><div class="gantt">${g}</div></td>
       <td class="num">${inr(c.sp)}</td><td class="num">${inr(c.cost)}</td><td class="num">${markupChip(c.sp,c.cost)}</td>
       <td>${peopleCell(c)}</td>
-      <td class="num" style="white-space:nowrap"><button class="btn sm" data-action="open-project" data-id="${esc(p.id)}">Edit</button> <button class="btn ghost sm danger ${state.armed==="del:"+p.id?"armed":""}" data-action="del-row" data-id="${esc(p.id)}">${state.armed==="del:"+p.id?"Sure?":"Delete"}</button></td>
-      ${[...prodRoles,...leadRoles].map(r=>`<td class="num">${days(c.roleDays[r.id]||0)}</td>`).join("")}
+      <td class="num" title="${esc([...prodRoles,...leadRoles].map(r=>`${r.name} ${days(c.roleDays[r.id]||0)} d`).join(" · "))}">${days(c.days)} d<div class="sub">production</div></td>
+      <td>${rowActions(p)}</td>
     </tr>`;
   }).join("");
   const tot=plist.filter(p=>p.status!=="delivered").reduce((a,p)=>{const c=calcs[p.id];a.sp+=c.sp;a.cost+=c.cost;if(p.status==="pitch")a.pitch+=c.sp;else a.firm+=c.sp;return a;},{sp:0,cost:0,pitch:0,firm:0});
@@ -1207,8 +1242,8 @@ function viewPipeline(){
   <div class="section-head" style="margin-bottom:10px"><h3>Quotes</h3>
     <div class="legend"><span>Open pipeline <b>${inr(tot.sp)}</b></span><span>Confirmed <b>${inr(tot.firm)}</b></span><span>Pitching <b>${inr(tot.pitch)}</b></span><button class="btn sm primary" data-action="new-project">+ New quote</button></div></div>
   <div class="panel"><div class="table-wrap"><table>
-    <thead><tr><th>Quote</th><th>Status</th><th>Dates</th><th>${esc(months[0].label)} – ${esc(last.label)}</th><th class="num">Price</th><th class="num">Cost</th><th class="num">Markup</th><th>People</th><th></th>${[...prodRoles,...leadRoles].map(r=>`<th class="num" title="${esc(r.name)}"><span class="dot" style="background:${roleColor(roles.indexOf(r))}"></span> ${esc(abbr(r.name))} d</th>`).join("")}</tr></thead>
-    <tbody>${prow||`<tr><td colspan="${9+roles.length}"><div class="empty"><strong>No quotes yet</strong>Create one in the Quote builder.</div></td></tr>`}</tbody>
+    <thead><tr><th>Quote</th><th>Status</th><th>Dates</th><th>${esc(fmtDate(isoOf(rangeA)))} → ${esc(fmtDate(isoOf(rangeB)))}</th><th class="num">Price</th><th class="num">Cost</th><th class="num">Markup</th><th>People</th><th class="num">Days</th><th></th></tr></thead>
+    <tbody>${prow||`<tr><td colspan="9"><div class="empty"><strong>No quotes yet</strong>Create one in the Quote builder.</div></td></tr>`}</tbody>
   </table></div></div>`;
 }
 
