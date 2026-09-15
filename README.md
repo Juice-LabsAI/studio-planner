@@ -13,6 +13,7 @@ data/seed.js    default rate card, reference rates, team, example quotes
 ## Run it
 
 - **On your computer:** open `index.html` in a browser.
+- **On Vercel:** the project is linked to this repo, so pushing to `main` redeploys it (studio-planner-chi.vercel.app).
 - **On GitHub Pages:** push the repo, then go to Settings → Pages → Deploy from branch → `main` / root. The app will be at `https://<user>.github.io/<repo>/`.
 
 ## How the numbers work
@@ -37,7 +38,7 @@ Margin % = (price − internal cost) ÷ price
 - **Leadership & coordination (CD, PM):** every quote also books, for whoever holds each role on it, that role's *hours per project* plus a *% of the quote's production days*. Set these in Reference rates → Roles. This time is already covered by the workday rate, so it shows up in capacity but isn't added to internal cost.
 - **People:** the team is a list of named people (Reference rates → Team), each with one or more roles and a utilisation %. A person's capacity is working days (Mon–Fri) × their utilisation, and all their roles share it.
 - **Assigning work:** on each quote, pick one person per role under "Who's on it", or click **Assign least booked**. To give a single line to someone else, use its "Done by" menu. For example, split 20 statics into two lines of 10 with different designers. Work with no one picked shows as **Unassigned** until you assign it.
-- **Capacity view:** booked days per person, month by month, with a quote's days spread evenly between its start and delivery dates. Unassigned work gets its own section, and pitches are optional.
+- **Capacity view:** booked days per person, switchable between **weekly** (8 weeks) and **monthly** (6 months), with a quote's days spread evenly between its start and delivery dates. Unassigned work gets its own section, and pitches are optional.
 
 ## Where your data lives
 

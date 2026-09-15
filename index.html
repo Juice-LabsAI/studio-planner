@@ -66,6 +66,11 @@ button,input,select,textarea{font:inherit;color:inherit}
 .sync.ok i{background:var(--good)} .sync.warn i{background:var(--warn)}
 .acct{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 #account{display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);color:var(--ink-2)}
+.seg-sm{display:inline-flex;border:1px solid var(--line-2);border-radius:999px;overflow:hidden;background:var(--surface)}
+.seg-sm button{appearance:none;border:0;background:none;padding:4px 9px;font-size:var(--fs-xs);font-weight:600;color:var(--ink-3);cursor:pointer;line-height:1.6}
+.seg-sm button+button{border-left:1px solid var(--line)}
+.seg-sm button:hover{color:var(--ink)}
+.seg-sm button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
 .auth-card{max-width:520px;margin:40px auto;padding:28px}
 .auth-card h2{margin-bottom:6px}
 .auth-card p{color:var(--ink-2);margin:0 0 16px}
@@ -200,6 +205,9 @@ tbody tr.cat-head:hover td{background:var(--surface-2)}
 .pct{font-size:var(--fs-xs);font-weight:600;color:var(--ink-3);margin-top:4px}
 .pct.good{color:var(--good)} .pct.warn{color:var(--warn)} .pct.bad{color:var(--bad)}
 .month-nav{display:flex;gap:6px;align-items:center}
+th.now{color:var(--accent)}
+.nowtag{display:inline-block;font-size:11px;font-weight:700;padding:1px 6px;border-radius:999px;background:var(--accent-soft);color:var(--accent);vertical-align:1px}
+.cap-grid td:nth-child(1){min-width:180px}
 .gantt{position:relative;height:12px;background:var(--surface-2);border-radius:3px;min-width:170px}
 .gantt span{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--accent)}
 .gantt span.pitch{background:transparent;border:1.5px dashed var(--ink-3)}
@@ -263,6 +271,7 @@ legend{font-size:var(--fs-sm);font-weight:700;color:var(--ink);padding:0 6px}
 #toast[hidden]{display:none!important}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
+<script>try{var t=localStorage.getItem("sp-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="data/config.js"></script>
 <script src="data/seed.js"></script>
@@ -277,7 +286,7 @@ legend{font-size:var(--fs-sm);font-weight:700;color:var(--ink);padding:0 6px}
         <h1>Studio Planner</h1>
         <span class="tc">JUICE AI STUDIO · COST &amp; BANDWIDTH</span>
       </div>
-      <div class="acct"><div id="sync" class="sync"><i></i><span>Loading…</span></div><div id="account"></div></div>
+      <div class="acct"><div id="sync" class="sync"><i></i><span>Loading…</span></div><div id="account"></div><div id="theme"></div></div>
     </div>
     <nav class="tabs" role="tablist" id="tabs"></nav>
   </header>
@@ -319,13 +328,15 @@ const state={
   settings:null, jobs:[], projects:[], loaded:{settings:false,jobs:false,projects:false},
   curId:null, cur:null, dirty:false, saveTimer:null, saving:false,
   addJobId:"", addQty:1,
-  includePitches:true, monthOffset:0,
+  includePitches:true, monthOffset:0, gran:"month", theme:"auto",
   exampleBaseId:"",
   jobDraft:null, jobDraftNew:false, jobErr:"",
   sDraft:null, sDirty:false,
   armed:null
 };
-try{const t=localStorage.getItem("sp-tab");if(t)state.tab=t;}catch(e){}
+try{const t=localStorage.getItem("sp-tab");if(t)state.tab=t;
+  const g=localStorage.getItem("sp-gran");if(g==="week"||g==="month")state.gran=g;
+  const th=localStorage.getItem("sp-theme");if(th)state.theme=th;}catch(e){}
 const S=()=>state.settings||EMPTY_SETTINGS;
 
 /* ---------- calculation engine ---------- */
@@ -622,6 +633,8 @@ function setSync(){
     else txt=(state.dirty||cloud.pending)?"Saving…":"Saved · shared with your team";
   }else{cls=storeOK?"ok":"warn";txt=!storeOK?"Not saving — download a backup":(state.dirty?"Saving…":"Saved in this browser");}
   el.className="sync "+cls;el.querySelector("span").textContent=txt;
+  const th=$("#theme");
+  if(th)th.innerHTML=`<div class="seg-sm" role="group" aria-label="Colour theme">${[["auto","Auto","Follow your device"],["light","☀","Light"],["dark","☾","Dark"]].map(([k,l,t])=>`<button data-action="theme" data-v="${k}" aria-pressed="${state.theme===k}" title="${t}">${l}</button>`).join("")}</div>`;
   const a=$("#account");if(a)a.innerHTML=cloudOn()&&cloud.user?`<span>${esc(cloud.user.email)}</span><button class="btn ghost sm" data-action="sign-out">Sign out</button>`:"";
 }
 function banner(){
@@ -892,10 +905,27 @@ function viewSummary(p,pc){
 }
 
 /* ----- pipeline & capacity ----- */
+function periodsFor(){
+  const off=state.monthOffset,today=new Date();today.setHours(12,0,0,0);
+  const mark=x=>{x.now=today>=x.a&&today<=x.b;return x;};
+  if(state.gran==="week"){
+    const d=new Date(today.getFullYear(),today.getMonth(),today.getDate(),12);
+    d.setDate(d.getDate()-((d.getDay()+6)%7)+off*7);
+    return [...Array(8)].map((_,i)=>{
+      const a=new Date(d);a.setDate(d.getDate()+i*7);const b=new Date(a);b.setDate(a.getDate()+6);
+      const fmt=x=>x.toLocaleDateString("en-IN",{day:"numeric",month:"short"});
+      return mark({a,b,n:wd(a,b),label:fmt(a)+" – "+fmt(b)});
+    });
+  }
+  const start=new Date(today.getFullYear(),today.getMonth()+off,1,12);
+  return [...Array(6)].map((_,i)=>{
+    const a=new Date(start.getFullYear(),start.getMonth()+i,1,12),b=new Date(a.getFullYear(),a.getMonth()+1,0,12);
+    return mark({a,b,n:wd(a,b),label:a.toLocaleDateString("en-IN",{month:"short",year:"2-digit"})});
+  });
+}
 function viewPipeline(){
   const s=S();const roles=s.roles||[];
-  const now=new Date();const start=new Date(now.getFullYear(),now.getMonth()+state.monthOffset,1,12);
-  const months=[...Array(6)].map((_,i)=>{const a=new Date(start.getFullYear(),start.getMonth()+i,1,12);const b=new Date(a.getFullYear(),a.getMonth()+1,0,12);return {a,b,n:wd(a,b),label:a.toLocaleDateString("en-IN",{month:"short",year:"2-digit"})};});
+  const months=periodsFor();
   const calcs={};state.projects.forEach(p=>calcs[p.id]=projectCalc(p,s));
   const load=(key,m,filter)=>{let t=0;state.projects.forEach(p=>{if(!filter(p))return;const pd=projDates(p);if(!pd)return;const ov=overlapWd(pd.a,pd.b,m.a,m.b);if(ov)t+=(calcs[p.id].personDays[key]||0)*ov/pd.n;});return t;};
   const firm=p=>p.status!=="pitch";const pitch=p=>p.status==="pitch";
@@ -923,7 +953,7 @@ function viewPipeline(){
   const unRows=unKeys.filter(k=>months.some(m=>load(k,m,p=>counted(p))>0)).map(keyRow).join("");
   const prodRoles=roles.filter(r=>!isLead(r)),leadRoles=roles.filter(isLead);
   const peopleCell=c=>{const ks=Object.keys(c.personDays);if(!ks.length)return '<span class="muted">—</span>';const named=ks.filter(k=>!k.startsWith("u:")&&personById(k,s)).map(k=>esc(personById(k,s).name));const un=ks.some(k=>k.startsWith("u:")||!personById(k,s));return (named.join(", ")||"")+(un?`${named.length?" ":""}<span class="chip warn">unassigned</span>`:"");};
-  const monthHead=`<thead><tr><th>Person</th>${months.map(m=>`<th>${m.label}<div class="sub" style="font-weight:500">${m.n} working days</div></th>`).join("")}</tr></thead>`;
+  const monthHead=`<thead><tr><th>Person</th>${months.map(m=>`<th${m.now?' class="now"':""}>${m.label}${m.now?' <span class="nowtag">now</span>':""}<div class="sub" style="font-weight:500">${m.n} working day${m.n===1?"":"s"}</div></th>`).join("")}</tr></thead>`;
   const creditRows=(s.credits||[]).map(c=>{
     const cells=months.map(m=>{let t=0;state.projects.forEach(p=>{if(!counted(p))return;const pd=projDates(p);if(!pd)return;const ov=overlapWd(pd.a,pd.b,m.a,m.b);if(ov)t+=(calcs[p.id].credits[c.id]||0)*ov/pd.n;});
       return `<td class="cell"><div class="top-n"><b>${num(t)}</b><span class="muted"> cr</span></div><div class="sub">${inr(t*(+c.rate||0))}</div></td>`;}).join("");
@@ -931,7 +961,7 @@ function viewPipeline(){
   }).join("");
 
   // projects table
-  const rangeA=months[0].a,rangeB=months[5].b;const span=(rangeB-rangeA)||1;
+  const last=months[months.length-1];const rangeA=months[0].a,rangeB=last.b;const span=(rangeB-rangeA)||1;
   const plist=[...state.projects].sort((a,b)=>(a.start||"9").localeCompare(b.start||"9"));
   const prow=plist.map(p=>{
     const c=calcs[p.id];const pd=projDates(p);
@@ -948,21 +978,22 @@ function viewPipeline(){
   }).join("");
   const tot=plist.filter(p=>p.status!=="delivered").reduce((a,p)=>{const c=calcs[p.id];a.sp+=c.sp;a.cost+=c.cost;if(p.status==="pitch")a.pitch+=c.sp;else a.firm+=c.sp;return a;},{sp:0,cost:0,pitch:0,firm:0});
 
-  return `<div class="section-head"><div><h2>Pipeline &amp; capacity</h2><p>Booked team days against capacity, month by month. Each quote's effort is spread evenly across its working days (Mon–Fri) between start and delivery.</p></div>
+  return `<div class="section-head"><div><h2>Pipeline &amp; capacity</h2><p>Booked days against each person's capacity, ${state.gran==="week"?"week by week":"month by month"}. Each quote's effort is spread evenly across its working days (Mon–Fri) between start and delivery.</p></div>
     <div class="toolbar">
       <label class="toggle"><input type="checkbox" id="pipe-pitch" data-k="includePitches" ${state.includePitches?"checked":""}> Include pitches <span class="muted">(hatched)</span></label>
-      <div class="month-nav"><button class="btn sm" data-action="month" data-d="-1" aria-label="Earlier months">←</button><button class="btn sm" data-action="month" data-d="0">Today</button><button class="btn sm" data-action="month" data-d="1" aria-label="Later months">→</button></div>
+      <div class="seg-sm" role="group" aria-label="Time scale"><button data-action="gran" data-v="week" aria-pressed="${state.gran==="week"}">Weekly</button><button data-action="gran" data-v="month" aria-pressed="${state.gran==="month"}">Monthly</button></div>
+      <div class="month-nav"><button class="btn sm" data-action="month" data-d="-1" aria-label="${state.gran==="week"?"Earlier weeks":"Earlier months"}">←</button><button class="btn sm" data-action="month" data-d="0">Today</button><button class="btn sm" data-action="month" data-d="1" aria-label="${state.gran==="week"?"Later weeks":"Later months"}">→</button></div>
     </div></div>
   <div class="panel" style="margin-bottom:18px"><div class="grid-title"><h3>Production team</h3><p>Each person's booked days from quotes they're assigned to.</p></div><div class="table-wrap"><table class="cap-grid">
     ${monthHead}
-    <tbody>${roleRows||`<tr><td colspan="7" class="muted">Add people in Reference rates → Team.</td></tr>`}${creditRows?`<tr class="cat-head"><td colspan="7"><span class="eyebrow">Credits to buy</span></td></tr>`+creditRows:""}</tbody>
+    <tbody>${roleRows||`<tr><td colspan="${months.length+1}" class="muted">Add people in Reference rates → Team.</td></tr>`}${creditRows?`<tr class="cat-head"><td colspan="${months.length+1}"><span class="eyebrow">Credits to buy</span></td></tr>`+creditRows:""}</tbody>
   </table></div></div>
   ${unRows?`<div class="panel" style="margin-bottom:18px"><div class="grid-title"><h3>Unassigned work</h3><p>Days on quotes where no one is picked for the role yet. Assign people in the Quote builder.</p></div><div class="table-wrap"><table class="cap-grid">${monthHead}<tbody>${unRows}</tbody></table></div></div>`:""}
   ${leadRows?`<div class="panel" style="margin-bottom:22px"><div class="grid-title"><h3>Leadership &amp; coordination</h3><p>Hours per project plus a share of each quote's production days, set in Reference rates → Team.</p></div><div class="table-wrap"><table class="cap-grid">${monthHead}<tbody>${leadRows}</tbody></table></div></div>`:""}
   <div class="section-head" style="margin-bottom:10px"><h3>Quotes</h3>
     <div class="legend"><span>Open pipeline <b>${inr(tot.sp)}</b></span><span>Confirmed <b>${inr(tot.firm)}</b></span><span>Pitching <b>${inr(tot.pitch)}</b></span><button class="btn sm primary" data-action="new-project">+ New quote</button></div></div>
   <div class="panel"><div class="table-wrap"><table>
-    <thead><tr><th>Quote</th><th>Status</th><th>Dates</th><th>${esc(months[0].label)} – ${esc(months[5].label)}</th><th class="num">Price</th><th class="num">Cost</th><th class="num">Markup</th><th>People</th>${[...prodRoles,...leadRoles].map(r=>`<th class="num" title="${esc(r.name)}"><span class="dot" style="background:${roleColor(roles.indexOf(r))}"></span> ${esc(abbr(r.name))} d</th>`).join("")}</tr></thead>
+    <thead><tr><th>Quote</th><th>Status</th><th>Dates</th><th>${esc(months[0].label)} – ${esc(last.label)}</th><th class="num">Price</th><th class="num">Cost</th><th class="num">Markup</th><th>People</th>${[...prodRoles,...leadRoles].map(r=>`<th class="num" title="${esc(r.name)}"><span class="dot" style="background:${roleColor(roles.indexOf(r))}"></span> ${esc(abbr(r.name))} d</th>`).join("")}</tr></thead>
     <tbody>${prow||`<tr><td colspan="${8+roles.length}"><div class="empty"><strong>No quotes yet</strong>Create one in the Quote builder.</div></td></tr>`}</tbody>
   </table></div></div>`;
 }
@@ -1222,6 +1253,12 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&state.jobDraft){sta
 
 const actions={
   "sign-out"(){flushProject();if(cloud.channel){cloud.sb.removeChannel(cloud.channel);cloud.channel=null;}cloud.sb.auth.signOut();cloud.user=null;state.cloudView="signin";state.otpSent=false;render();},
+  theme(el){state.theme=el.dataset.v;
+    if(state.theme==="auto")document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme",state.theme);
+    try{localStorage.setItem("sp-theme",state.theme);}catch(e){}
+    render();},
+  gran(el){state.gran=el.dataset.v;state.monthOffset=0;try{localStorage.setItem("sp-gran",state.gran);}catch(e){}render();},
   retry(){if(cloud.open)cloudLoad();else if(cloud.user)afterSignIn();else location.reload();},
   async "setup-import"(){const d=localBackupData();if(!d)return;state.setupBusy=true;render();fromShape(d);migrateState();state.cloudView="live";await cloudReplaceAll();state.setupBusy=false;await cloudLoad();toast("Imported into the shared database");},
   async "setup-seed"(){if(!SEED)return;state.setupBusy=true;render();fromShape(SEED);migrateState();state.cloudView="live";await cloudReplaceAll();state.setupBusy=false;await cloudLoad();toast("Shared database set up from the repo defaults");},
