@@ -136,9 +136,11 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
 .sch-grid td:first-child,.sch-grid th:first-child{min-width:212px;text-align:left}
 .sch-grid td,.sch-grid th{text-align:right}
 .sch-cell{min-width:88px}
-.tr-st{min-width:134px}
-.tr-pr{min-width:116px}
-.tr-dt{min-width:150px}
+.tr-st{min-width:152px}
+.tr-pr{min-width:126px}
+.tr-dt{min-width:152px}
+.tr-cr{min-width:268px}
+.tr-nm{min-width:210px}
 .sch-bar{height:8px;border-radius:2px;background:var(--surface-2);margin-top:6px;overflow:hidden}
 .sch-bar span{display:block;height:100%;border-radius:2px}
 .sch-tot td{font-weight:700;background:var(--surface-2)}
@@ -212,6 +214,11 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
 .cmt-form{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
 .cmt-form .field{flex:1 1 320px}
 .tr-open td{background:color-mix(in srgb,var(--surface-2) 55%,transparent)}
+.cr-grid{display:grid;grid-template-columns:auto auto auto auto auto;gap:5px 8px;align-items:center;font-size:var(--fs-xs);white-space:nowrap}
+.cr-grid .nm{color:var(--ink-3)}
+.cr-grid .est{font-variant-numeric:tabular-nums;font-weight:600}
+.cr-grid .inp{width:78px;padding:3px 6px;font-size:var(--fs-xs)}
+.cr-sum{font-size:var(--fs-xs);margin-top:6px}
 
 /* panels */
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px}
@@ -1391,6 +1398,26 @@ function viewPeopleSchedule(){
 function priColor(p){return {critical:"var(--bad)",high:"var(--warn)",medium:"var(--accent)",low:"var(--ink-3)"}[priOf(p)];}
 
 /* ----- project tracker ----- */
+function creditsCell(p,pc,s){
+  const act=p.actual||{};
+  const rows=(s.credits||[]).filter(c=>(pc.credits[c.id]||0)>0.0001||act[c.id]!=null);
+  if(!rows.length)return '<span class="muted">—</span>';
+  let dCost=0,anyUsed=false;
+  const html=rows.map(c=>{
+    const est=pc.credits[c.id]||0;
+    const used=act[c.id];
+    const has=used!=null&&used!=="";
+    if(has){anyUsed=true;dCost+=((+used)-est)*(+c.rate||0);}
+    const off=has&&est>0?((+used)-est)/est:null;
+    const chip=has?(off==null?'<span class="chip">—</span>':`<span class="chip ${off>0.02?"bad":off<-0.02?"good":""}">${off>0?"+":""}${Math.round(off*100)}%</span>`):'<span class="muted">—</span>';
+    return `<span class="nm" title="${esc(c.name)} · ${inr2(c.rate)} per credit">${esc(c.name.slice(0,10))}</span>
+      <span class="est">${num(est)}</span><span class="nm">→</span>
+      <input class="inp numi" inputmode="decimal" id="ac-${esc(p.id)}-${esc(c.id)}" data-k="tpa" data-id="${esc(p.id)}" data-prov="${esc(c.id)}" data-num data-opt value="${has?esc(used):""}" placeholder="used" aria-label="Credits used on ${esc(p.name||"this project")} from ${esc(c.name)}">
+      ${chip}`;
+  }).join("");
+  return `<div class="cr-grid">${html}</div>${anyUsed?`<div class="cr-sum ${dCost>0?"delta-up":dCost<0?"delta-down":""}">${dCost>0?`${inr(dCost)} over`:dCost<0?`${inr(-dCost)} under`:"on budget"}</div>`:'<div class="sub">enter what was used</div>'}`;
+}
+
 function viewProjects(){
   const s=S();const {over}=buildSchedule(s);
   const q=(state.trFilter||"").trim().toLowerCase();
@@ -1405,7 +1432,7 @@ function viewProjects(){
     const late=overFor(p.id);
     const open=state.openComments===p.id;
     return `<tr class="${open?"tr-open":""}">
-      <td><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn ghost sm" style="padding:0;font-weight:600;color:var(--ink)" data-action="open-project" data-id="${esc(p.id)}">${esc(p.name||"Untitled")}</button></div>
+      <td class="tr-nm"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn ghost sm" style="padding:0;font-weight:600;color:var(--ink)" data-action="open-project" data-id="${esc(p.id)}">${esc(p.name||"Untitled")}</button></div>
         <div class="sub">${esc(p.client||"No client")} · ${inr(pc.sp)} · ${days(pc.days)} production d</div>
         ${late>0.0001?`<div class="sub" style="color:var(--bad);font-weight:600">${days(late)} d won't fit before delivery</div>`:""}</td>
       <td class="tr-st"><select class="inp xs" id="tr-st-${esc(p.id)}" data-k="tp.status" data-id="${esc(p.id)}" aria-label="Status">${STATUSES.map(([k,l])=>`<option value="${k}" ${p.status===k?"selected":""}>${l}</option>`).join("")}</select></td>
@@ -1413,9 +1440,10 @@ function viewProjects(){
       <td class="tr-dt"><input class="inp xs" type="date" id="tr-a-${esc(p.id)}" data-k="tp.start" data-id="${esc(p.id)}" value="${esc(p.start||"")}" aria-label="Start"></td>
       <td class="tr-dt"><input class="inp xs" type="date" id="tr-b-${esc(p.id)}" data-k="tp.end" data-id="${esc(p.id)}" value="${esc(p.end||"")}" aria-label="Delivery">${pd?`<div class="sub">${pd.n} working days</div>`:'<div class="sub" style="color:var(--warn)">not scheduled</div>'}</td>
       <td>${names.length?esc(names.join(", ")):'<span class="muted">—</span>'}${un?' <span class="chip warn">unassigned</span>':""}</td>
+      <td class="tr-cr">${creditsCell(p,pc,s)}</td>
       <td class="num"><button class="btn sm" data-action="comments" data-id="${esc(p.id)}">${cmts.length?`${cmts.length} comment${cmts.length===1?"":"s"}`:"Comment"}</button></td>
       <td>${rowActions(p)}</td>
-    </tr>${open?`<tr class="tr-open"><td colspan="8">
+    </tr>${open?`<tr class="tr-open"><td colspan="9">
       <div class="cmt-list">${cmts.length?cmts.slice().reverse().map(c=>`<div class="cmt"><div class="who">${esc(c.by||"Someone")} · ${esc(new Date(c.at).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</div>${esc(c.text)}</div>`).join(""):'<div class="sub">No comments yet.</div>'}</div>
       <div class="cmt-form">
         <div class="field" style="flex:0 1 160px"><label for="cmt-me">Your name</label><input class="inp xs" id="cmt-me" data-k="me" value="${esc(state.me||"")}" placeholder="e.g. Kamal"></div>
@@ -1428,8 +1456,8 @@ function viewProjects(){
   return `<div class="section-head"><div><h2>Projects</h2><p>Every quote shows up here automatically. Set status, priority and dates, see who's on each project, and keep notes in the comment box. Priority drives the Schedule tab.</p></div>
     <div class="toolbar"><input class="inp" id="tr-filter" data-k="trFilter" value="${esc(state.trFilter||"")}" placeholder="Search projects…" style="width:220px"><button class="btn primary" data-action="new-project">+ New quote</button></div></div>
   <div class="panel"><div class="table-wrap"><table>
-    <thead><tr><th>Project</th><th>Status</th><th>Priority</th><th>Start</th><th>Delivery</th><th>Team</th><th class="num">Comments</th><th></th></tr></thead>
-    <tbody>${rows||`<tr><td colspan="8"><div class="empty"><strong>No projects yet</strong>Create a quote and it appears here.</div></td></tr>`}</tbody>
+    <thead><tr><th>Project</th><th>Status</th><th>Priority</th><th>Start</th><th>Delivery</th><th>Team</th><th>Credits · est → used</th><th class="num">Comments</th><th></th></tr></thead>
+    <tbody>${rows||`<tr><td colspan="9"><div class="empty"><strong>No projects yet</strong>Create a quote and it appears here.</div></td></tr>`}</tbody>
   </table></div></div>
   <p class="sub" style="margin-top:12px">${esc(counts)}</p>`;
 }
@@ -1511,7 +1539,7 @@ function viewPipeline(){
       <td><button class="btn ghost sm" style="padding-left:0;font-weight:600;color:var(--ink)" data-action="open-project" data-id="${esc(p.id)}">${esc(p.name||"Untitled")}</button><div class="sub">${esc(p.client||"")}</div></td>
       <td><span class="pill st-${esc(p.status)}">${esc(STATUS_LABEL[p.status]||p.status)}</span><div style="margin-top:5px">${priPill(p)}</div></td>
       <td class="datecell">${pd?`${esc(fmtRange(p.start,p.end))}<div class="sub">${pd.n} working days</div>`:'<span class="chip warn">No dates</span>'}</td>
-      <td style="min-width:160px"><div class="gantt">${g}</div></td>
+      <td style="min-width:200px"><div class="gantt" title="${pd?esc(fmtRange(p.start,p.end))+" within "+esc(fmtDate(isoOf(rangeA)))+" – "+esc(fmtDate(isoOf(rangeB))):"No dates"}">${g}</div></td>
       <td class="num">${inr(c.sp)}</td><td class="num">${inr(c.cost)}</td><td class="num">${markupChip(c.sp,c.cost)}</td>
       <td>${peopleCell(c)}</td>
       <td class="num" title="${esc([...prodRoles,...leadRoles].map(r=>`${r.name} ${days(c.roleDays[r.id]||0)} d`).join(" · "))}">${days(c.days)} d<div class="sub">production</div></td>
@@ -1535,7 +1563,7 @@ function viewPipeline(){
   <div class="section-head" style="margin-bottom:10px"><h3>Quotes</h3>
     <div class="legend"><span>Open pipeline <b>${inr(tot.sp)}</b></span><span>Confirmed <b>${inr(tot.firm)}</b></span><span>Pitching <b>${inr(tot.pitch)}</b></span><button class="btn sm primary" data-action="new-project">+ New quote</button></div></div>
   <div class="panel"><div class="table-wrap"><table>
-    <thead><tr><th>Quote</th><th>Status</th><th>Dates</th><th>${esc(fmtDate(isoOf(rangeA)))} → ${esc(fmtDate(isoOf(rangeB)))}</th><th class="num">Price</th><th class="num">Cost</th><th class="num">Markup</th><th>People</th><th class="num">Days</th><th></th></tr></thead>
+    <thead><tr><th>Quote</th><th>Status</th><th>Dates</th><th>Timeline<div class="sub" style="font-weight:500">${esc(fmtDate(isoOf(rangeA)))} → ${esc(fmtDate(isoOf(rangeB)))}${todayPos!=null?" · line = today":""}</div></th><th class="num">Price</th><th class="num">Cost</th><th class="num">Markup</th><th>People</th><th class="num">Days</th><th></th></tr></thead>
     <tbody>${prow||`<tr><td colspan="9"><div class="empty"><strong>No quotes yet</strong>Create one in the Quote builder.</div></td></tr>`}</tbody>
   </table></div></div>`;
 }
@@ -1749,6 +1777,7 @@ function onField(e){
   if(k==="trFilter"){state.trFilter=v;render();return;}
   if(k==="me"){state.me=v;try{localStorage.setItem("sp-me",v);}catch(e){}return;}
   if(k.startsWith("gline.")){const f=k.slice(6),id=el.dataset.id;updateProjectById(el.dataset.pid,pr=>{const l=(pr.lines||[]).find(x=>x.id===id);if(l)l[f]=v;});return;}
+  if(k==="tpa"){const id=el.dataset.id,prov=el.dataset.prov;updateProjectById(id,pr=>{pr.actual=Object.assign({},pr.actual||{});if(v===""||v==null)delete pr.actual[prov];else pr.actual[prov]=+v;});return;}
   if(k.startsWith("tp.")){const id=el.dataset.id,f=k.slice(3);updateProjectById(id,pr=>{pr[f]=v;});return;}
   if(k==="addJobId"){state.addJobId=v;return;}
   if(k==="addQty"){state.addQty=v;return;}
