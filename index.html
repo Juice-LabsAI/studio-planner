@@ -1226,21 +1226,21 @@ function viewGantt(){
   return `${state.gLegend?`<div class="panel panel-pad gt-key">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><h3>How to read this</h3><button class="icon-btn" data-action="gt-legend" aria-label="Hide the key">✕</button></div>
     <div class="gt-legend">
-      <span><span class="lg"></span>Project — the dates you quoted the client</span>
-      <span><span class="lg line"></span>Deliverable on its own dates</span>
-      <span><span class="lg dash"></span>Deliverable following the project — drag it to give it its own dates</span>
+      <span><span class="lg"></span><b>Thick bar = the whole project.</b> The dates you promised the client.</span>
+      <span><span class="lg line"></span><b>Thin bar = one deliverable</b>, with its own dates.</span>
+      <span><span class="lg dash"></span><b>Dashed = no dates of its own yet</b>, so it sits on the project's dates. Drag it to give it real dates; <b>reset</b> puts it back.</span>
     </div>
     <div class="gt-legend">
-      <span>Bar colour is priority:</span>
+      <span>Colour = how urgent:</span>
       <span><span class="dot" style="background:var(--bad)"></span>Critical</span><span><span class="dot" style="background:var(--warn)"></span>High</span><span><span class="dot" style="background:var(--accent)"></span>Medium</span><span><span class="dot" style="background:var(--ink-3)"></span>Low</span>
     </div>
     <div class="gt-legend">
-      <span><b style="color:var(--bad)">Overflow +3 d</b> — a deliverable ends this many days after the project's delivery date. <b>extend</b> moves the delivery date to cover it.</span>
+      <span><b style="color:var(--bad)">Overflow +3 d</b> = a deliverable runs 3 days past the delivery date. <b>extend</b> pushes the delivery date out to cover it.</span>
     </div>
     <div class="gt-legend">
-      <span><b>0.5 d won't fit</b> — that person hasn't enough free capacity inside those dates, after higher-priority work.</span>
+      <span><b>0.5 d won't fit</b> = the person doesn't have half a day free inside those dates, once their more urgent work is in.</span>
     </div>
-    <div class="gt-legend"><span>Drag a bar to move it, its edges to resize. Arrow keys nudge by a day, Shift + arrows change the length. Team load at the bottom updates as you drag.</span></div>
+    <div class="gt-legend"><span>Drag the middle of a bar to move it. Drag an edge to make it longer or shorter. Arrow keys move it a day at a time; hold Shift to change its length. The team load rows at the bottom update as you drag.</span></div>
   </div>`:""}
   <div class="gt-wrap" id="gt-wrap">
     <div style="min-width:${H.w+276}px">
