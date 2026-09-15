@@ -34,8 +34,10 @@ Margin % = (price − internal cost) ÷ price
 - **"Quote per brief"** jobs (e.g. Complex CGI) suggest a price of internal cost × target markup.
 - **Complimentary** jobs are quoted at ₹0, but their effort and cost still count.
 - **Who does the work:** each job type's effort is production time only and goes 100% to one role: Video Editor for video, GIF and AI voiceover jobs, Graphic Designer for static and carousel jobs, and PM for artist dubbing and PDP copy.
-- **Leadership & coordination (CD, PM):** every quote also books each role's *hours per project* plus a *% of the quote's production days*. Set these in Reference rates → Team. This time is already covered by the workday rate, so it shows up in capacity but isn't added to internal cost.
-- **Capacity:** headcount × working days (Mon–Fri) × utilisation. A quote's days are spread evenly between its start and delivery dates. Pitches are optional in the view.
+- **Leadership & coordination (CD, PM):** every quote also books, for whoever holds each role on it, that role's *hours per project* plus a *% of the quote's production days*. Set these in Reference rates → Roles. This time is already covered by the workday rate, so it shows up in capacity but isn't added to internal cost.
+- **People:** the team is a list of named people (Reference rates → Team), each with one or more roles and a utilisation %. A person's capacity is working days (Mon–Fri) × their utilisation, and all their roles share it.
+- **Assigning work:** on each quote, pick one person per role under "Who's on it", or click **Assign least booked**. To give a single line to someone else, use its "Done by" menu. For example, split 20 statics into two lines of 10 with different designers. Work with no one picked shows as **Unassigned** until you assign it.
+- **Capacity view:** booked days per person, month by month, with a quote's days spread evenly between its start and delivery dates. Unassigned work gets its own section, and pitches are optional.
 
 ## Where your data lives
 

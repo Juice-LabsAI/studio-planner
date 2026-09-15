@@ -1,4 +1,4 @@
-/* Juice Studio Planner — default rate card, reference rates and team.
+/* Juice Studio Planner — default rate card, reference rates, roles and team.
    Edit here (or use Reference rates → Download seed.js in the app) and commit. */
 window.STUDIO_SEED = {
   "version": 1,
@@ -24,8 +24,6 @@ window.STUDIO_SEED = {
       {
         "id": "cd",
         "name": "Creative Director",
-        "headcount": 1,
-        "utilisation": 70,
         "group": "leadership",
         "perProjectHours": 4,
         "pctOfProduction": 15
@@ -33,8 +31,6 @@ window.STUDIO_SEED = {
       {
         "id": "ve",
         "name": "Video Editor",
-        "headcount": 3,
-        "utilisation": 80,
         "group": "production",
         "perProjectHours": 0,
         "pctOfProduction": 0
@@ -42,8 +38,6 @@ window.STUDIO_SEED = {
       {
         "id": "gd",
         "name": "Graphic Designer",
-        "headcount": 2,
-        "utilisation": 80,
         "group": "production",
         "perProjectHours": 0,
         "pctOfProduction": 0
@@ -52,8 +46,6 @@ window.STUDIO_SEED = {
         "id": "pm",
         "name": "PM",
         "group": "leadership",
-        "headcount": 1,
-        "utilisation": 80,
         "perProjectHours": 3,
         "pctOfProduction": 10
       }
@@ -67,7 +59,65 @@ window.STUDIO_SEED = {
       "PDP Content": "Amazon, Q-Com & marketplaces: conversion-focused listing assets generated and optimized for marketplace placements."
     },
     "history": [],
-    "schema": 2
+    "schema": 3,
+    "people": [
+      {
+        "id": "u-cd-1",
+        "name": "Creative Director",
+        "roles": [
+          "cd"
+        ],
+        "utilisation": 70
+      },
+      {
+        "id": "u-ve-1",
+        "name": "Video Editor 1",
+        "roles": [
+          "ve"
+        ],
+        "utilisation": 80
+      },
+      {
+        "id": "u-ve-2",
+        "name": "Video Editor 2",
+        "roles": [
+          "ve"
+        ],
+        "utilisation": 80
+      },
+      {
+        "id": "u-ve-3",
+        "name": "Video Editor 3",
+        "roles": [
+          "ve"
+        ],
+        "utilisation": 80
+      },
+      {
+        "id": "u-gd-1",
+        "name": "Graphic Designer 1",
+        "roles": [
+          "gd"
+        ],
+        "utilisation": 80
+      },
+      {
+        "id": "u-gd-2",
+        "name": "Graphic Designer 2",
+        "roles": [
+          "gd"
+        ],
+        "utilisation": 80
+      },
+      {
+        "id": "u-pm-1",
+        "name": "PM",
+        "roles": [
+          "pm"
+        ],
+        "utilisation": 80
+      }
+    ]
   },
   "jobs": {
     "brand-film-15": {

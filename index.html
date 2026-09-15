@@ -213,8 +213,17 @@ tbody tr.cat-head:hover td{background:var(--surface-2)}
 .ref-card p.hint{margin:0 0 14px;font-size:var(--fs-sm);color:var(--ink-3);max-width:80ch}
 .rows{display:flex;flex-direction:column;gap:10px}
 .r-row{display:grid;gap:10px;align-items:end}
-.team-row{grid-template-columns:auto minmax(150px,1.6fr) minmax(130px,1fr) .7fr .8fr .8fr .8fr auto}
-@media (max-width:980px){.team-row{grid-template-columns:auto 1fr 1fr;}.team-row>.dot{grid-row:span 3}}
+.role-row{grid-template-columns:auto minmax(150px,1.5fr) minmax(150px,1.2fr) .8fr .8fr auto auto}
+.person-row{grid-template-columns:auto minmax(160px,1fr) minmax(260px,2.6fr) minmax(90px,.5fr) auto}
+@media (max-width:980px){.role-row,.person-row{grid-template-columns:auto 1fr 1fr}}
+.chk-row{display:flex;flex-wrap:wrap;gap:6px;min-height:40px;align-items:center}
+.field .chk,.chk{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-2);border-radius:999px;padding:5px 11px;font-size:var(--fs-sm);font-weight:500;color:var(--ink-2);cursor:pointer;background:var(--surface)}
+.chk input{position:absolute;opacity:0;pointer-events:none}
+.chk:has(input:checked){background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent);font-weight:600}
+.chk:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.avatar{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex:none;letter-spacing:.02em}
+.who-row{display:grid;grid-template-columns:auto 1fr;gap:5px 8px;align-items:center;font-size:var(--fs-sm);font-weight:600}
+.who-row select{grid-column:1/-1}
 .savebar{position:sticky;bottom:12px;z-index:10;margin-top:18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 18px;border-radius:12px;background:var(--ink);color:var(--bg);box-shadow:var(--shadow);font-weight:500}
 .savebar .btn{background:transparent;color:var(--bg);border-color:color-mix(in srgb,var(--bg) 40%,transparent)}
 .savebar .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -375,6 +384,11 @@ function projectCalc(p,s){
     const d=hasWork?(+r.perProjectHours||0)/((+s.hoursPerDay)||8)+out.days*(+r.pctOfProduction||0)/100:0;
     out.overRoleDays[r.id]=d;out.roleDays[r.id]=(out.roleDays[r.id]||0)+d;
   });
+  out.personDays={};
+  const assign=p.assign||{};const addP=(k,d)=>{if(d>0)out.personDays[k]=(out.personDays[k]||0)+d;};
+  const who=(pid)=>pid&&personById(pid,s)?pid:null;
+  out.lines.forEach(({l,c})=>{if(!c)return;const rid=doerOf(c.j).id;if(!rid)return;addP(who(l.assignee)||who(assign[rid])||("u:"+rid),c.days);});
+  (s.roles||[]).forEach(r=>addP(who(assign[r.id])||("u:"+r.id),out.overRoleDays[r.id]||0));
   out.discount=out.gross*((+p.discountPct||0)/100);
   out.sp=out.gross-out.discount;
   out.margin=out.sp-out.cost;
@@ -401,6 +415,13 @@ function projDates(p){const a=D(p.start),b=D(p.end);return a&&b&&a<=b?{a,b,n:wd(
 
 function roleColor(i){return `var(--role-${i%5})`;}
 const isLead=r=>!!r&&r.group==="leadership";
+const personById=(id,s)=>id?((s||S()).people||[]).find(x=>x.id===id):null;
+const peopleForRole=(rid,s)=>((s||S()).people||[]).filter(x=>(x.roles||[]).includes(rid));
+const personCapPerDay=x=>(+x.utilisation||0)/100;
+const initials=n=>String(n||"?").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase();
+function personRoleIdx(x,s){const roles=(s||S()).roles||[];const i=roles.findIndex(r=>(x.roles||[]).includes(r.id));return i<0?0:i;}
+function keyLabel(k,s){s=s||S();if(k.startsWith("u:")){const r=(s.roles||[]).find(r=>r.id===k.slice(2));return "Unassigned "+(r?r.name:"role");}const x=personById(k,s);return x?x.name:"Former team member";}
+function keyColor(k,s){s=s||S();if(k.startsWith("u:")){const i=(s.roles||[]).findIndex(r=>r.id===k.slice(2));return roleColor(i<0?0:i);}const x=personById(k,s);return roleColor(x?personRoleIdx(x,s):0);}
 const abbr=n=>{const w=String(n||"").trim().split(/\s+/);return w.length>1?w.map(x=>x[0]).join("").toUpperCase():String(n||"").slice(0,4);};
 function doerOf(j){const sp=j.split||{};let best=null,bv=0,n=0;for(const k in sp){if(+sp[k]>0)n++;if(+sp[k]>bv){bv=+sp[k];best=k;}}return {id:best,mixed:n>1};}
 function doerTag(j){const roles=S().roles||[];const d=doerOf(j);if(d.mixed)return '<span class="doer muted">Mixed</span>';const i=roles.findIndex(r=>r.id===d.id);if(i<0)return '<span class="doer muted">—</span>';return `<span class="doer"><span class="dot" style="background:${roleColor(i)}"></span>${esc(roles[i].name)}</span>`;}
@@ -418,9 +439,20 @@ function toShape(){
   const obj=arr=>Object.fromEntries(arr.map(x=>{const c=clone(x);const id=c.id;delete c.id;return [id,c];}));
   return {version:1,exportedAt:new Date().toISOString(),settings:clone(state.settings||EMPTY_SETTINGS),jobs:obj(state.jobs),projects:obj(state.projects)};
 }
-const SCHEMA=2;
+const SCHEMA=3;
 function migrateState(){
   const s=state.settings;if(!s||(+s.schema||1)>=SCHEMA)return false;
+  const v=+s.schema||1;
+  if(v<2)migrateV2(s);
+  if(v<3){
+    s.people=s.people||[];
+    if(!s.people.length)(s.roles||[]).forEach(r=>{const n=Math.max(0,Math.round(+r.headcount||0));for(let i=0;i<n;i++)s.people.push({id:uid("u"),name:n>1?`${r.name} ${i+1}`:r.name,roles:[r.id],utilisation:+r.utilisation||80});});
+    s.schema=3;
+    s.history=[{at:new Date().toISOString(),changes:[{label:"Team",from:"headcount per role",to:"named people ("+s.people.length+" placeholders — rename them)"}]}].concat(s.history||[]).slice(0,25);
+  }
+  return true;
+}
+function migrateV2(s){
   const roles=s.roles=s.roles||[];
   const find=(id,re)=>roles.find(r=>r.id===id)||roles.find(r=>re.test(String(r.name||"").trim()));
   const ve=find("ve",/editor/i),gd=find("gd",/designer/i),cd=find("cd",/creative\s*dir|^cd$/i);
@@ -438,9 +470,8 @@ function migrateState(){
       r=/dubbing|artist\s*voice/i.test(n)?pm:/\bcopy\b/i.test(n)?pm:/gif|video|film|promo|voice|adapt|cgi|explainer|motion|reel/i.test(n)?ve:/static|carousel|ratio|gallery|banner|image|a\+/i.test(n+" "+(j.category||""))?gd:ve;}
     r=r||ve||gd;if(r)j.split={[r.id]:100};
   });
-  s.schema=SCHEMA;
+  s.schema=2;
   s.history=[{at:new Date().toISOString(),changes:[{label:"Role split",from:"% across roles",to:"100% to the production role"},{label:"CD / PM time",from:"part of job split",to:"hours per project + % of production"}]}].concat(s.history||[]).slice(0,25);
-  return true;
 }
 let storeOK=true;
 /* ---------- shared database (Supabase) ---------- */
@@ -508,7 +539,7 @@ async function cloudLoad(silent){
   rowsToState(sR,jR,pR);
   if(!state.sDirty)state.sDraft=null;
   state.cloudView="live";
-  if(migrateState()){await cloudUpsert("settings",[settingsDoc()]);await cloudUpsert("jobs",state.jobs);toast("Role splits updated: CD and PM time is now tracked per project");}
+  if(migrateState()){await cloudUpsert("settings",[settingsDoc()]);await cloudUpsert("jobs",state.jobs);toast("Team updated: rename the placeholder people in Reference rates → Team");}
   pickCurrent();subscribe();render();
 }
 function subscribe(){
@@ -577,7 +608,7 @@ function loadStore(){
   try{const raw=localStorage.getItem(STORE_KEY);if(raw)d=JSON.parse(raw);}catch(e){storeOK=false;}
   if(!d&&SEED)d=SEED;
   if(d)fromShape(d);
-  if(migrateState()){persist();setTimeout(()=>toast("Role splits updated: CD and PM time is now tracked per project"),400);}
+  if(migrateState()){persist();setTimeout(()=>toast("Team updated: rename the placeholder people in Reference rates → Team"),400);}
   state.loaded={settings:true,jobs:true,projects:true};
   state.dbState="live";
   pickCurrent();
@@ -731,9 +762,11 @@ function viewQuote(){
     if(!c)return `<tr><td colspan="8"><span class="muted">A job type on this line was deleted from the rate card.</span></td><td class="num"><button class="btn ghost sm" data-action="rm-line" data-id="${esc(l.id)}" aria-label="Remove line">✕</button></td></tr>`;
     const j=c.j;
     const baseSel=isAdapt(j)?`<div class="base-sel"><label for="ln-base-${esc(l.id)}">Base film</label><select class="inp xs" id="ln-base-${esc(l.id)}" data-k="line.baseJobId" data-id="${esc(l.id)}"><option value="">Choose…</option>${jobOptions(l.baseJobId,nonAdapt)}</select></div>`:"";
+    const rid=doerOf(j).id;const dflt=personById((p.assign||{})[rid]);const holders=rid?peopleForRole(rid):[];
+    const lineWho=rid&&c.days>0?`<div class="base-sel"><label for="ln-who-${esc(l.id)}">Done by</label><select class="inp xs" id="ln-who-${esc(l.id)}" data-k="line.assignee" data-id="${esc(l.id)}"><option value="">Quote default${dflt?" ("+esc(dflt.name)+")":" (unassigned)"}</option>${holders.map(x=>`<option value="${esc(x.id)}" ${l.assignee===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}${l.assignee&&!holders.some(x=>x.id===l.assignee)&&personById(l.assignee)?`<option value="${esc(l.assignee)}" selected>${esc(personById(l.assignee).name)}</option>`:""}</select></div>`:"";
     const note=c.p.kind==="suggested"?'<div class="sub">suggested @ '+xfmt(+s.targetMarkup)+'</div>':c.p.kind==="range"?'<div class="sub">range midpoint</div>':c.p.kind==="free"?'<div class="sub">complimentary</div>':c.p.kind==="adapt"?`<div class="sub">${Math.round((+j.pricing.pct||0)*100)}% of base</div>`:c.p.kind==="adapt-nobase"?'<div class="sub" style="color:var(--warn)">pick a base film</div>':"";
     return `<tr>
-      <td><div class="line-cat">${esc(j.category)}</div><div class="line-name">${jobLabel(j)}</div>${baseSel}</td>
+      <td><div class="line-cat">${esc(j.category)}</div><div class="line-name">${jobLabel(j)}</div>${baseSel}${lineWho}</td>
       <td class="num" style="width:78px"><input class="inp numi xs" inputmode="decimal" id="ln-qty-${esc(l.id)}" data-k="line.qty" data-id="${esc(l.id)}" data-num value="${esc(l.qty)}" aria-label="Quantity"></td>
       <td class="num" style="width:130px"><input class="inp numi xs" inputmode="decimal" id="ln-sp-${esc(l.id)}" data-k="line.spOverride" data-id="${esc(l.id)}" data-num data-opt value="${c.hasOv?esc(l.spOverride):""}" placeholder="${esc(num(c.p.sp))}" aria-label="Unit price override">${c.hasOv?'<div class="sub">custom price</div>':note}</td>
       <td class="num">${inr(c.sp)}</td>
@@ -770,9 +803,14 @@ function viewSummary(p,pc){
   const s=S();const roles=s.roles||[];const hpd=+s.hoursPerDay||8;
   const prod=roles.filter(r=>!isLead(r)),lead=roles.filter(isLead);
   const maxRole=Math.max(0.0001,...roles.map(r=>pc.roleDays[r.id]||0));
-  // delivery estimate
+  // delivery estimate, per person (unassigned work uses everyone who holds that role)
   let bottleneck=null,minDays=0;
-  roles.forEach(r=>{const d=pc.roleDays[r.id]||0;if(d<=0)return;const cap=(+r.headcount||0)*((+r.utilisation||0)/100);const need=cap>0?d/cap:Infinity;if(need>minDays){minDays=need;bottleneck=r;}});
+  Object.entries(pc.personDays).forEach(([k,d])=>{
+    let cap;
+    if(k.startsWith("u:"))cap=peopleForRole(k.slice(2),s).reduce((a,x)=>a+personCapPerDay(x),0);
+    else{const x=personById(k,s);cap=x?personCapPerDay(x):0;}
+    const need=cap>0?d/cap:Infinity;if(need>minDays){minDays=need;bottleneck=k;}
+  });
   const assigned=Object.values(pc.prodRoleDays||{}).reduce((a,b)=>a+b,0);
   const unassigned=pc.days-assigned;
   const line=r=>{
@@ -783,27 +821,43 @@ function viewSummary(p,pc){
   };
   const leadDays=lead.reduce((a,r)=>a+(pc.overRoleDays[r.id]||0),0);
   let est="";
-  if(minDays===Infinity)est=`<div class="callout bad">No <b>${esc(bottleneck.name)}</b> on the team. Add headcount in Reference rates.</div>`;
-  else if(minDays>0)est=`<div class="callout">Fastest delivery with the current team: <b>${Math.ceil(minDays)} working days</b>. ${esc(bottleneck.name)} is the bottleneck.</div>`;
+  if(minDays===Infinity)est=`<div class="callout bad">No one on the team can take <b>${esc(keyLabel(bottleneck,s).replace(/^Unassigned /,""))}</b> work. Add a person with that role in Reference rates → Team.</div>`;
+  else if(minDays>0)est=`<div class="callout">Fastest delivery with these assignments: <b>${Math.ceil(minDays)} working days</b>. ${esc(keyLabel(bottleneck,s))} is the bottleneck.</div>`;
   // window load
   let win="";
   const pd=projDates(p);
-  if(pd&&roles.length){
-    const rowsW=[...prod,...lead].map(r=>{
-      const i=roles.indexOf(r);
-      const cap=(+r.headcount||0)*pd.n*((+r.utilisation||0)/100);
-      let other=0;
-      state.projects.forEach(q=>{if(q.id===p.id||!counted(q))return;const qd=projDates(q);if(!qd)return;const ov=overlapWd(pd.a,pd.b,qd.a,qd.b);if(!ov)return;const qc=projectCalc(q,s);other+=(qc.roleDays[r.id]||0)*ov/qd.n;});
-      const mine=pc.roleDays[r.id]||0;const load=cap>0?(mine+other)/cap:(mine+other>0?Infinity:0);
+  const others={};
+  const otherLoad=(k,a,b)=>{let t=0;state.projects.forEach(q=>{if(q.id===p.id||!counted(q))return;const qd=projDates(q);if(!qd)return;const ov=overlapWd(a,b,qd.a,qd.b);if(!ov)return;const qc=others[q.id]||(others[q.id]=projectCalc(q,s));t+=(qc.personDays[k]||0)*ov/qd.n;});return t;};
+  if(pd&&Object.keys(pc.personDays).length){
+    const keys=Object.keys(pc.personDays).sort((a,b)=>(a.startsWith("u:")-b.startsWith("u:"))||keyLabel(a,s).localeCompare(keyLabel(b,s)));
+    const rowsW=keys.map(k=>{
+      const x=k.startsWith("u:")?null:personById(k,s);
+      const cap=x?pd.n*personCapPerDay(x):0;
+      const other=x?otherLoad(k,pd.a,pd.b):0;
+      const mine=pc.personDays[k]||0;const load=cap>0?(mine+other)/cap:Infinity;
       const cls=load>1?"bad":load>.85?"warn":"good";
-      return `<tr><td><span class="dot" style="background:${roleColor(i)}"></span> ${esc(r.name)}</td><td class="num">${days(mine)}</td><td class="num">${days(other)}</td><td class="num">${days(cap)}</td><td class="num"><span class="pct ${cls}">${isFinite(load)?pct(load):"no team"}</span></td></tr>`;
+      return `<tr><td><span class="dot" style="background:${keyColor(k,s)}"></span> ${x?esc(x.name):`<span style="color:var(--warn)">${esc(keyLabel(k,s))}</span>`}</td><td class="num">${days(mine)}</td><td class="num">${x?days(other):"—"}</td><td class="num">${x?days(cap):"—"}</td><td class="num"><span class="pct ${x?cls:"warn"}">${x?pct(load):"assign"}</span></td></tr>`;
     }).join("");
-    win=`<div class="panel panel-pad"><div class="eyebrow" style="margin-bottom:8px">Team load · ${esc(fmtDate(p.start))} – ${esc(fmtDate(p.end))} · ${pd.n} working days</div>
-      <div class="table-wrap"><table class="compact"><thead><tr><th>Role</th><th class="num">This</th><th class="num">Others</th><th class="num">Cap.</th><th class="num">Load</th></tr></thead><tbody>${rowsW}</tbody></table></div>
-      <div class="sub" style="margin-top:8px">"Others" = overlapping ${state.includePitches?"confirmed, in-production and pitch":"confirmed and in-production"} quotes, spread evenly across their dates.</div></div>`;
+    win=`<div class="panel panel-pad"><div class="eyebrow" style="margin-bottom:8px">People load · ${esc(fmtDate(p.start))} – ${esc(fmtDate(p.end))} · ${pd.n} working days</div>
+      <div class="table-wrap"><table class="compact"><thead><tr><th>Person</th><th class="num">This</th><th class="num">Others</th><th class="num">Cap.</th><th class="num">Load</th></tr></thead><tbody>${rowsW}</tbody></table></div>
+      <div class="sub" style="margin-top:8px">"Others" = their overlapping ${state.includePitches?"confirmed, in-production and pitch":"confirmed and in-production"} quotes, spread evenly across those quotes' dates.</div></div>`;
   }else if(p.lines&&p.lines.length){
-    win=`<div class="callout">Add start and delivery dates to check this against the rest of your pipeline.</div>`;
+    win=`<div class="callout">Add start and delivery dates to check people's load against the rest of your pipeline.</div>`;
   }
+  // who's on it
+  const needRoles=roles.filter(r=>(pc.roleDays[r.id]||0)>0);
+  const whoRows=needRoles.map(r=>{
+    const i=roles.indexOf(r);const cur=(p.assign||{})[r.id]||"";
+    const cands=peopleForRole(r.id,s).map(x=>({x,l:pd?(otherLoad(x.id,pd.a,pd.b)/Math.max(0.0001,pd.n*personCapPerDay(x))):null}));
+    if(pd)cands.sort((a,b)=>a.l-b.l);
+    const opts=cands.map((c,ci)=>`<option value="${esc(c.x.id)}" ${c.x.id===cur?"selected":""}>${esc(c.x.name)}${c.l!=null?` · ${pct(c.l)} booked`:""}${pd&&ci===0&&cands.length>1?" (least booked)":""}</option>`).join("");
+    return `<div class="who-row"><span class="dot" style="background:${roleColor(i)}"></span><label for="as-${esc(r.id)}">${esc(r.name)}<span class="sub"> · ${days(pc.roleDays[r.id])} d</span></label>
+      <select class="inp xs" id="as-${esc(r.id)}" data-k="assign" data-role="${esc(r.id)}"><option value="">${cands.length?"Unassigned":"No one has this role"}</option>${opts}</select></div>`;
+  }).join("");
+  const anyUn=needRoles.some(r=>!personById((p.assign||{})[r.id],s)&&peopleForRole(r.id,s).length);
+  const who=needRoles.length?`<div class="panel panel-pad" style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div class="eyebrow">Who's on it</div>${anyUn?'<button class="btn sm" data-action="auto-assign">Assign least booked</button>':""}</div>
+      ${whoRows}<div class="sub">Change who does a single line from the "Done by" menu on that line.</div></div>`:"";
   const creditRows=Object.keys(pc.credits).map(k=>`<dt>${esc(creditName(k))} · ${num(pc.credits[k])} cr</dt><dd>${inr(pc.creditCostBy[k])}</dd>`).join("");
   return `<aside class="summary">
     <div class="panel">
@@ -832,6 +886,7 @@ function viewSummary(p,pc){
       ${unassigned>0.001?`<div class="callout warn"><b>${days(unassigned)} d</b> not assigned to a role. Set who does the work on those job types.</div>`:""}
       ${est}
     </div>
+    ${who}
     ${win}
   </aside>`;
 }
@@ -842,24 +897,33 @@ function viewPipeline(){
   const now=new Date();const start=new Date(now.getFullYear(),now.getMonth()+state.monthOffset,1,12);
   const months=[...Array(6)].map((_,i)=>{const a=new Date(start.getFullYear(),start.getMonth()+i,1,12);const b=new Date(a.getFullYear(),a.getMonth()+1,0,12);return {a,b,n:wd(a,b),label:a.toLocaleDateString("en-IN",{month:"short",year:"2-digit"})};});
   const calcs={};state.projects.forEach(p=>calcs[p.id]=projectCalc(p,s));
-  const load=(roleId,m,filter)=>{let t=0;state.projects.forEach(p=>{if(!filter(p))return;const pd=projDates(p);if(!pd)return;const ov=overlapWd(pd.a,pd.b,m.a,m.b);if(ov)t+=(calcs[p.id].roleDays[roleId]||0)*ov/pd.n;});return t;};
+  const load=(key,m,filter)=>{let t=0;state.projects.forEach(p=>{if(!filter(p))return;const pd=projDates(p);if(!pd)return;const ov=overlapWd(pd.a,pd.b,m.a,m.b);if(ov)t+=(calcs[p.id].personDays[key]||0)*ov/pd.n;});return t;};
   const firm=p=>p.status!=="pitch";const pitch=p=>p.status==="pitch";
-  const roleRow=r=>{const i=roles.indexOf(r);
+  const people=s.people||[];
+  const keyRow=(k)=>{
+    const x=k.startsWith("u:")?null:personById(k,s);const col=keyColor(k,s);
     const cells=months.map(m=>{
-      const cap=(+r.headcount||0)*m.n*((+r.utilisation||0)/100);
-      const f=load(r.id,m,firm),pi=state.includePitches?load(r.id,m,pitch):0;
+      const cap=x?m.n*personCapPerDay(x):0;
+      const f=load(k,m,firm),pi=state.includePitches?load(k,m,pitch):0;
       const tot=f+pi;const l=cap>0?tot/cap:(tot>0?Infinity:0);
       const cls=l>1?"bad":l>.85?"warn":"good";
       const W=Math.max(cap,tot)||1;
+      if(!x)return `<td class="cell"><div class="top-n"><b>${days(tot)}</b><span class="muted"> d</span></div><div class="cbar" style="color:${col}"><span class="s" style="width:${f/W*100}%;background:${col}"></span><span class="h" style="width:${pi/W*100}%"></span></div><div class="pct ${tot?"warn":""}">${tot?"needs a person":"—"}</div></td>`;
       return `<td class="cell"><div class="top-n"><b>${days(tot)}</b><span class="muted"> / ${days(cap)} d</span></div>
-        <div class="cbar" style="color:${roleColor(i)}"><span class="s" style="width:${f/W*100}%;background:${roleColor(i)}"></span><span class="h" style="width:${pi/W*100}%"></span></div>
-        <div class="pct ${tot?cls:""}">${tot?(isFinite(l)?pct(l)+" booked":"no team"):"free"}${l>1&&isFinite(l)?` · short ${days(tot-cap)} d`:""}</div></td>`;
+        <div class="cbar" style="color:${col}"><span class="s" style="width:${f/W*100}%;background:${col}"></span><span class="h" style="width:${pi/W*100}%"></span></div>
+        <div class="pct ${tot?cls:""}">${tot?(isFinite(l)?pct(l)+" booked":"no capacity"):"free"}${l>1&&isFinite(l)?` · over by ${days(tot-cap)} d`:""}</div></td>`;
     }).join("");
-    return `<tr><td><div style="display:flex;gap:8px;align-items:center"><span class="dot" style="background:${roleColor(i)}"></span><b>${esc(r.name)}</b></div><div class="sub">${esc(r.headcount)} × ${esc(r.utilisation)}% utilisation</div></td>${cells}</tr>`;
+    const roleNames=x?(x.roles||[]).map(rid=>(roles.find(r=>r.id===rid)||{}).name).filter(Boolean).join(", "):"";
+    return `<tr><td><div style="display:flex;gap:8px;align-items:center">${x?`<span class="avatar" style="background:${col}">${esc(initials(x.name))}</span>`:`<span class="dot" style="background:${col}"></span>`}<b>${esc(x?x.name:keyLabel(k,s))}</b></div><div class="sub">${x?`${esc(roleNames||"No role")} · ${esc(x.utilisation)}% utilisation`:"Pick people on these quotes"}</div></td>${cells}</tr>`;
   };
+  const leadPerson=x=>isLead(roles[personRoleIdx(x,s)]);
+  const roleRows=people.filter(x=>!leadPerson(x)).map(x=>keyRow(x.id)).join("");
+  const leadRows=people.filter(leadPerson).map(x=>keyRow(x.id)).join("");
+  const unKeys=[...new Set(Object.values(calcs).flatMap(c=>Object.keys(c.personDays).filter(k=>k.startsWith("u:")||!personById(k,s))))];
+  const unRows=unKeys.filter(k=>months.some(m=>load(k,m,p=>counted(p))>0)).map(keyRow).join("");
   const prodRoles=roles.filter(r=>!isLead(r)),leadRoles=roles.filter(isLead);
-  const roleRows=prodRoles.map(roleRow).join(""),leadRows=leadRoles.map(roleRow).join("");
-  const monthHead=`<thead><tr><th>Role</th>${months.map(m=>`<th>${m.label}<div class="sub" style="font-weight:500">${m.n} working days</div></th>`).join("")}</tr></thead>`;
+  const peopleCell=c=>{const ks=Object.keys(c.personDays);if(!ks.length)return '<span class="muted">—</span>';const named=ks.filter(k=>!k.startsWith("u:")&&personById(k,s)).map(k=>esc(personById(k,s).name));const un=ks.some(k=>k.startsWith("u:")||!personById(k,s));return (named.join(", ")||"")+(un?`${named.length?" ":""}<span class="chip warn">unassigned</span>`:"");};
+  const monthHead=`<thead><tr><th>Person</th>${months.map(m=>`<th>${m.label}<div class="sub" style="font-weight:500">${m.n} working days</div></th>`).join("")}</tr></thead>`;
   const creditRows=(s.credits||[]).map(c=>{
     const cells=months.map(m=>{let t=0;state.projects.forEach(p=>{if(!counted(p))return;const pd=projDates(p);if(!pd)return;const ov=overlapWd(pd.a,pd.b,m.a,m.b);if(ov)t+=(calcs[p.id].credits[c.id]||0)*ov/pd.n;});
       return `<td class="cell"><div class="top-n"><b>${num(t)}</b><span class="muted"> cr</span></div><div class="sub">${inr(t*(+c.rate||0))}</div></td>`;}).join("");
@@ -878,6 +942,7 @@ function viewPipeline(){
       <td>${pd?`${esc(fmtDate(p.start))} – ${esc(fmtDate(p.end))}<div class="sub">${pd.n} working days</div>`:'<span class="chip warn">No dates · not counted</span>'}</td>
       <td style="min-width:170px"><div class="gantt">${g}</div></td>
       <td class="num">${inr(c.sp)}</td><td class="num">${inr(c.cost)}</td><td class="num">${markupChip(c.sp,c.cost)}</td>
+      <td>${peopleCell(c)}</td>
       ${[...prodRoles,...leadRoles].map(r=>`<td class="num">${days(c.roleDays[r.id]||0)}</td>`).join("")}
     </tr>`;
   }).join("");
@@ -888,16 +953,17 @@ function viewPipeline(){
       <label class="toggle"><input type="checkbox" id="pipe-pitch" data-k="includePitches" ${state.includePitches?"checked":""}> Include pitches <span class="muted">(hatched)</span></label>
       <div class="month-nav"><button class="btn sm" data-action="month" data-d="-1" aria-label="Earlier months">←</button><button class="btn sm" data-action="month" data-d="0">Today</button><button class="btn sm" data-action="month" data-d="1" aria-label="Later months">→</button></div>
     </div></div>
-  <div class="panel" style="margin-bottom:18px"><div class="grid-title"><h3>Production</h3><p>Days from job effort in the rate card.</p></div><div class="table-wrap"><table class="cap-grid">
+  <div class="panel" style="margin-bottom:18px"><div class="grid-title"><h3>Production team</h3><p>Each person's booked days from quotes they're assigned to.</p></div><div class="table-wrap"><table class="cap-grid">
     ${monthHead}
-    <tbody>${roleRows||`<tr><td colspan="7" class="muted">Add production roles in Reference rates.</td></tr>`}${creditRows?`<tr class="cat-head"><td colspan="7"><span class="eyebrow">Credits to buy</span></td></tr>`+creditRows:""}</tbody>
+    <tbody>${roleRows||`<tr><td colspan="7" class="muted">Add people in Reference rates → Team.</td></tr>`}${creditRows?`<tr class="cat-head"><td colspan="7"><span class="eyebrow">Credits to buy</span></td></tr>`+creditRows:""}</tbody>
   </table></div></div>
+  ${unRows?`<div class="panel" style="margin-bottom:18px"><div class="grid-title"><h3>Unassigned work</h3><p>Days on quotes where no one is picked for the role yet. Assign people in the Quote builder.</p></div><div class="table-wrap"><table class="cap-grid">${monthHead}<tbody>${unRows}</tbody></table></div></div>`:""}
   ${leadRows?`<div class="panel" style="margin-bottom:22px"><div class="grid-title"><h3>Leadership &amp; coordination</h3><p>Hours per project plus a share of each quote's production days, set in Reference rates → Team.</p></div><div class="table-wrap"><table class="cap-grid">${monthHead}<tbody>${leadRows}</tbody></table></div></div>`:""}
   <div class="section-head" style="margin-bottom:10px"><h3>Quotes</h3>
     <div class="legend"><span>Open pipeline <b>${inr(tot.sp)}</b></span><span>Confirmed <b>${inr(tot.firm)}</b></span><span>Pitching <b>${inr(tot.pitch)}</b></span><button class="btn sm primary" data-action="new-project">+ New quote</button></div></div>
   <div class="panel"><div class="table-wrap"><table>
-    <thead><tr><th>Quote</th><th>Status</th><th>Dates</th><th>${esc(months[0].label)} – ${esc(months[5].label)}</th><th class="num">Price</th><th class="num">Cost</th><th class="num">Markup</th>${[...prodRoles,...leadRoles].map(r=>`<th class="num" title="${esc(r.name)}"><span class="dot" style="background:${roleColor(roles.indexOf(r))}"></span> ${esc(abbr(r.name))} d</th>`).join("")}</tr></thead>
-    <tbody>${prow||`<tr><td colspan="${7+roles.length}"><div class="empty"><strong>No quotes yet</strong>Create one in the Quote builder.</div></td></tr>`}</tbody>
+    <thead><tr><th>Quote</th><th>Status</th><th>Dates</th><th>${esc(months[0].label)} – ${esc(months[5].label)}</th><th class="num">Price</th><th class="num">Cost</th><th class="num">Markup</th><th>People</th>${[...prodRoles,...leadRoles].map(r=>`<th class="num" title="${esc(r.name)}"><span class="dot" style="background:${roleColor(roles.indexOf(r))}"></span> ${esc(abbr(r.name))} d</th>`).join("")}</tr></thead>
+    <tbody>${prow||`<tr><td colspan="${8+roles.length}"><div class="empty"><strong>No quotes yet</strong>Create one in the Quote builder.</div></td></tr>`}</tbody>
   </table></div></div>`;
 }
 
@@ -1020,8 +1086,10 @@ function flat(s){
   (s.credits||[]).forEach(c=>{m["cr:"+c.id]=[`${c.name} credit`,inr2(c.rate)];});
   m.dayRate=["Workday cost",inr(s.dayRate)];m.hours=["Hours per workday",String(s.hoursPerDay)];
   m.floor=["Markup floor",xfmt(+s.markupFloor)];m.target=["Target markup",xfmt(+s.targetMarkup)];
-  (s.roles||[]).forEach(r=>{m["rn:"+r.id]=["Role name",r.name];m["rh:"+r.id]=[`${r.name} headcount`,String(r.headcount)];m["ru:"+r.id]=[`${r.name} utilisation`,r.utilisation+"%"];
+  (s.roles||[]).forEach(r=>{m["rn:"+r.id]=["Role name",r.name];
     m["rg:"+r.id]=[`${r.name} type`,isLead(r)?"Leadership & coordination":"Production"];m["rp:"+r.id]=[`${r.name} hours per project`,String(+r.perProjectHours||0)];m["rq:"+r.id]=[`${r.name} % of production`,(+r.pctOfProduction||0)+"%"];});
+  const rn=id=>((s.roles||[]).find(r=>r.id===id)||{}).name||"?";
+  (s.people||[]).forEach(x=>{m["pn:"+x.id]=["Person",x.name];m["pu:"+x.id]=[`${x.name} utilisation`,(x.utilisation||0)+"%"];m["pr:"+x.id]=[`${x.name} roles`,(x.roles||[]).map(rn).join(", ")||"none"];});
   return m;
 }
 function viewReference(){
@@ -1033,15 +1101,20 @@ function viewReference(){
       <div class="field"><label for="st-cr-${i}">₹ per credit</label><input class="inp numi" inputmode="decimal" id="st-cr-${i}" data-k="set.credits.${i}.rate" data-num value="${esc(c.rate)}"></div>
       <span class="sub" style="padding-bottom:9px">${used(c.id)} job${used(c.id)===1?"":"s"}</span>
       <button class="btn ghost sm" data-action="rm-credit" data-i="${i}" ${used(c.id)?"disabled title=\"In use by job types\"":""} aria-label="Remove provider" style="margin-bottom:5px">✕</button></div>`).join("");
-  const roles=(d.roles||[]).map((r,i)=>`<div class="r-row team-row">
+  const roles=(d.roles||[]).map((r,i)=>`<div class="r-row role-row">
       <span class="dot" style="background:${roleColor(i)};margin-bottom:14px"></span>
       <div class="field"><label for="st-rn-${i}">Role</label><input class="inp" id="st-rn-${i}" data-k="set.roles.${i}.name" value="${esc(r.name)}"></div>
       <div class="field"><label for="st-rg-${i}">Type</label><select class="inp" id="st-rg-${i}" data-k="set.roles.${i}.group"><option value="production" ${!isLead(r)?"selected":""}>Production</option><option value="leadership" ${isLead(r)?"selected":""}>Leadership &amp; coordination</option></select></div>
-      <div class="field"><label for="st-rh-${i}">Headcount</label><input class="inp numi" inputmode="decimal" id="st-rh-${i}" data-k="set.roles.${i}.headcount" data-num value="${esc(r.headcount)}"></div>
-      <div class="field"><label for="st-ru-${i}">Utilisation %</label><input class="inp numi" inputmode="decimal" id="st-ru-${i}" data-k="set.roles.${i}.utilisation" data-num value="${esc(r.utilisation)}"></div>
       <div class="field"><label for="st-rp-${i}">Hours / project</label><input class="inp numi" inputmode="decimal" id="st-rp-${i}" data-k="set.roles.${i}.perProjectHours" data-num value="${esc(r.perProjectHours||0)}"></div>
       <div class="field"><label for="st-rq-${i}">% of production</label><input class="inp numi" inputmode="decimal" id="st-rq-${i}" data-k="set.roles.${i}.pctOfProduction" data-num value="${esc(r.pctOfProduction||0)}"></div>
+      <span class="sub" style="padding-bottom:10px;white-space:nowrap">${(n=>n+(n===1?" person":" people"))((d.people||[]).filter(x=>(x.roles||[]).includes(r.id)).length)}</span>
       <button class="btn ghost sm" data-action="rm-role" data-i="${i}" aria-label="Remove role" style="margin-bottom:6px">✕</button></div>`).join("");
+  const peopleRows=(d.people||[]).map((x,i)=>`<div class="r-row person-row">
+      <span class="avatar" style="background:${roleColor(personRoleIdx(x,d))};margin-bottom:8px">${esc(initials(x.name))}</span>
+      <div class="field"><label for="st-pn-${i}">Name</label><input class="inp" id="st-pn-${i}" data-k="set.people.${i}.name" value="${esc(x.name)}"></div>
+      <div class="field"><span class="lbl">Roles</span><div class="chk-row">${(d.roles||[]).map((r,ri)=>`<label class="chk"><input type="checkbox" id="st-pr-${i}-${esc(r.id)}" data-k="setrole" data-i="${i}" value="${esc(r.id)}" ${(x.roles||[]).includes(r.id)?"checked":""}><span class="dot" style="background:${roleColor(ri)}"></span>${esc(r.name)}</label>`).join("")}</div></div>
+      <div class="field"><label for="st-pu-${i}">Utilisation %</label><input class="inp numi" inputmode="decimal" id="st-pu-${i}" data-k="set.people.${i}.utilisation" data-num value="${esc(x.utilisation)}"></div>
+      <button class="btn ghost sm" data-action="rm-person" data-i="${i}" aria-label="Remove ${esc(x.name)}" style="margin-bottom:6px">✕</button></div>`).join("");
   // impact
   let impact="";
   if(state.sDirty){
@@ -1067,9 +1140,11 @@ function viewReference(){
         <div class="field"><label for="st-floor">Floor (×)</label><input class="inp numi" inputmode="decimal" id="st-floor" data-k="set.markupFloor" data-num value="${esc(d.markupFloor)}"></div>
         <div class="field"><label for="st-target">Target (×)</label><input class="inp numi" inputmode="decimal" id="st-target" data-k="set.targetMarkup" data-num value="${esc(d.targetMarkup)}"></div>
       </div></section>
-    <section class="panel panel-pad ref-card" style="grid-column:1/-1"><h3>Team</h3><p class="hint">Headcount × working days × utilisation = capacity. Utilisation is the share of a day spent on billable production (leave room for reviews, pitches and admin).</p>
+    <section class="panel panel-pad ref-card" style="grid-column:1/-1"><h3>Roles</h3>
       <p class="hint">Job effort in the rate card is production time only, booked to the role that does the job. Each quote also books every role's <b>hours per project</b> (strategy, kickoff, setup) plus <b>% of production</b> (reviews, coordination) on top of the quote's production days. That extra time is already priced into the workday rate, so it isn't added to internal cost.</p>
       <div class="rows">${roles}</div><button class="btn sm" style="margin-top:10px" data-action="add-role">+ Add role</button></section>
+    <section class="panel panel-pad ref-card" style="grid-column:1/-1"><h3>People</h3><p class="hint">Each person's capacity = working days × their utilisation (the share of a day spent on billable production, leaving room for reviews, pitches and admin). A person can hold several roles; all their work counts against one capacity.</p>
+      <div class="rows">${peopleRows||'<p class="sub">No one added yet.</p>'}</div><button class="btn sm" style="margin-top:10px" data-action="add-person">+ Add person</button></section>
   </div>
   ${state.sDirty?`<div class="savebar"><span>You have unsaved changes to reference rates.</span><div style="display:flex;gap:8px"><button class="btn" data-action="discard-settings">Discard</button><button class="btn primary" data-action="save-settings">Save changes</button></div></div>`:""}
   ${impact}
@@ -1101,6 +1176,8 @@ function onField(e){
   if(k==="addQty"){state.addQty=v;return;}
   if(k==="includePitches"){state.includePitches=v;render();return;}
   if(k==="exampleBaseId"){state.exampleBaseId=v;render();return;}
+  if(k==="assign"){const rid=el.dataset.role;updateProject(p=>{p.assign=Object.assign({},p.assign||{});if(v)p.assign[rid]=v;else delete p.assign[rid];});return;}
+  if(k==="setrole"){const x=state.sDraft.people[+el.dataset.i];const set=new Set(x.roles||[]);if(el.checked)set.add(el.value);else set.delete(el.value);x.roles=(state.sDraft.roles||[]).map(r=>r.id).filter(id=>set.has(id));state.sDirty=true;render();return;}
   if(k.startsWith("proj.")){updateProject(p=>{p[k.slice(5)]=v;});return;}
   if(k.startsWith("line.")){const id=el.dataset.id;updateProject(p=>{const l=(p.lines||[]).find(x=>x.id===id);if(l)l[k.slice(5)]=v;});return;}
   if(k.startsWith("job.")){
@@ -1166,11 +1243,20 @@ const actions={
   "add-credit"(){state.sDraft.credits.push({id:uid("c"),name:"New provider",rate:0});state.sDirty=true;render();},
   "rm-credit"(el){state.sDraft.credits.splice(+el.dataset.i,1);state.sDirty=true;render();},
   "add-role"(){state.sDraft.roles.push({id:uid("r"),name:"New role",group:"production",headcount:1,utilisation:80,perProjectHours:0,pctOfProduction:0});state.sDirty=true;render();},
-  "rm-role"(el){state.sDraft.roles.splice(+el.dataset.i,1);state.sDirty=true;render();},
+  "rm-role"(el){const [r]=state.sDraft.roles.splice(+el.dataset.i,1);(state.sDraft.people||[]).forEach(x=>{x.roles=(x.roles||[]).filter(id=>id!==r.id);});state.sDirty=true;render();},
+  "add-person"(){state.sDraft.people=state.sDraft.people||[];const pr=(state.sDraft.roles||[]).find(r=>!isLead(r));state.sDraft.people.push({id:uid("u"),name:"New person",roles:pr?[pr.id]:[],utilisation:80});state.sDirty=true;render();setTimeout(()=>{const el=$("#st-pn-"+(state.sDraft.people.length-1));if(el){el.focus();el.select();}},20);},
+  "rm-person"(el){state.sDraft.people.splice(+el.dataset.i,1);state.sDirty=true;render();},
+  "auto-assign"(){const s=S();const p=state.cur;if(!p)return;const pc=projectCalc(p,s);const pd=projDates(p);
+    const cache={};const loadOf=x=>{if(!pd)return 0;let t=0;state.projects.forEach(q=>{if(q.id===p.id||!counted(q))return;const qd=projDates(q);if(!qd)return;const ov=overlapWd(pd.a,pd.b,qd.a,qd.b);if(!ov)return;const qc=cache[q.id]||(cache[q.id]=projectCalc(q,s));t+=(qc.personDays[x.id]||0)*ov/qd.n;});return t/Math.max(0.0001,pd.n*personCapPerDay(x));};
+    const extra={};Object.entries(pc.personDays).forEach(([k,d])=>{if(!k.startsWith("u:"))extra[k]=d;});
+    const capOf=x=>Math.max(0.0001,(pd?pd.n:20)*personCapPerDay(x));
+    const order=[...(s.roles||[])].sort((a,b)=>(pc.roleDays[b.id]||0)-(pc.roleDays[a.id]||0));
+    updateProject(q=>{q.assign=Object.assign({},q.assign||{});order.forEach(r=>{const need=pc.roleDays[r.id]||0;if(need<=0||personById(q.assign[r.id],s))return;const c=peopleForRole(r.id,s).map(x=>({x,l:loadOf(x)+(extra[x.id]||0)/capOf(x)})).sort((a,b)=>a.l-b.l)[0];if(c){q.assign[r.id]=c.x.id;extra[c.x.id]=(extra[c.x.id]||0)+need;}});});
+    toast(pd?"Assigned the least-booked person for each role":"Assigned people — add dates to balance by workload");},
   "discard-settings"(){state.sDraft=null;state.sDirty=false;render();},
   async "save-settings"(){
     const a=flat(S()),b=flat(state.sDraft);const changes=[];
-    new Set([...Object.keys(a),...Object.keys(b)]).forEach(k=>{const x=a[k],y=b[k];if(!x)changes.push({label:"Added "+y[0],from:"—",to:y[1]});else if(!y)changes.push({label:"Removed "+x[0],from:x[1],to:"—"});else if(x[1]!==y[1])changes.push({label:k.startsWith("rn:")?"Role renamed":y[0],from:x[1],to:y[1]});});
+    new Set([...Object.keys(a),...Object.keys(b)]).forEach(k=>{const x=a[k],y=b[k];if(!x)changes.push({label:"Added "+y[0],from:"—",to:y[1]});else if(!y)changes.push({label:"Removed "+x[0],from:x[1],to:"—"});else if(x[1]!==y[1])changes.push({label:k.startsWith("rn:")?"Role renamed":k.startsWith("pn:")?"Person renamed":y[0],from:x[1],to:y[1]});});
     const next=clone(state.sDraft);next.history=[{at:new Date().toISOString(),changes}].concat((S().history||[])).slice(0,25);
     if(!changes.length){state.sDirty=false;state.sDraft=null;render();return;}
     state.settings=next;state.sDraft=null;state.sDirty=false;render();
@@ -1181,8 +1267,8 @@ const actions={
   "restore"(){$("#restore-file").click();},
   "reset-defaults"(){if(!SEED){toast("No data/seed.js found next to this file");return;}if(state.armed!=="reset"){state.armed="reset";render();return;}state.armed=null;fromShape(SEED);migrateState();state.sDraft=null;state.sDirty=false;const p=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];state.curId=p?p.id:null;state.cur=p?clone(p):null;render();replaceAllData().then(()=>toast("Reset to the rate card in data/seed.js"));},
   async "export-quote"(){if(!state.cur)return;const p=state.cur,s=S(),pc=projectCalc(p,s);
-    const rows=[["Project",p.name],["Client",p.client],["Status",STATUS_LABEL[p.status]],["Start",p.start],["Delivery",p.end],[],["Category","Job","Variant","Base film","Qty","Unit price","Line price","Internal cost","Markup","Margin %","Workdays",...(s.roles||[]).map(r=>r.name+" days"),"Credits","Credit provider"]];
-    pc.lines.forEach(({l,c})=>{if(!c)return;rows.push([c.j.category,c.j.name,c.j.variant,c.base?c.base.name+" "+(c.base.variant||""):"",c.qty,Math.round(c.unitSP),Math.round(c.sp),Math.round(c.cost),c.cost>0?(c.sp/c.cost).toFixed(2):"",c.sp>0?((c.sp-c.cost)/c.sp*100).toFixed(1):"",c.days,...(s.roles||[]).map(r=>+(c.roleDays[r.id]||0).toFixed(3)),Math.round(c.c.credits*c.qty),c.c.credits?creditName(c.c.creditType):""]);});
+    const rows=[["Project",p.name],["Client",p.client],["Status",STATUS_LABEL[p.status]],["Start",p.start],["Delivery",p.end],[],["Category","Job","Variant","Base film","Qty","Unit price","Line price","Internal cost","Markup","Margin %","Workdays","Done by",...(s.roles||[]).map(r=>r.name+" days"),"Credits","Credit provider"]];
+    pc.lines.forEach(({l,c})=>{if(!c)return;rows.push([c.j.category,c.j.name,c.j.variant,c.base?c.base.name+" "+(c.base.variant||""):"",c.qty,Math.round(c.unitSP),Math.round(c.sp),Math.round(c.cost),c.cost>0?(c.sp/c.cost).toFixed(2):"",c.sp>0?((c.sp-c.cost)/c.sp*100).toFixed(1):"",c.days,(()=>{const rid=doerOf(c.j).id;const x=personById(l.assignee)||personById((p.assign||{})[rid]);return x?x.name:"Unassigned";})(),...(s.roles||[]).map(r=>+(c.roleDays[r.id]||0).toFixed(3)),Math.round(c.c.credits*c.qty),c.c.credits?creditName(c.c.creditType):""]);});
     rows.push([],["Gross",Math.round(pc.gross)],["Discount",Math.round(pc.discount)],["Quote value (excl. taxes)",Math.round(pc.sp)],["Internal cost",Math.round(pc.cost)],["Margin",Math.round(pc.margin)],["Markup",pc.cost>0?pc.markup.toFixed(2):""]);
     saveCSV((p.name||"quote").replace(/[^\w\- ]+/g,"").trim()+".csv",rows);},
   async "export-rates"(){const s=S();const rows=[["Category","Job","Variant","Description","Pricing","Selling price","Internal cost","Markup","Margin %","Workdays","Credits","Buffer","Provider","External cost",...(s.roles||[]).map(r=>r.name+" %")]];
