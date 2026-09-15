@@ -45,7 +45,8 @@ Margin % = (price − internal cost) ÷ price
 ## Projects and schedule
 
 - **Projects tab:** every quote appears here automatically. Set status, priority (Critical / High / Medium / Low), start and delivery dates inline, see who's on each project, and keep a running comment thread per project. Your name for comments is remembered in your browser.
-- **Schedule tab:** a per-person view of what they're working on, week by week (or month by month). Each person's days are filled from each project's start date, highest priority first, up to their daily capacity (utilisation). Anything that can't fit before the delivery date is flagged as "x d won't fit by <date>" rather than silently moving the date. Delivered projects are excluded; pitches are optional.
+- **Schedule tab → Timeline:** an editable Gantt. Drag a project bar to move it, or its edges to change start and delivery. Expand a project to plan each deliverable on its own: a dashed bar follows the project dates until you drag it, and "reset" puts it back. Switch between day and week zoom, and use arrow keys (Shift for length) on a focused bar. Team load lanes at the bottom show each person's booked days per day or week and recolour as you drag.
+- **Schedule tab → By person:** a per-person view of what they're working on, week by week (or month by month). Each person's days are filled from each project's start date, highest priority first, up to their daily capacity (utilisation). Anything that can't fit before the delivery date is flagged as "x d won't fit by <date>" rather than silently moving the date. Delivered projects are excluded; pitches are optional.
 
 ## Where your data lives
 

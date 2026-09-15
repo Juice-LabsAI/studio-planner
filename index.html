@@ -143,6 +143,41 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
 .sch-bar span{display:block;height:100%;border-radius:2px}
 .sch-tot td{font-weight:700;background:var(--surface-2)}
 .sch-none td{color:var(--bad)}
+/* gantt */
+.gt-wrap{overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;max-height:72vh;overscroll-behavior-x:contain}
+.gt-row{display:flex;align-items:stretch;border-bottom:1px solid var(--line)}
+.gt-row:last-child{border-bottom:0}
+.gt-row:hover .gt-label{background:var(--surface-2)}
+.gt-label{width:276px;flex:0 0 276px;position:sticky;left:0;z-index:3;background:var(--surface);border-right:1px solid var(--line);padding:9px 12px;display:flex;gap:8px;align-items:flex-start}
+.gt-lane{position:relative;flex:0 0 auto;min-height:44px}
+.gt-head{position:sticky;top:0;z-index:4;background:var(--surface);border-bottom:1px solid var(--line-2)}
+.gt-head .gt-label{z-index:5;align-items:flex-end}
+.gt-head .gt-lane{min-height:auto}
+.gt-tick{position:absolute;top:0;bottom:0;font-size:11.5px;color:var(--ink-3);text-align:center;padding-top:22px;line-height:1.25;font-variant-numeric:tabular-nums}
+.gt-tick.wknd{color:var(--ink-3);opacity:.6}
+.gt-tick.today{color:var(--accent);font-weight:700}
+.gt-mon{position:absolute;top:3px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
+.gt-bar{position:absolute;top:9px;height:26px;border-radius:7px;background:var(--accent);color:#fff;display:flex;align-items:center;gap:6px;padding:0 9px;font-size:var(--fs-xs);font-weight:600;white-space:nowrap;overflow:hidden;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,.18);user-select:none;touch-action:none}
+.gt-bar.line{top:8px;height:22px;opacity:.95}
+.gt-bar.inherit{background:transparent;border:1.5px dashed currentColor;box-shadow:none}
+.gt-bar:active{cursor:grabbing}
+.gt-bar:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.gt-bar .hd{position:absolute;top:0;bottom:0;width:9px;cursor:ew-resize}
+.gt-bar .hd.l{left:0;border-radius:7px 0 0 7px}
+.gt-bar .hd.r{right:0;border-radius:0 7px 7px 0}
+.gt-bar .hd:hover{background:rgba(255,255,255,.35)}
+.gt-bar small{font-weight:500;opacity:.85}
+.gt-cell{position:absolute;top:11px;height:22px;border-radius:5px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.gt-open{appearance:none;border:0;background:none;cursor:pointer;color:var(--ink-3);padding:2px;line-height:1;font-size:13px;width:18px;flex:none}
+.gt-open:hover{color:var(--ink)}
+.gt-name{min-width:0}
+.gt-name b{display:block;font-size:var(--fs-sm);font-weight:600;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gt-name span{display:block;font-size:var(--fs-xs);color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gt-grp{background:var(--surface-2);font-size:var(--fs-xs);font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)}
+.gt-grp .gt-label{background:var(--surface-2)}
+.pdot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:7px;flex:none}
+#gt-tip{position:fixed;z-index:70;background:var(--ink);color:var(--bg);padding:6px 10px;border-radius:7px;font-size:var(--fs-xs);font-weight:600;pointer-events:none;box-shadow:var(--shadow)}
+#gt-tip[hidden]{display:none}
 .cmt-list{display:flex;flex-direction:column;gap:10px;margin:10px 0}
 .cmt{background:var(--surface-2);border-radius:9px;padding:10px 12px;font-size:var(--fs-sm)}
 .cmt .who{font-size:var(--fs-xs);color:var(--ink-3);margin-bottom:3px}
@@ -386,7 +421,7 @@ const state={
   settings:null, jobs:[], projects:[], loaded:{settings:false,jobs:false,projects:false},
   curId:null, cur:null, dirty:false, saveTimer:null, saving:false,
   addJobId:"", addQty:1,
-  includePitches:true, monthOffset:0, gran:"month", theme:"auto", qFilter:"", trFilter:"", openComments:null, me:"",
+  includePitches:true, monthOffset:0, gran:"month", theme:"auto", qFilter:"", trFilter:"", openComments:null, me:"", schedMode:"gantt", zoom:"day", gOffset:0, gOpen:{}, drag:null,
   exampleBaseId:"",
   jobDraft:null, jobDraftNew:false, jobErr:"",
   sDraft:null, sDirty:false,
@@ -395,7 +430,9 @@ const state={
 try{const t=localStorage.getItem("sp-tab");if(t)state.tab=t;
   const g=localStorage.getItem("sp-gran");if(g==="week"||g==="month")state.gran=g;
   const th=localStorage.getItem("sp-theme");if(th)state.theme=th;
-  state.me=localStorage.getItem("sp-me")||"";}catch(e){}
+  state.me=localStorage.getItem("sp-me")||"";
+  const sm=localStorage.getItem("sp-schedmode");if(sm)state.schedMode=sm;
+  const z=localStorage.getItem("sp-zoom");if(z==="day"||z==="week")state.zoom=z;}catch(e){}
 const S=()=>state.settings||EMPTY_SETTINGS;
 
 /* ---------- calculation engine ---------- */
@@ -785,6 +822,7 @@ function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTi
 
 /* ---------- rendering ---------- */
 function render(){
+  if(state.drag)return;
   const ae=document.activeElement;
   const keep=ae&&ae.id&&(ae.tagName==="INPUT"||ae.tagName==="TEXTAREA"||ae.tagName==="SELECT")?{id:ae.id,v:ae.value,s:ae.selectionStart,e:ae.selectionEnd,type:ae.type}:null;
   const scrollY=window.scrollY;
@@ -989,27 +1027,46 @@ function viewSummary(p,pc){
 
 /* ----- scheduler ----- */
 const isoOf=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+function lineWindow(p,l){
+  if(l&&l.start&&l.end&&l.start<=l.end){const a=D(l.start),b=D(l.end);return {a,b,n:wd(a,b)};}
+  return projDates(p);
+}
 function buildSchedule(s){
   s=s||S();
-  const byKey={},alloc={},over={},calcs={};
+  const byKey={},alloc={},over={},overLine={},dayTot={},calcs={};
   state.projects.forEach(p=>{
     if(!counted(p)||p.status==="delivered")return;
-    const pd=projDates(p);if(!pd)return;
+    const pd=projDates(p);
     const pc=calcs[p.id]||(calcs[p.id]=projectCalc(p,s));
-    Object.entries(pc.personDays).forEach(([k,d])=>{
-      if(d>0.0001)(byKey[k]=byKey[k]||[]).push({pid:p.id,need:d,a:pd.a,b:pd.b,pri:PRI_RANK[priOf(p)]});
+    const assign=p.assign||{};
+    const pri=PRI_RANK[priOf(p)];
+    pc.lines.forEach(({l,c})=>{
+      if(!c||c.days<=0.0001)return;
+      const rid=doerOf(c.j).id;if(!rid)return;
+      const key=(l.assignee&&personById(l.assignee,s)?l.assignee:null)||(personById(assign[rid],s)?assign[rid]:null)||("u:"+rid);
+      const w=lineWindow(p,l);if(!w)return;
+      (byKey[key]=byKey[key]||[]).push({pid:p.id,lid:l.id,need:c.days,a:w.a,b:w.b,pri});
+    });
+    if(pd)(s.roles||[]).forEach(r=>{
+      const d=pc.overRoleDays[r.id]||0;if(d<=0.0001)return;
+      const key=personById(assign[r.id],s)?assign[r.id]:("u:"+r.id);
+      (byKey[key]=byKey[key]||[]).push({pid:p.id,lid:null,need:d,a:pd.a,b:pd.b,pri});
     });
   });
   Object.entries(byKey).forEach(([key,ts])=>{
     const person=key.startsWith("u:")?null:personById(key,s);
     const cap=person?personCapPerDay(person):0;
-    if(!(cap>0)){ts.forEach(t=>{(over[key]=over[key]||{})[t.pid]=t.need;});return;}
+    const note=(t,left)=>{
+      (over[key]=over[key]||{})[t.pid]=((over[key]||{})[t.pid]||0)+left;
+      if(t.lid)(overLine[key]=overLine[key]||{})[t.pid+"|"+t.lid]=left;
+    };
+    if(!(cap>0)){ts.forEach(t=>note(t,t.need));return;}
     ts.sort((x,y)=>x.pri-y.pri||x.b-y.b||x.a-y.a);
     const rem=ts.map(t=>t.need);
     const d=new Date(Math.min(...ts.map(t=>+t.a)));d.setHours(12,0,0,0);
     const end=new Date(Math.max(...ts.map(t=>+t.b)));
     let guard=0;
-    while(d<=end&&guard++<2000){
+    while(d<=end&&guard++<3000){
       const w=d.getDay();
       if(w!==0&&w!==6){
         let free=cap;
@@ -1019,13 +1076,15 @@ function buildSchedule(s){
           const iso=isoOf(d);
           const A=alloc[key]=alloc[key]||{};const B=A[t.pid]=A[t.pid]||{};
           B[iso]=(B[iso]||0)+give;
+          const T=dayTot[key]=dayTot[key]||{};T[iso]=(T[iso]||0)+give;
+          if(t.lid){const L=alloc[key]["L:"+t.lid]=alloc[key]["L:"+t.lid]||{};L[iso]=(L[iso]||0)+give;}
         }
       }
       d.setDate(d.getDate()+1);
     }
-    ts.forEach((t,i)=>{if(rem[i]>1e-6)(over[key]=over[key]||{})[t.pid]=rem[i];});
+    ts.forEach((t,i)=>{if(rem[i]>1e-6)note(t,rem[i]);});
   });
-  return {alloc,over};
+  return {alloc,over,overLine,dayTot};
 }
 function allocIn(map,a,b){
   let t=0;if(!map)return 0;
@@ -1044,8 +1103,182 @@ function rowActions(p){
     <button class="icon-btn danger ${armed?"armed":""}" data-action="del-row" data-id="${esc(p.id)}" title="${armed?"Click again to delete":"Delete"}" aria-label="Delete ${esc(p.name||"quote")}">${ICON.trash}</button></div>`;
 }
 
+/* ----- editable gantt ----- */
+const DAY=864e5;
+const addDays=(iso,n)=>{const d=D(iso);d.setDate(d.getDate()+n);return isoOf(d);};
+const diffDays=(isoA,isoB)=>Math.round((D(isoB)-D(isoA))/DAY);
+function ganttHorizon(){
+  const t=new Date();t.setHours(12,0,0,0);
+  const startMon=new Date(t);startMon.setDate(t.getDate()-((t.getDay()+6)%7));
+  const dayView=state.zoom==="day";
+  startMon.setDate(startMon.getDate()+state.gOffset*7);
+  const days=dayView?42:112;
+  const dayW=dayView?34:13;
+  return {a:isoOf(startMon),days,dayW,dayView,w:days*dayW};
+}
+function viewGantt(){
+  const s=S();const H=ganttHorizon();const sc=buildSchedule(s);
+  const xOf=iso=>diffDays(H.a,iso)*H.dayW;
+  const clampBar=(a,b)=>{const x1=Math.max(0,xOf(a)),x2=Math.min(H.w,xOf(b)+H.dayW);return x2<=0||x1>=H.w?null:{left:x1,width:Math.max(H.dayW*0.7,x2-x1)};};
+  // header
+  let ticks="",months="";
+  for(let i=0;i<H.days;i+=(H.dayView?1:7)){
+    const iso=addDays(H.a,i),d=D(iso),w=d.getDay(),isTodayCol=isoOf(new Date())===iso;
+    const cls=H.dayView?(w===0||w===6?"wknd":"")+(isTodayCol?" today":""):"";
+    ticks+=`<div class="gt-tick ${cls}" style="left:${i*H.dayW}px;width:${(H.dayView?1:7)*H.dayW}px">${H.dayView?`${d.getDate()}<div style="font-size:10px">${"MTWTFSS"[(w+6)%7]}</div>`:`${d.getDate()} ${d.toLocaleDateString("en-IN",{month:"short"})}`}</div>`;
+    if(d.getDate()<=(H.dayView?1:7)||i===0)months+=`<div class="gt-mon" style="left:${i*H.dayW+2}px">${d.toLocaleDateString("en-IN",{month:"long",year:"2-digit"})}</div>`;
+  }
+  const laneBg=H.dayView
+    ?`background-image:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px ${H.dayW}px),repeating-linear-gradient(90deg,transparent 0 ${5*H.dayW}px,color-mix(in srgb,var(--surface-2) 70%,transparent) ${5*H.dayW}px ${7*H.dayW}px)`
+    :`background-image:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px ${7*H.dayW}px)`;
+  const lane=(inner,extra)=>`<div class="gt-lane" data-dayw="${H.dayW}" style="width:${H.w}px;${laneBg};${extra||""}">${inner}</div>`;
+  const todayX=(()=>{const iso=isoOf(new Date());const x=xOf(iso);return x>=0&&x<=H.w?x:null;})();
+  const todayLine=todayX!=null?`<div style="position:absolute;left:${todayX}px;top:0;bottom:0;width:2px;background:var(--accent);opacity:.5"></div>`:"";
+
+  const list=state.projects.filter(p=>p.status!=="delivered"&&counted(p))
+    .sort((a,b)=>PRI_RANK[priOf(a)]-PRI_RANK[priOf(b)]||(a.start||"9").localeCompare(b.start||"9"));
+  const undated=list.filter(p=>!projDates(p));
+  const dated=list.filter(p=>projDates(p));
+  const rows=dated.map(p=>{
+    const pc=projectCalc(p,s);const open=!!state.gOpen[p.id];
+    const bar=clampBar(p.start,p.end);
+    const barHtml=bar?`<div class="gt-bar" data-drag-bar data-pid="${esc(p.id)}" data-a="${esc(p.start)}" data-b="${esc(p.end)}" tabindex="0" role="button"
+      aria-label="${esc(p.name||"Quote")} ${esc(fmtRange(p.start,p.end))}. Drag to move, arrow keys to nudge"
+      style="left:${bar.left}px;width:${bar.width}px;background:${priColor(p)}">
+      <span class="hd l" data-drag="start"></span><span data-drag="move" style="flex:1;overflow:hidden;text-overflow:ellipsis">${esc(p.name||"Untitled")} <small>${days(pc.days)} d</small></span><span class="hd r" data-drag="end"></span>
+    </div>`:"";
+    const head=`<div class="gt-row">
+      <div class="gt-label"><button class="gt-open" data-action="gt-toggle" data-id="${esc(p.id)}" aria-expanded="${open}" aria-label="${open?"Collapse":"Expand"} ${esc(p.name||"quote")}">${open?"▾":"▸"}</button>
+        <div class="gt-name"><b><span class="pdot" style="background:${priColor(p)}" title="${esc(PRI_LABEL[priOf(p)])} priority"></span>${esc(p.name||"Untitled")}</b><span>${esc(PRI_LABEL[priOf(p)])} · ${esc(p.client||"no client")} · ${esc(fmtRange(p.start,p.end))}</span></div></div>
+      ${lane(barHtml+todayLine)}
+    </div>`;
+    if(!open)return head;
+    const lines=pc.lines.map(({l,c})=>{
+      if(!c||c.days<=0.0001)return "";
+      const w=lineWindow(p,l);const own=!!(l.start&&l.end);
+      const lb=clampBar(own?l.start:p.start,own?l.end:p.end);
+      const rid=doerOf(c.j).id;const who=(l.assignee&&personById(l.assignee,s))||personById((p.assign||{})[rid],s);
+      const key=who?who.id:("u:"+rid);
+      const left=((sc.overLine[key]||{})[p.id+"|"+l.id])||0;
+      const holders=rid?peopleForRole(rid,s):[];
+      const bh=lb?`<div class="gt-bar line ${own?"":"inherit"}" data-drag-bar data-pid="${esc(p.id)}" data-lid="${esc(l.id)}" data-a="${esc(own?l.start:p.start)}" data-b="${esc(own?l.end:p.end)}" tabindex="0" role="button"
+        aria-label="${esc(c.j.name)} ${esc(fmtRange(own?l.start:p.start,own?l.end:p.end))}${own?"":" (follows the project)"}"
+        style="left:${lb.left}px;width:${lb.width}px;${own?`background:${priColor(p)}`:`color:${priColor(p)}`}">
+        <span class="hd l" data-drag="start"></span><span data-drag="move" style="flex:1;overflow:hidden;text-overflow:ellipsis">${esc(c.j.name)} <small>${days(c.days)} d${own?"":" · follows project"}</small></span><span class="hd r" data-drag="end"></span></div>`:"";
+      return `<div class="gt-row">
+        <div class="gt-label" style="padding-left:34px">
+          <div class="gt-name"><b>${esc(c.j.name)}${c.j.variant?` <span class="muted" style="font-weight:500">· ${esc(c.j.variant)}</span>`:""}</b>
+            <span>${days(c.days)} d · <select class="inp xs" style="display:inline-block;width:auto;max-width:130px;padding:2px 5px" data-k="gline.assignee" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" aria-label="Who does ${esc(c.j.name)}"><option value="">Quote default</option>${holders.map(x=>`<option value="${esc(x.id)}" ${l.assignee===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select>
+            ${own?`<button class="btn ghost sm" style="padding:1px 5px" data-action="gt-reset-line" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" title="Follow the project dates again">reset</button>`:""}
+            ${left>0.0001?`<b style="color:var(--bad)"> · ${days(left)} d won't fit</b>`:""}</span></div></div>
+        ${lane(bh+todayLine)}
+      </div>`;
+    }).join("");
+    return head+lines;
+  }).join("");
+
+  // team load lanes
+  const step=H.dayView?1:7;
+  const loadRows=(s.people||[]).map(x=>{
+    const tot=sc.dayTot[x.id]||{};const capDay=personCapPerDay(x);
+    let cells="";
+    for(let i=0;i<H.days;i+=step){
+      let v=0,capN=0;
+      for(let k=0;k<step;k++){const iso=addDays(H.a,i+k);const w=D(iso).getDay();if(w===0||w===6)continue;capN++;v+=tot[iso]||0;}
+      const cap=capDay*capN;
+      if(!capN)continue;
+      const l=cap>0?v/cap:(v>0?2:0);
+      const bg=v<=0.0001?"var(--surface-2)":l>1.001?"var(--bad-soft)":l>.85?"var(--warn-soft)":"var(--accent-soft)";
+      const fg=v<=0.0001?"var(--ink-3)":l>1.001?"var(--bad)":l>.85?"var(--warn)":"var(--accent)";
+      cells+=`<div class="gt-cell" title="${esc(x.name)} · ${esc(fmtRange(addDays(H.a,i),addDays(H.a,i+step-1)))} · ${days(v)} of ${days(cap)} d" style="left:${i*H.dayW+2}px;width:${step*H.dayW-4}px;background:${bg};color:${fg}">${v>0.0001?(H.dayView?days(v):pct(l)):""}</div>`;
+    }
+    return `<div class="gt-row"><div class="gt-label"><div class="gt-name"><b><span class="pdot" style="background:${keyColor(x.id,s)}"></span>${esc(x.name)}</b><span>${days(capDay)} d per working day</span></div></div>${lane(cells+todayLine)}</div>`;
+  }).join("");
+
+  const undatedRows=undated.map(p=>`<div class="gt-row"><div class="gt-label"><div class="gt-name"><b><span class="pdot" style="background:${priColor(p)}"></span>${esc(p.name||"Untitled")}</b><span>${esc(PRI_LABEL[priOf(p)])} · ${esc(p.client||"no client")} · no dates</span></div></div>${lane(`<button class="btn sm" style="position:absolute;left:6px;top:8px" data-action="gt-schedule" data-id="${esc(p.id)}">Place on the calendar</button>`+todayLine)}</div>`).join("");
+
+  return `<div class="gt-wrap" id="gt-wrap">
+    <div style="min-width:${H.w+276}px">
+      <div class="gt-row gt-head"><div class="gt-label"><div class="gt-name"><b>Project</b><span>${H.dayView?"Day view · drag bars to move, edges to resize":"Week view · drag bars to move"}</span></div></div>${lane(months+ticks,"height:52px")}</div>
+      ${rows||`<div class="gt-row"><div class="gt-label"><span class="sub">No scheduled projects</span></div>${lane("")}</div>`}
+      ${undatedRows?`<div class="gt-row gt-grp"><div class="gt-label">Not on the calendar</div>${lane("")}</div>${undatedRows}`:""}
+      ${loadRows?`<div class="gt-row gt-grp"><div class="gt-label">Team load · ${H.dayView?"per day":"per week"}</div>${lane("")}</div>${loadRows}`:""}
+    </div></div>
+  <p class="sub" style="margin-top:10px;max-width:95ch">Drag a project bar to move it, or its edges to change start and delivery. Expand a project to plan each deliverable separately — a dashed bar follows the project dates until you drag it. Team load underneath updates as you move things: it uses priority order and each person's capacity, so you can see the knock-on effect straight away. Arrow keys nudge a focused bar by a day; hold Shift to change its length.</p>`;
+}
+
+/* drag + keyboard editing */
+function gtTip(txt,x,y){
+  let t=document.getElementById("gt-tip");
+  if(!t){t=document.createElement("div");t.id="gt-tip";document.body.appendChild(t);}
+  t.hidden=false;t.textContent=txt;t.style.left=(x+14)+"px";t.style.top=(y-34)+"px";
+}
+function gtTipHide(){const t=document.getElementById("gt-tip");if(t)t.hidden=true;}
+function gtCommit(pid,lid,a,b){
+  updateProjectById(pid,pr=>{
+    if(lid){const l=(pr.lines||[]).find(x=>x.id===lid);if(l){l.start=a;l.end=b;}}
+    else{pr.start=a;pr.end=b;}
+  });
+}
+document.addEventListener("pointerdown",e=>{
+  const h=e.target.closest("[data-drag]");if(!h)return;
+  const bar=h.closest(".gt-bar");if(!bar)return;
+  const lane=bar.parentElement;
+  state.drag={mode:h.dataset.drag,bar,lane,pid:bar.dataset.pid,lid:bar.dataset.lid||null,
+    x0:e.clientX,left0:parseFloat(bar.style.left),w0:parseFloat(bar.style.width),
+    dayW:+lane.dataset.dayw||34,a0:bar.dataset.a,b0:bar.dataset.b,moved:false};
+  bar.classList.add("dragging");
+  try{bar.setPointerCapture(e.pointerId);}catch(err){}
+  e.preventDefault();
+});
+document.addEventListener("pointermove",e=>{
+  const dg=state.drag;if(!dg)return;
+  const dd=Math.round((e.clientX-dg.x0)/dg.dayW);
+  let a=dg.a0,b=dg.b0;
+  if(dg.mode==="move"){a=addDays(dg.a0,dd);b=addDays(dg.b0,dd);}
+  else if(dg.mode==="start"){a=addDays(dg.a0,Math.min(dd,diffDays(dg.a0,dg.b0)));}
+  else{b=addDays(dg.b0,Math.max(dd,-diffDays(dg.a0,dg.b0)));}
+  dg.a=a;dg.b=b;dg.moved=dg.moved||dd!==0;
+  if(dg.mode==="move"){dg.bar.style.left=(dg.left0+dd*dg.dayW)+"px";}
+  else if(dg.mode==="start"){const shift=Math.min(dd,diffDays(dg.a0,dg.b0));dg.bar.style.left=(dg.left0+shift*dg.dayW)+"px";dg.bar.style.width=Math.max(dg.dayW,dg.w0-shift*dg.dayW)+"px";}
+  else{const grow=Math.max(dd,-diffDays(dg.a0,dg.b0));dg.bar.style.width=Math.max(dg.dayW,dg.w0+grow*dg.dayW)+"px";}
+  const n=wd(D(a),D(b));
+  gtTip(`${fmtRange(a,b)} · ${n} working day${n===1?"":"s"}`,e.clientX,e.clientY);
+});
+document.addEventListener("pointerup",()=>{
+  const dg=state.drag;if(!dg)return;
+  state.drag=null;gtTipHide();dg.bar.classList.remove("dragging");
+  if(dg.moved&&dg.a&&dg.b)gtCommit(dg.pid,dg.lid,dg.a,dg.b);else render();
+});
+document.addEventListener("keydown",e=>{
+  const bar=e.target&&e.target.classList&&e.target.classList.contains("gt-bar")?e.target:null;
+  if(!bar)return;
+  const dir=e.key==="ArrowLeft"?-1:e.key==="ArrowRight"?1:0;if(!dir)return;
+  e.preventDefault();
+  const a=bar.dataset.a,b=bar.dataset.b;
+  if(e.shiftKey){const nb=addDays(b,dir);if(diffDays(a,nb)>=0)gtCommit(bar.dataset.pid,bar.dataset.lid||null,a,nb);}
+  else gtCommit(bar.dataset.pid,bar.dataset.lid||null,addDays(a,dir),addDays(b,dir));
+});
+
 /* ----- schedule view ----- */
 function viewSchedule(){
+  if(state.schedMode==="gantt")return viewScheduleShell(viewGantt());
+  return viewScheduleShell(viewPeopleSchedule());
+}
+function viewScheduleShell(body){
+  const gantt=state.schedMode==="gantt";
+  return `<div class="section-head"><div><h2>Schedule</h2><p>${gantt?"Drag projects and deliverables across the calendar. Team load below reacts to every change, so you can balance as you plan.":"Each person's work over time. Days are filled from each project's start date, highest priority first, up to that person's capacity. Anything that can't fit before a delivery date is flagged instead of moving the date."}</p></div>
+    <div class="toolbar">
+      <div class="seg-sm" role="group" aria-label="Schedule view"><button data-action="sched-mode" data-v="gantt" aria-pressed="${gantt}">Timeline</button><button data-action="sched-mode" data-v="people" aria-pressed="${!gantt}">By person</button></div>
+      <label class="toggle"><input type="checkbox" id="sch-pitch" data-k="includePitches" ${state.includePitches?"checked":""}> Include pitches</label>
+      ${gantt?`<div class="seg-sm" role="group" aria-label="Zoom"><button data-action="zoom" data-v="day" aria-pressed="${state.zoom==="day"}">Days</button><button data-action="zoom" data-v="week" aria-pressed="${state.zoom==="week"}">Weeks</button></div>
+      <div class="month-nav"><button class="btn sm" data-action="gshift" data-d="-1" aria-label="Earlier">←</button><button class="btn sm" data-action="gshift" data-d="0">Today</button><button class="btn sm" data-action="gshift" data-d="1" aria-label="Later">→</button></div>`
+      :`<div class="seg-sm" role="group" aria-label="Time scale"><button data-action="gran" data-v="week" aria-pressed="${state.gran==="week"}">Weekly</button><button data-action="gran" data-v="month" aria-pressed="${state.gran==="month"}">Monthly</button></div>
+      <div class="month-nav"><button class="btn sm" data-action="month" data-d="-1" aria-label="Earlier">←</button><button class="btn sm" data-action="month" data-d="0">Today</button><button class="btn sm" data-action="month" data-d="1" aria-label="Later">→</button></div>`}
+    </div></div>
+  ${body}`;
+}
+function viewPeopleSchedule(){
   const s=S();const periods=periodsFor();const {alloc,over}=buildSchedule(s);
   const keys=[...new Set([...Object.keys(alloc),...Object.keys(over)])];
   const people=(s.people||[]);
@@ -1058,7 +1291,7 @@ function viewSchedule(){
   const blocks=keys.map(key=>{
     const person=key.startsWith("u:")?null:personById(key,s);
     const capDay=person?personCapPerDay(person):0;
-    const pids=Object.keys(alloc[key]||{});
+    const pids=Object.keys(alloc[key]||{}).filter(k=>!k.startsWith("L:"));
     const oPids=Object.keys(over[key]||{});
     const all=[...new Set([...pids,...oPids])].map(projById).filter(Boolean)
       .sort((a,b)=>PRI_RANK[priOf(a)]-PRI_RANK[priOf(b)]||(a.end||"").localeCompare(b.end||""));
@@ -1086,13 +1319,7 @@ function viewSchedule(){
       <div class="table-wrap"><table class="sch-grid cap-grid">${head}<tbody>${rows}<tr class="sch-tot"><td>Total booked</td>${totals}</tr></tbody></table></div>
     </div>`;
   }).join("");
-  return `<div class="section-head"><div><h2>Schedule</h2><p>Each person's work laid out over time. Days are filled from each project's start date, highest priority first, up to that person's daily capacity. Anything that can't fit before a delivery date is flagged instead of moving the date.</p></div>
-    <div class="toolbar">
-      <label class="toggle"><input type="checkbox" id="sch-pitch" data-k="includePitches" ${state.includePitches?"checked":""}> Include pitches</label>
-      <div class="seg-sm" role="group" aria-label="Time scale"><button data-action="gran" data-v="week" aria-pressed="${state.gran==="week"}">Weekly</button><button data-action="gran" data-v="month" aria-pressed="${state.gran==="month"}">Monthly</button></div>
-      <div class="month-nav"><button class="btn sm" data-action="month" data-d="-1" aria-label="Earlier">←</button><button class="btn sm" data-action="month" data-d="0">Today</button><button class="btn sm" data-action="month" data-d="1" aria-label="Later">→</button></div>
-    </div></div>
-  ${blocks||`<div class="panel empty"><strong>Nothing to schedule yet</strong>Quotes need dates, deliverables and people assigned.</div>`}
+  return `${blocks||`<div class="panel empty"><strong>Nothing to schedule yet</strong>Quotes need dates, deliverables and people assigned.</div>`}
   <p class="sub" style="margin-top:4px;max-width:90ch">Delivered quotes are left out. Priority is set per project in the Projects tab.</p>`;
 }
 function priColor(p){return {critical:"var(--bad)",high:"var(--warn)",medium:"var(--accent)",low:"var(--ink-3)"}[priOf(p)];}
@@ -1455,6 +1682,7 @@ function onField(e){
   if(k==="qFilter"){state.qFilter=v;render();return;}
   if(k==="trFilter"){state.trFilter=v;render();return;}
   if(k==="me"){state.me=v;try{localStorage.setItem("sp-me",v);}catch(e){}return;}
+  if(k.startsWith("gline.")){const f=k.slice(6),id=el.dataset.id;updateProjectById(el.dataset.pid,pr=>{const l=(pr.lines||[]).find(x=>x.id===id);if(l)l[f]=v;});return;}
   if(k.startsWith("tp.")){const id=el.dataset.id,f=k.slice(3);updateProjectById(id,pr=>{pr[f]=v;});return;}
   if(k==="addJobId"){state.addJobId=v;return;}
   if(k==="addQty"){state.addQty=v;return;}
@@ -1522,6 +1750,13 @@ const actions={
   "dup-project"(){if(!state.cur)return;flushProject();const now=new Date().toISOString();const p=clone(state.cur);p.id=uid("p");p.name=(p.name||"Quote")+" (copy)";p.status="pitch";p.createdAt=now;p.updatedAt=now;p.lines=(p.lines||[]).map(l=>Object.assign(l,{id:uid("l")}));state.projects.push(clone(p));state.curId=p.id;state.cur=p;state.dirty=true;flushProject();render();toast("Quote duplicated");},
   "open-project"(el){flushProject();const f=state.projects.find(p=>p.id===el.dataset.id);if(!f)return;state.curId=f.id;state.cur=clone(f);state.tab="quote";render();window.scrollTo(0,0);},
   "del-project"(){if(state.armed!=="del-proj"){state.armed="del-proj";render();return;}const id=state.curId;clearTimeout(state.saveTimer);state.dirty=false;state.projects=state.projects.filter(p=>p.id!==id);state.cur=null;state.curId=null;state.armed=null;dbDel("projects/"+id);const n=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];if(n){state.curId=n.id;state.cur=clone(n);}render();toast("Quote deleted");},
+  "sched-mode"(el){state.schedMode=el.dataset.v;try{localStorage.setItem("sp-schedmode",state.schedMode);}catch(e){}render();},
+  zoom(el){state.zoom=el.dataset.v;state.gOffset=0;try{localStorage.setItem("sp-zoom",state.zoom);}catch(e){}render();},
+  gshift(el){const d=+el.dataset.d;state.gOffset=d===0?0:state.gOffset+(state.zoom==="day"?d*2:d*4);render();},
+  "gt-toggle"(el){const id=el.dataset.id;state.gOpen=Object.assign({},state.gOpen);if(state.gOpen[id])delete state.gOpen[id];else state.gOpen[id]=1;render();},
+  "gt-reset-line"(el){updateProjectById(el.dataset.pid,pr=>{const l=(pr.lines||[]).find(x=>x.id===el.dataset.id);if(l){delete l.start;delete l.end;}});toast("Line follows the project dates again");},
+  "gt-schedule"(el){const H=ganttHorizon();const a=addDays(H.a,(new Date()>=D(H.a)&&new Date()<=D(addDays(H.a,H.days)))?diffDays(H.a,isoOf(new Date())):0);
+    updateProjectById(el.dataset.id,pr=>{pr.start=a;pr.end=addDays(a,4);});toast("Placed on the calendar — drag to adjust");},
   comments(el){const id=el.dataset.id;state.openComments=state.openComments===id?null:id;render();
     if(state.openComments)setTimeout(()=>{const t=$("#cmt-text-"+id);if(t)t.focus();},30);},
   "add-comment"(el){const id=el.dataset.id;const box=$("#cmt-text-"+id);const text=box?box.value.trim():"";
