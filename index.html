@@ -153,12 +153,14 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
 .gt-foot{height:14px}
 .gt-key{margin-bottom:14px}
 .gt-key h3{margin-bottom:10px}
-.gt-legend{display:flex;gap:8px 18px;flex-wrap:wrap;align-items:center;font-size:var(--fs-sm);color:var(--ink-2);margin-bottom:9px;line-height:1.5}
-.gt-legend:last-child{margin-bottom:0}
+.key-row{display:flex;gap:11px;align-items:flex-start;font-size:var(--fs-sm);color:var(--ink-2);margin-bottom:9px;line-height:1.55}
+.key-row:last-child{margin-bottom:0}
+.key-row>.lg{margin-top:4px}
+.key-row .dot{vertical-align:0}
 .gt-legend span{display:inline-flex;align-items:center;gap:7px}
 .lg{width:26px;height:13px;border-radius:4px;background:var(--accent);flex:none}
-.lg.line{height:10px;width:22px}
-.lg.dash{background:transparent;border:1.5px dashed var(--accent);height:10px;width:22px}
+.lg.line{height:13px;width:24px;background:color-mix(in srgb,var(--accent) 15%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 40%,var(--surface));border-left:4px solid var(--accent)}
+.lg.dash{height:13px;width:24px;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--accent) 12%,var(--surface)) 0 5px,var(--surface) 5px 10px);border:1px dashed color-mix(in srgb,var(--accent) 45%,var(--surface));border-left:4px solid var(--accent)}
 .gt-bar.out{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--bad)}
 .gt-row{display:flex;align-items:stretch;border-bottom:1px solid var(--line)}
 .gt-row:last-child{border-bottom:0}
@@ -173,8 +175,10 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
 .gt-tick.today{color:var(--accent);font-weight:700}
 .gt-mon{position:absolute;top:3px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
 .gt-bar{position:absolute;top:9px;height:26px;border-radius:7px;background:var(--accent);color:#fff;display:flex;align-items:center;gap:6px;padding:0 9px;font-size:var(--fs-xs);font-weight:600;white-space:nowrap;overflow:hidden;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,.18);user-select:none;touch-action:none}
-.gt-bar.line{top:8px;height:22px;opacity:.95}
-.gt-bar.inherit{background:transparent;border:1.5px dashed currentColor;box-shadow:none}
+.gt-bar.line{top:10px;height:22px;background:color-mix(in srgb,var(--bc) 15%,var(--surface));color:color-mix(in srgb,var(--bc) 78%,var(--ink));border:1px solid color-mix(in srgb,var(--bc) 40%,var(--surface));border-left:4px solid var(--bc);box-shadow:none;font-weight:500}
+.gt-bar.line small{opacity:1;color:var(--ink-3)}
+.gt-bar.line.inherit{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--bc) 12%,var(--surface)) 0 5px,var(--surface) 5px 10px);border-style:dashed;border-left-style:solid}
+.gt-bar.line .hd:hover{background:color-mix(in srgb,var(--bc) 22%,transparent)}
 .gt-bar:active{cursor:grabbing}
 .gt-bar:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .gt-bar .hd{position:absolute;top:0;bottom:0;width:9px;cursor:ew-resize}
@@ -190,7 +194,9 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
 .gt-open[aria-expanded="true"] svg{transform:rotate(90deg)}
 .gt-name{min-width:0}
 .gt-name b{display:block;font-size:var(--fs-sm);font-weight:600;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.gt-name span{display:block;font-size:var(--fs-xs);color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gt-name span.meta{display:block;font-size:var(--fs-xs);color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gt-acts{display:flex;gap:6px 8px;align-items:center;flex-wrap:wrap;margin-top:5px;font-size:var(--fs-xs);color:var(--ink-3)}
+.gt-acts .inp.xs{padding:2px 6px}
 .gt-grp{background:var(--surface-2);font-size:var(--fs-xs);font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)}
 .gt-grp .gt-label{background:var(--surface-2)}
 .pdot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:7px;flex:none}
@@ -1168,12 +1174,18 @@ function viewGantt(){
     const bar=clampBar(p.start,p.end);
     const barHtml=bar?`<div class="gt-bar" data-drag-bar data-pid="${esc(p.id)}" data-a="${esc(p.start)}" data-b="${esc(p.end)}" tabindex="0" role="button"
       aria-label="${esc(p.name||"Quote")} ${esc(fmtRange(p.start,p.end))}. Drag to move, arrow keys to nudge"
-      style="left:${bar.left}px;width:${bar.width}px;background:${priColor(p)}">
+      style="left:${bar.left}px;width:${bar.width}px;--bc:${priColor(p)};background:var(--bc)">
       <span class="hd l" data-drag="start"></span><span data-drag="move" style="flex:1;overflow:hidden;text-overflow:ellipsis">${esc(p.name||"Untitled")} <small>${days(pc.days)} d</small></span><span class="hd r" data-drag="end"></span>
     </div>`:"";
     const head=`<div class="gt-row">
       <div class="gt-label"><button class="gt-open" data-action="gt-toggle" data-id="${esc(p.id)}" aria-expanded="${open}" aria-label="${open?"Collapse":"Expand"} ${esc(p.name||"quote")}">${ICON.chev}</button>
-        <div class="gt-name"><b><span class="pdot" style="background:${priColor(p)}" title="${esc(PRI_LABEL[priOf(p)])} priority"></span>${esc(p.name||"Untitled")}</b><span>${esc(PRI_LABEL[priOf(p)])} · ${esc(p.client||"no client")} · ${esc(fmtRange(p.start,p.end))}${maxOver?` · <b style="color:var(--bad)">Overflow +${maxOver} d</b> <button class="btn ghost sm" style="padding:1px 6px" data-action="gt-fit" data-id="${esc(p.id)}" title="Move the delivery date to cover every deliverable">extend</button>`:""}${maxEarly?` · <span style="color:var(--warn)">starts ${maxEarly} d early</span>`:""}</span></div></div>
+        <div class="gt-name"><b><span class="pdot" style="background:${priColor(p)}" title="${esc(PRI_LABEL[priOf(p)])} priority"></span>${esc(p.name||"Untitled")}</b>
+          <span class="meta">${esc(PRI_LABEL[priOf(p)])} · ${esc(p.client||"no client")} · ${esc(fmtRange(p.start,p.end))}</span>
+          ${(maxOver||maxEarly||open)?`<div class="gt-acts">
+            ${maxOver?`<b style="color:var(--bad)">Overflow +${maxOver} d</b><button class="btn ghost sm" style="padding:1px 7px" data-action="gt-fit" data-id="${esc(p.id)}" title="Move the delivery date to cover every deliverable">extend</button>`:""}
+            ${maxEarly?`<span style="color:var(--warn)">starts ${maxEarly} d early</span>`:""}
+            ${open?`<button class="btn ghost sm" style="padding:1px 7px" data-action="gt-autoplan" data-id="${esc(p.id)}" title="Give each deliverable its own dates, in the order the schedule already plans them">auto-plan</button>`:""}
+          </div>`:""}</div></div>
       ${lane(barHtml+todayLine)}
     </div>`;
     if(!open)return head;
@@ -1188,15 +1200,18 @@ function viewGantt(){
       const outside=own&&(l.start<p.start||l.end>p.end);
       const bh=lb?`<div class="gt-bar line ${own?"":"inherit"} ${outside?"out":""}" data-drag-bar data-pid="${esc(p.id)}" data-lid="${esc(l.id)}" data-a="${esc(own?l.start:p.start)}" data-b="${esc(own?l.end:p.end)}" tabindex="0" role="button"
         aria-label="${esc(c.j.name)} ${esc(fmtRange(own?l.start:p.start,own?l.end:p.end))}${own?"":" (follows the project)"}"
-        style="left:${lb.left}px;width:${lb.width}px;${own?`background:${priColor(p)}`:`color:${priColor(p)}`}">
+        style="left:${lb.left}px;width:${lb.width}px;--bc:${priColor(p)}">
         <span class="hd l" data-drag="start"></span><span data-drag="move" style="flex:1;overflow:hidden;text-overflow:ellipsis">${esc(c.j.name)} <small>${days(c.days)} d${own?"":" · auto"}</small></span><span class="hd r" data-drag="end"></span></div>`:"";
       return `<div class="gt-row">
         <div class="gt-label" style="padding-left:34px">
           <div class="gt-name"><b>${esc(c.j.name)}${c.j.variant?` <span class="muted" style="font-weight:500">· ${esc(c.j.variant)}</span>`:""}</b>
-            <span>${days(c.days)} d · <select class="inp xs" style="display:inline-block;width:auto;max-width:130px;padding:2px 5px" data-k="gline.assignee" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" aria-label="Who does ${esc(c.j.name)}"><option value="">Quote default</option>${holders.map(x=>`<option value="${esc(x.id)}" ${l.assignee===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select>
-            ${own?`<button class="btn ghost sm" style="padding:1px 5px" data-action="gt-reset-line" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" title="Follow the project dates again">reset</button>`:""}
-            ${own&&l.end>p.end?`<b style="color:var(--bad)"> · Overflow +${diffDays(p.end,l.end)} d</b>`:""}${own&&l.start<p.start?`<span style="color:var(--warn)"> · starts ${diffDays(l.start,p.start)} d early</span>`:""}
-            ${left>0.0001?`<b style="color:var(--bad)"> · ${days(left)} d won't fit</b>`:""}</span></div></div>
+            <div class="gt-acts">
+              <span>${days(c.days)} d</span>
+              <select class="inp xs" style="width:auto;max-width:132px" data-k="gline.assignee" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" aria-label="Who does ${esc(c.j.name)}"><option value="">Quote default</option>${holders.map(x=>`<option value="${esc(x.id)}" ${l.assignee===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select>
+              ${own?`<button class="btn ghost sm" style="padding:1px 7px" data-action="gt-reset-line" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" title="Follow the project dates again">reset</button>`:""}
+              ${own&&l.end>p.end?`<b style="color:var(--bad)">Overflow +${diffDays(p.end,l.end)} d</b>`:""}${own&&l.start<p.start?`<span style="color:var(--warn)">starts ${diffDays(l.start,p.start)} d early</span>`:""}
+              ${left>0.0001?`<b style="color:var(--bad)">${days(left)} d won't fit</b>`:""}
+            </div></div></div>
         ${lane(bh+todayLine)}
       </div>`;
     }).join("");
@@ -1218,33 +1233,24 @@ function viewGantt(){
       const fg=v<=0.0001?"var(--ink-3)":l>1.001?"var(--bad)":l>.85?"var(--warn)":"var(--accent)";
       cells+=`<div class="gt-cell" title="${esc(x.name)} · ${esc(fmtRange(addDays(H.a,i),addDays(H.a,i+step-1)))} · ${days(v)} of ${days(cap)} d" style="left:${i*H.dayW+2}px;width:${step*H.dayW-4}px;background:${bg};color:${fg}">${v>0.0001?(H.dayView?days(v):pct(l)):""}</div>`;
     }
-    return `<div class="gt-row"><div class="gt-label"><div class="gt-name"><b><span class="pdot" style="background:${keyColor(x.id,s)}"></span>${esc(x.name)}</b><span>${days(capDay)} d per working day</span></div></div>${lane(cells+todayLine)}</div>`;
+    return `<div class="gt-row"><div class="gt-label"><div class="gt-name"><b><span class="pdot" style="background:${keyColor(x.id,s)}"></span>${esc(x.name)}</b><span class="meta">${days(capDay)} d per working day</span></div></div>${lane(cells+todayLine)}</div>`;
   }).join("");
 
-  const undatedRows=undated.map(p=>`<div class="gt-row"><div class="gt-label"><div class="gt-name"><b><span class="pdot" style="background:${priColor(p)}"></span>${esc(p.name||"Untitled")}</b><span>${esc(PRI_LABEL[priOf(p)])} · ${esc(p.client||"no client")} · no dates</span></div></div>${lane(`<button class="btn sm" style="position:absolute;left:6px;top:8px" data-action="gt-schedule" data-id="${esc(p.id)}">Place on the calendar</button>`+todayLine)}</div>`).join("");
+  const undatedRows=undated.map(p=>`<div class="gt-row"><div class="gt-label"><div class="gt-name"><b><span class="pdot" style="background:${priColor(p)}"></span>${esc(p.name||"Untitled")}</b><span class="meta">${esc(PRI_LABEL[priOf(p)])} · ${esc(p.client||"no client")} · no dates</span></div></div>${lane(`<button class="btn sm" style="position:absolute;left:6px;top:8px" data-action="gt-schedule" data-id="${esc(p.id)}">Place on the calendar</button>`+todayLine)}</div>`).join("");
 
   return `${state.gLegend?`<div class="panel panel-pad gt-key">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><h3>How to read this</h3><button class="icon-btn" data-action="gt-legend" aria-label="Hide the key">✕</button></div>
-    <div class="gt-legend">
-      <span><span class="lg"></span><b>Thick bar = the whole project.</b> The dates you promised the client.</span>
-      <span><span class="lg line"></span><b>Thin bar = one deliverable</b>, with its own dates.</span>
-      <span><span class="lg dash"></span><b>Dashed = no dates of its own yet</b>, so it sits on the project's dates. Drag it to give it real dates; <b>reset</b> puts it back.</span>
-    </div>
-    <div class="gt-legend">
-      <span>Colour = how urgent:</span>
-      <span><span class="dot" style="background:var(--bad)"></span>Critical</span><span><span class="dot" style="background:var(--warn)"></span>High</span><span><span class="dot" style="background:var(--accent)"></span>Medium</span><span><span class="dot" style="background:var(--ink-3)"></span>Low</span>
-    </div>
-    <div class="gt-legend">
-      <span><b style="color:var(--bad)">Overflow +3 d</b> = a deliverable runs 3 days past the delivery date. <b>extend</b> pushes the delivery date out to cover it.</span>
-    </div>
-    <div class="gt-legend">
-      <span><b>0.5 d won't fit</b> = the person doesn't have half a day free inside those dates, once their more urgent work is in.</span>
-    </div>
-    <div class="gt-legend"><span>Drag the middle of a bar to move it. Drag an edge to make it longer or shorter. Arrow keys move it a day at a time; hold Shift to change its length. The team load rows at the bottom update as you drag.</span></div>
+    <div class="key-row"><span class="lg"></span><div><b>Thick bar = the whole project.</b> The dates you promised the client.</div></div>
+    <div class="key-row"><span class="lg line"></span><div><b>Thin tinted bar = one deliverable</b> with its own dates.</div></div>
+    <div class="key-row"><span class="lg dash"></span><div><b>Dashed = the deliverable has no dates of its own yet.</b> New deliverables start this way: they can happen anywhere inside the project's dates, and the schedule sequences them for you. Drag one, or hit <b>auto-plan</b> on the project row, to pin real dates. <b>reset</b> puts it back.</div></div>
+    <div class="key-row"><span class="lg" style="background:none;border:0"></span><div>Colour shows how urgent it is: <span class="dot" style="background:var(--bad)"></span> Critical &nbsp;<span class="dot" style="background:var(--warn)"></span> High &nbsp;<span class="dot" style="background:var(--accent)"></span> Medium &nbsp;<span class="dot" style="background:var(--ink-3)"></span> Low</div></div>
+    <div class="key-row"><span class="lg" style="background:none;border:0"></span><div><b style="color:var(--bad)">Overflow +3 d</b> means a deliverable runs 3 days past the delivery date. <b>extend</b> pushes the delivery date out to cover it.</div></div>
+    <div class="key-row"><span class="lg" style="background:none;border:0"></span><div><b>0.5 d won't fit</b> means the person doesn't have half a day free inside those dates, once their more urgent work is in.</div></div>
+    <div class="key-row"><span class="lg" style="background:none;border:0"></span><div>Drag the middle of a bar to move it, an edge to make it longer or shorter. Arrow keys move it a day at a time; hold Shift to change its length. The team load rows at the bottom update as you drag.</div></div>
   </div>`:""}
   <div class="gt-wrap" id="gt-wrap">
     <div style="min-width:${H.w+276}px">
-      <div class="gt-row gt-head"><div class="gt-label"><div class="gt-name"><b>Project</b><span>${H.dayView?"Day view · drag bars to move, edges to resize":"Week view · drag bars to move"}</span></div></div>${lane(months+ticks,"height:52px")}</div>
+      <div class="gt-row gt-head"><div class="gt-label"><div class="gt-name"><b>Project</b><span class="meta">${H.dayView?"Day view · drag to move":"Week view · drag to move"}</span></div></div>${lane(months+ticks,"height:52px")}</div>
       ${rows||`<div class="gt-row"><div class="gt-label"><span class="sub">No scheduled projects</span></div>${lane("")}</div>`}
       ${undatedRows?`<div class="gt-row gt-grp"><div class="gt-label">Not on the calendar</div>${lane("")}</div>${undatedRows}`:""}
       ${loadRows?`<div class="gt-row gt-grp"><div class="gt-label">Team load · ${H.dayView?"per day":"per week"}</div>${lane("")}</div>${loadRows}`:""}
@@ -1802,6 +1808,25 @@ const actions={
   gshift(el){const d=+el.dataset.d;state.gOffset=d===0?0:state.gOffset+(state.zoom==="day"?d*2:d*4);render();},
   "gt-toggle"(el){const id=el.dataset.id;state.gOpen=Object.assign({},state.gOpen);if(state.gOpen[id])delete state.gOpen[id];else state.gOpen[id]=1;render();},
   "gt-legend"(){state.gLegend=!state.gLegend;render();},
+  "gt-autoplan"(el){
+    const s=S();const id=el.dataset.id;const pr=projById(id);if(!pr)return;
+    // re-plan from scratch: ignore this project's pinned line dates, keep everyone else's
+    const keep=state.projects;
+    state.projects=keep.map(x=>x.id!==id?x:Object.assign({},x,{lines:(x.lines||[]).map(l=>{const c=Object.assign({},l);delete c.start;delete c.end;return c;})}));
+    let sc;try{sc=buildSchedule(s);}finally{state.projects=keep;}
+    let n=0;
+    const first={},last={};
+    Object.values(sc.alloc).forEach(byPid=>{
+      Object.entries(byPid).forEach(([k,map])=>{
+        if(!k.startsWith("L:"))return;
+        const lid=k.slice(2);const isos=Object.keys(map).sort();
+        if(!isos.length)return;
+        if(!first[lid]||isos[0]<first[lid])first[lid]=isos[0];
+        if(!last[lid]||isos[isos.length-1]>last[lid])last[lid]=isos[isos.length-1];
+      });
+    });
+    updateProjectById(id,x=>{(x.lines||[]).forEach(l=>{if(first[l.id]){l.start=first[l.id];l.end=last[l.id];n++;}});});
+    toast(n?`Planned ${n} deliverable${n===1?"":"s"} — drag to adjust`:"Nothing to plan: assign people to these deliverables first");},
   "gt-fit"(el){const id=el.dataset.id;const pr=projById(id);if(!pr)return;
     const ls=(pr.lines||[]).filter(l=>l.start&&l.end);
     if(!ls.length)return;
