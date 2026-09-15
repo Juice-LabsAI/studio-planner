@@ -20,7 +20,8 @@
   --f-display:"Bricolage Grotesque","Public Sans",system-ui,sans-serif;
   --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
-  --fs-xs:12.5px; --fs-sm:13.5px; --fs-base:15px; --fs-md:17px; --fs-lg:20px; --fs-xl:26px;
+  --fs-xs:13px; --fs-sm:14px; --fs-base:15.5px; --fs-md:18px; --fs-lg:21px; --fs-xl:27px;
+  --lh:1.6; --lh-tight:1.35;
   --r:8px;
 }
 @media (prefers-color-scheme: dark){
@@ -43,14 +44,14 @@
 }
 *{box-sizing:border-box}
 html,body{background:var(--bg);color:var(--ink)}
-body{font-family:var(--f-body);font-size:var(--fs-base);line-height:1.5;padding-inline:24px;padding-block:0 64px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{font-family:var(--f-body);font-size:var(--fs-base);line-height:var(--lh);padding-inline:24px;padding-block:0 64px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 .wrap{max-width:1360px;margin:0 auto}
 h1,h2,h3{font-family:var(--f-display);font-weight:700;letter-spacing:-.01em;text-wrap:balance;margin:0;line-height:1.2}
 h2{font-size:var(--fs-xl)} h3{font-size:var(--fs-md);font-weight:600}
 .num,td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .mono{font-family:var(--f-mono)}
 .muted{color:var(--ink-3)}
-.sub{font-size:var(--fs-xs);color:var(--ink-3);line-height:1.4;margin-top:2px}
+.sub{font-size:var(--fs-xs);color:var(--ink-3);line-height:1.45;margin-top:3px}
 .eyebrow{font-size:var(--fs-xs);font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3)}
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -91,7 +92,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 main{padding-top:26px}
 .section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px}
-.section-head p{margin:6px 0 0;color:var(--ink-2);max-width:70ch}
+.section-head p{margin:7px 0 0;color:var(--ink-2);max-width:74ch;line-height:1.55}
 
 /* controls */
 .btn{appearance:none;border:1px solid var(--line-2);background:var(--surface);padding:8px 14px;border-radius:7px;cursor:pointer;font-weight:600;font-size:var(--fs-sm);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
@@ -105,8 +106,8 @@ main{padding-top:26px}
 .btn.sm{padding:5px 10px;font-size:var(--fs-xs)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .field{display:flex;flex-direction:column;gap:5px;min-width:0}
-.field label,.lbl{font-size:var(--fs-sm);color:var(--ink-2);font-weight:600}
-.inp{border:1px solid var(--line-2);background:var(--surface);border-radius:7px;padding:8px 10px;min-width:0;width:100%;font-size:var(--fs-base)}
+.field label,.lbl{font-size:var(--fs-sm);color:var(--ink-2);font-weight:600;line-height:1.35}
+.inp{border:1px solid var(--line-2);background:var(--surface);border-radius:7px;padding:9px 11px;line-height:1.4;min-width:0;width:100%;font-size:var(--fs-base)}
 .inp:hover{border-color:var(--ink-3)}
 .inp:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
 .inp.numi{text-align:right;font-variant-numeric:tabular-nums}
@@ -132,22 +133,44 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
 .panel-pad{padding:18px 20px}
 .table-wrap{overflow-x:auto}
 table{border-collapse:collapse;width:100%}
-th{font-size:var(--fs-xs);letter-spacing:.02em;color:var(--ink-3);font-weight:600;text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:bottom}
-td{padding:13px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:var(--fs-xs);letter-spacing:.02em;color:var(--ink-3);font-weight:600;text-align:left;padding:12px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:bottom}
+td{padding:14px 12px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.5}
 tr:last-child td{border-bottom:0}
 tbody tr:hover td{background:color-mix(in srgb,var(--surface-2) 45%,transparent)}
 
 /* quote builder */
-.quote-grid{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:22px;align-items:start}
-@media (max-width:1080px){.quote-grid{grid-template-columns:1fr}}
-.proj-bar{display:grid;grid-template-columns:2fr 1.4fr 1fr 1.1fr 1.1fr .7fr;gap:12px;align-items:end}
-@media (max-width:900px){.proj-bar{grid-template-columns:1fr 1fr}}
+.quote-3{display:grid;grid-template-columns:216px minmax(0,1fr) 348px;grid-template-areas:"side main sum";gap:18px;align-items:start}
+@media (max-width:1460px){.quote-3{grid-template-columns:216px minmax(0,1fr);grid-template-areas:"side main" "side sum"}}
+@media (max-width:920px){.quote-3{grid-template-columns:1fr;grid-template-areas:"side" "main" "sum"}}
+.q-side{grid-area:side;position:sticky;top:124px;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 150px)}
+.q-main{grid-area:main;min-width:0}
+.q-sum{grid-area:sum;min-width:0}
+@media (max-width:920px){.q-side{position:static;max-height:none}}
+.q-list{overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding:6px}
+.q-item{display:block;width:100%;text-align:left;border:0;border-radius:8px;background:none;padding:9px 10px;cursor:pointer;color:inherit}
+.q-item:hover{background:var(--surface-2)}
+.q-item[aria-current="true"]{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.q-item b{display:block;font-size:var(--fs-sm);font-weight:600;line-height:1.35}
+.q-item span{display:block;font-size:var(--fs-xs);color:var(--ink-3);margin-top:2px}
+.q-item[aria-current="true"] b{color:var(--accent)}
+.q-group{font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);padding:10px 10px 4px}
+.q-group:first-child{padding-top:4px}
+.line-main td{border-bottom:0;padding-bottom:6px}
+tr.line-extra:hover td{background:none}
+.line-extra td{padding:0 12px 14px}
+.lx{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+.lx .field{flex:0 1 200px}
+.lx .field.note{flex:1 1 240px}
+.lx-meta{margin-left:auto;font-size:var(--fs-xs);color:var(--ink-3);font-variant-numeric:tabular-nums;padding-bottom:10px;white-space:nowrap}
+.proj-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px 14px;align-items:end}
 .proj-switch{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
 .proj-switch select{max-width:380px}
 .add-row{display:flex;gap:10px;align-items:end;flex-wrap:wrap;padding:16px 20px;border-top:1px solid var(--line);background:var(--surface-2);border-radius:0 0 12px 12px}
 .add-row .field:first-child{flex:1 1 300px}
+.lines{min-width:620px}
 .lines td{vertical-align:middle}
-.line-name{font-weight:600;font-size:var(--fs-base);line-height:1.35}
+.lines td:first-child,.lines th:first-child{min-width:196px}
+.line-name{font-weight:600;font-size:var(--fs-base);line-height:1.4}
 .line-name .muted{font-weight:500}
 .line-cat{font-size:var(--fs-xs);color:var(--ink-3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px}
 .base-sel{margin-top:8px;display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-size:var(--fs-xs);color:var(--ink-2);font-weight:600}
@@ -158,14 +181,14 @@ tbody tr:hover td{background:color-mix(in srgb,var(--surface-2) 45%,transparent)
 .summary{position:sticky;top:124px;display:flex;flex-direction:column;gap:16px}
 .sum-hero{padding:20px}
 .sum-hero .big{font-family:var(--f-display);font-size:42px;font-weight:700;letter-spacing:-.02em;line-height:1.05;font-variant-numeric:tabular-nums;margin-top:4px}
-.kv{display:grid;grid-template-columns:1fr auto;gap:8px 14px;font-size:var(--fs-sm)}
+.kv{display:grid;grid-template-columns:1fr auto;gap:9px 14px;font-size:var(--fs-sm);line-height:1.45}
 .kv dt{color:var(--ink-2)} .kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
 .kv .tot{font-weight:700;color:var(--ink);border-top:1px solid var(--line);padding-top:8px;font-size:var(--fs-base)}
 .metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-top:1px solid var(--line)}
 .metric{background:var(--surface);padding:12px 16px}
 .metric .v{font-family:var(--f-display);font-size:var(--fs-lg);font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
 .metric:first-child{border-bottom-left-radius:12px}.metric:last-child{border-bottom-right-radius:12px}
-.role-line{display:grid;grid-template-columns:auto 1fr auto;gap:5px 10px;align-items:center;font-size:var(--fs-sm)}
+.role-line{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;font-size:var(--fs-sm);line-height:1.45}
 .role-line>span:nth-child(2){font-weight:500}
 .role-line .num{font-weight:600}
 .dot{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
@@ -190,14 +213,14 @@ tbody tr.cat-head:hover td{background:var(--surface-2)}
 .cat-head .cb{font-size:var(--fs-sm);color:var(--ink-2);margin-top:2px}
 .asset{font-weight:600;font-size:var(--fs-base)}
 .variant{font-size:var(--fs-sm);color:var(--ink-2);font-weight:500}
-.desc{font-size:var(--fs-sm);color:var(--ink-3);max-width:52ch;margin-top:4px;line-height:1.45}
+.desc{font-size:var(--fs-sm);color:var(--ink-3);max-width:52ch;margin-top:5px;line-height:1.55}
 .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
 /* capacity */
 .cap-grid td,.cap-grid th{text-align:right}
 .cap-grid td:first-child,.cap-grid th:first-child{text-align:left}
 .cell{min-width:132px}
-.cell .top-n{font-variant-numeric:tabular-nums;font-size:var(--fs-base)}
+.cell .top-n{font-variant-numeric:tabular-nums;font-size:var(--fs-base);line-height:1.4}
 .cell .top-n b{font-weight:700}
 .cbar{height:9px;background:var(--surface-2);border-radius:3px;margin-top:7px;position:relative;overflow:hidden;display:flex}
 .cbar .s{height:100%}
@@ -328,7 +351,7 @@ const state={
   settings:null, jobs:[], projects:[], loaded:{settings:false,jobs:false,projects:false},
   curId:null, cur:null, dirty:false, saveTimer:null, saving:false,
   addJobId:"", addQty:1,
-  includePitches:true, monthOffset:0, gran:"month", theme:"auto",
+  includePitches:true, monthOffset:0, gran:"month", theme:"auto", qFilter:"",
   exampleBaseId:"",
   jobDraft:null, jobDraftNew:false, jobErr:"",
   sDraft:null, sDirty:false,
@@ -376,16 +399,18 @@ function lineCalc(l,s){
   const unitSP=hasOv?+ov:p.sp;
   const roleDays={};(s.roles||[]).forEach(r=>{roleDays[r.id]=(+j.effortDays||0)*((+(j.split||{})[r.id]||0)/100)*qty;});
   const credits={};if(c.credits&&c.creditType)credits[c.creditType]=c.credits*qty;
-  return {j,base,c,p,qty,unitSP,hasOv,sp:unitSP*qty,cost:c.total*qty,people:c.people*qty,creditCost:c.creditCost*qty,ext:c.ext*qty,days:(+j.effortDays||0)*qty,roleDays,credits};
+  const dPct=Math.max(0,Math.min(100,+l.discountPct||0));
+  const gross=unitSP*qty,disc=gross*dPct/100;
+  return {j,base,c,p,qty,unitSP,hasOv,dPct,gross,disc,sp:gross-disc,cost:c.total*qty,people:c.people*qty,creditCost:c.creditCost*qty,ext:c.ext*qty,days:(+j.effortDays||0)*qty,roleDays,credits};
 }
 function projectCalc(p,s){
   s=s||S();
-  const out={gross:0,cost:0,people:0,creditCost:0,ext:0,days:0,roleDays:{},credits:{},creditCostBy:{},lines:[],missing:0};
+  const out={list:0,lineDisc:0,gross:0,cost:0,people:0,creditCost:0,ext:0,days:0,roleDays:{},credits:{},creditCostBy:{},lines:[],missing:0};
   (s.roles||[]).forEach(r=>out.roleDays[r.id]=0);
   (p.lines||[]).forEach(l=>{
     const c=lineCalc(l,s);if(!c){out.missing++;out.lines.push({l,c:null});return;}
     out.lines.push({l,c});
-    out.gross+=c.sp;out.cost+=c.cost;out.people+=c.people;out.creditCost+=c.creditCost;out.ext+=c.ext;out.days+=c.days;
+    out.list+=c.gross;out.lineDisc+=c.disc;out.gross+=c.sp;out.cost+=c.cost;out.people+=c.people;out.creditCost+=c.creditCost;out.ext+=c.ext;out.days+=c.days;
     for(const k in c.roleDays)out.roleDays[k]=(out.roleDays[k]||0)+c.roleDays[k];
     for(const k in c.credits){out.credits[k]=(out.credits[k]||0)+c.credits[k];out.creditCostBy[k]=(out.creditCostBy[k]||0)+c.credits[k]*creditRate(k,s);}
   });
@@ -747,19 +772,20 @@ function defaultBaseId(p){
 /* ----- quote builder ----- */
 function viewQuote(){
   const s=S();
-  const sorted=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
-  const switcher=`<div class="proj-switch">
-    <select class="inp" id="proj-select" data-k="curId" aria-label="Open a saved quote">
-      ${sorted.length?"":'<option value="">No saved quotes</option>'}
-      ${sorted.map(p=>`<option value="${esc(p.id)}" ${p.id===state.curId?"selected":""}>${esc(p.name||"Untitled")}${p.client?" — "+esc(p.client):""} (${esc(STATUS_LABEL[p.status]||"")})</option>`).join("")}
-    </select>
-    <button class="btn primary" data-action="new-project">+ New quote</button>
-    ${state.cur?`<button class="btn ghost" data-action="dup-project">Duplicate</button>`:""}
-    ${state.cur?`<button class="btn ghost" data-action="export-quote">Export CSV</button>`:""}
-  </div>`;
+  const q=(state.qFilter||"").trim().toLowerCase();
+  const match=p=>!q||`${p.name||""} ${p.client||""}`.toLowerCase().includes(q);
+  const calcOf={};const val=p=>{if(!calcOf[p.id])calcOf[p.id]=projectCalc(p,s);return calcOf[p.id];};
+  const groups=STATUSES.map(([k,l])=>[l,state.projects.filter(p=>p.status===k&&match(p)).sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))]).filter(([,arr])=>arr.length);
+  const side=`<aside class="q-side">
+    <div class="toolbar"><button class="btn primary" data-action="new-project" style="flex:1">+ New quote</button></div>
+    <input class="inp xs" id="q-filter" data-k="qFilter" value="${esc(state.qFilter||"")}" placeholder="Search quotes…" aria-label="Search quotes">
+    <div class="panel q-list">
+      ${groups.length?groups.map(([label,arr])=>`<div class="q-group">${esc(label)} · ${arr.length}</div>`+arr.map(p2=>`<button class="q-item" data-action="open-project" data-id="${esc(p2.id)}" aria-current="${p2.id===state.curId}"><b>${esc(p2.name||"Untitled")}</b><span>${esc(p2.client||"No client")} · ${inr(val(p2).sp)}${p2.start?" · "+esc(fmtDate(p2.start)):""}</span></button>`).join("")).join(""):`<div class="sub" style="padding:14px 10px">${state.projects.length?"No quotes match that search.":"No quotes yet."}</div>`}
+    </div>
+  </aside>`;
   if(!state.cur){
-    return `<div class="section-head"><div><h2>Quote builder</h2><p>Put a project together from your rate card to see price, internal cost, markup, credits and team days.</p></div></div>${switcher}
-    <div class="panel empty"><strong>No quote open</strong>Start a new quote to begin.</div>`;
+    return `<div class="section-head"><div><h2>Quote builder</h2><p>Put a project together from your rate card to see price, internal cost, markup, credits and team days.</p></div></div>
+    <div class="quote-3">${side}<div class="q-main"><div class="panel empty"><strong>No quote open</strong>Pick one from the list, or start a new one.</div></div></div>`;
   }
   const p=state.cur;const pc=projectCalc(p,s);
   const bar=`<div class="panel panel-pad" style="margin-bottom:16px"><div class="proj-bar">
@@ -768,48 +794,50 @@ function viewQuote(){
     <div class="field"><label for="proj-status">Status</label><select class="inp" id="proj-status" data-k="proj.status">${STATUSES.map(([k,l])=>`<option value="${k}" ${p.status===k?"selected":""}>${l}</option>`).join("")}</select></div>
     <div class="field"><label for="proj-start">Start</label><input class="inp" type="date" id="proj-start" data-k="proj.start" value="${esc(p.start)}"></div>
     <div class="field"><label for="proj-end">Delivery</label><input class="inp" type="date" id="proj-end" data-k="proj.end" value="${esc(p.end)}"></div>
-    <div class="field"><label for="proj-disc">Discount %</label><input class="inp numi" inputmode="decimal" id="proj-disc" data-k="proj.discountPct" data-num value="${esc(p.discountPct||0)}"></div>
+    <div class="field"><label for="proj-disc">Quote discount %</label><input class="inp numi" inputmode="decimal" id="proj-disc" data-k="proj.discountPct" data-num value="${esc(p.discountPct||0)}"></div>
   </div></div>`;
 
   const rows=pc.lines.map(({l,c})=>{
-    if(!c)return `<tr><td colspan="8"><span class="muted">A job type on this line was deleted from the rate card.</span></td><td class="num"><button class="btn ghost sm" data-action="rm-line" data-id="${esc(l.id)}" aria-label="Remove line">✕</button></td></tr>`;
+    if(!c)return `<tr><td colspan="7"><span class="muted">A job type on this line was deleted from the rate card.</span></td><td class="num"><button class="btn ghost sm" data-action="rm-line" data-id="${esc(l.id)}" aria-label="Remove line">✕</button></td></tr>`;
     const j=c.j;
-    const baseSel=isAdapt(j)?`<div class="base-sel"><label for="ln-base-${esc(l.id)}">Base film</label><select class="inp xs" id="ln-base-${esc(l.id)}" data-k="line.baseJobId" data-id="${esc(l.id)}"><option value="">Choose…</option>${jobOptions(l.baseJobId,nonAdapt)}</select></div>`:"";
+    const baseSel=isAdapt(j)?`<div class="field"><label for="ln-base-${esc(l.id)}">Base film</label><select class="inp xs" id="ln-base-${esc(l.id)}" data-k="line.baseJobId" data-id="${esc(l.id)}"><option value="">Choose…</option>${jobOptions(l.baseJobId,nonAdapt)}</select></div>`:"";
     const rid=doerOf(j).id;const dflt=personById((p.assign||{})[rid]);const holders=rid?peopleForRole(rid):[];
-    const lineWho=rid&&c.days>0?`<div class="base-sel"><label for="ln-who-${esc(l.id)}">Done by</label><select class="inp xs" id="ln-who-${esc(l.id)}" data-k="line.assignee" data-id="${esc(l.id)}"><option value="">Quote default${dflt?" ("+esc(dflt.name)+")":" (unassigned)"}</option>${holders.map(x=>`<option value="${esc(x.id)}" ${l.assignee===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}${l.assignee&&!holders.some(x=>x.id===l.assignee)&&personById(l.assignee)?`<option value="${esc(l.assignee)}" selected>${esc(personById(l.assignee).name)}</option>`:""}</select></div>`:"";
+    const lineWho=rid&&c.days>0?`<div class="field"><label for="ln-who-${esc(l.id)}">Done by</label><select class="inp xs" id="ln-who-${esc(l.id)}" data-k="line.assignee" data-id="${esc(l.id)}"><option value="">Quote default${dflt?" ("+esc(dflt.name)+")":" (unassigned)"}</option>${holders.map(x=>`<option value="${esc(x.id)}" ${l.assignee===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}${l.assignee&&!holders.some(x=>x.id===l.assignee)&&personById(l.assignee)?`<option value="${esc(l.assignee)}" selected>${esc(personById(l.assignee).name)}</option>`:""}</select></div>`:"";
     const note=c.p.kind==="suggested"?'<div class="sub">suggested @ '+xfmt(+s.targetMarkup)+'</div>':c.p.kind==="range"?'<div class="sub">range midpoint</div>':c.p.kind==="free"?'<div class="sub">complimentary</div>':c.p.kind==="adapt"?`<div class="sub">${Math.round((+j.pricing.pct||0)*100)}% of base</div>`:c.p.kind==="adapt-nobase"?'<div class="sub" style="color:var(--warn)">pick a base film</div>':"";
-    return `<tr>
-      <td><div class="line-cat">${esc(j.category)}</div><div class="line-name">${jobLabel(j)}</div>${baseSel}${lineWho}</td>
-      <td class="num" style="width:78px"><input class="inp numi xs" inputmode="decimal" id="ln-qty-${esc(l.id)}" data-k="line.qty" data-id="${esc(l.id)}" data-num value="${esc(l.qty)}" aria-label="Quantity"></td>
-      <td class="num" style="width:130px"><input class="inp numi xs" inputmode="decimal" id="ln-sp-${esc(l.id)}" data-k="line.spOverride" data-id="${esc(l.id)}" data-num data-opt value="${c.hasOv?esc(l.spOverride):""}" placeholder="${esc(num(c.p.sp))}" aria-label="Unit price override">${c.hasOv?'<div class="sub">custom price</div>':note}</td>
-      <td class="num">${inr(c.sp)}</td>
+    return `<tr class="line-main">
+      <td><div class="line-cat">${esc(j.category)}</div><div class="line-name">${esc(j.name)}</div>${j.variant?`<div class="variant">${esc(j.variant)}</div>`:""}</td>
+      <td class="num" style="width:74px"><input class="inp numi xs" inputmode="decimal" id="ln-qty-${esc(l.id)}" data-k="line.qty" data-id="${esc(l.id)}" data-num value="${esc(l.qty)}" aria-label="Quantity"></td>
+      <td class="num" style="width:124px"><input class="inp numi xs" inputmode="decimal" id="ln-sp-${esc(l.id)}" data-k="line.spOverride" data-id="${esc(l.id)}" data-num data-opt value="${c.hasOv?esc(l.spOverride):""}" placeholder="${esc(num(c.p.sp))}" aria-label="Unit price override">${c.hasOv?'<div class="sub">custom price</div>':note}</td>
+      <td class="num" style="width:82px"><input class="inp numi xs" inputmode="decimal" id="ln-dis-${esc(l.id)}" data-k="line.discountPct" data-id="${esc(l.id)}" data-num value="${esc(l.discountPct||0)}" aria-label="Line discount %"></td>
+      <td class="num">${inr(c.sp)}${c.disc>0?`<div class="sub">was ${inr(c.gross)}</div>`:""}</td>
       <td class="num">${inr(c.cost)}</td>
       <td class="num">${c.p.kind==="free"&&!c.hasOv?'<span class="chip">free</span>':markupChip(c.sp,c.cost)}</td>
-      <td class="num">${days(c.days)}</td>
-      <td class="num">${c.c.credits?num(c.c.credits*c.qty):"—"}${c.c.credits?`<div class="sub">${esc(creditName(c.c.creditType))}</div>`:""}</td>
       <td class="num"><button class="btn ghost sm" data-action="rm-line" data-id="${esc(l.id)}" aria-label="Remove line">✕</button></td>
-    </tr>`;
+    </tr>
+    <tr class="line-extra"><td colspan="8"><div class="lx">${baseSel}${lineWho}
+      <div class="field note"><label for="ln-note-${esc(l.id)}">Note</label><input class="inp xs" id="ln-note-${esc(l.id)}" data-k="line.note" data-id="${esc(l.id)}" value="${esc(l.note||"")}" placeholder="Scope, language, SKU, revision terms…"></div>
+      <div class="lx-meta">${days(c.days)} d${c.c.credits?` · ${num(c.c.credits*c.qty)} ${esc(creditName(c.c.creditType))} cr`:""}</div>
+    </div></td></tr>`;
   }).join("");
 
   const addJob=state.addJobId&&jobById(state.addJobId)?state.addJobId:(state.jobs[0]&&state.jobs[0].id)||"";
   const lines=`<div class="panel">
     <div class="table-wrap"><table class="lines">
-      <thead><tr><th>Deliverable</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Line price</th><th class="num">Internal cost</th><th class="num">Markup</th><th class="num">Days</th><th class="num">Credits</th><th></th></tr></thead>
-      <tbody>${rows||`<tr><td colspan="9"><div class="empty"><strong>No deliverables yet</strong>Add jobs from your rate card below.</div></td></tr>`}</tbody>
+      <thead><tr><th>Deliverable</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Disc %</th><th class="num">Line price</th><th class="num">Internal cost</th><th class="num">Markup</th><th></th></tr></thead>
+      <tbody>${rows||`<tr><td colspan="8"><div class="empty"><strong>No deliverables yet</strong>Add jobs from your rate card below.</div></td></tr>`}</tbody>
     </table></div>
     <div class="add-row">
       <div class="field"><label for="add-job">Add a deliverable</label><select class="inp" id="add-job" data-k="addJobId">${jobOptions(addJob)}</select></div>
-      <div class="field" style="width:80px"><label for="add-qty">Qty</label><input class="inp numi" inputmode="decimal" id="add-qty" data-k="addQty" data-num value="${esc(state.addQty)}"></div>
+      <div class="field" style="width:86px"><label for="add-qty">Qty</label><input class="inp numi" inputmode="decimal" id="add-qty" data-k="addQty" data-num value="${esc(state.addQty)}"></div>
       <button class="btn primary" data-action="add-line" ${state.jobs.length?"":"disabled"}>Add</button>
     </div>
   </div>
-  <div class="field" style="margin-top:14px"><label for="proj-notes">Notes</label><textarea class="inp" id="proj-notes" data-k="proj.notes" placeholder="Scope assumptions, revision rounds, talent or music at cost…">${esc(p.notes||"")}</textarea></div>
-  <div style="margin-top:14px;display:flex;justify-content:flex-end"><button class="btn danger ${state.armed==="del-proj"?"armed":""}" data-action="del-project">${state.armed==="del-proj"?"Click again to delete this quote":"Delete quote"}</button></div>`;
+  <div class="field" style="margin-top:14px"><label for="proj-notes">Quote notes</label><textarea class="inp" id="proj-notes" data-k="proj.notes" placeholder="Scope assumptions, revision rounds, talent or music at cost…">${esc(p.notes||"")}</textarea></div>
+  <div style="margin-top:14px;display:flex;justify-content:flex-end;gap:8px"><button class="btn ghost" data-action="dup-project">Duplicate quote</button><button class="btn ghost" data-action="export-quote">Export CSV</button><button class="btn danger ${state.armed==="del-proj"?"armed":""}" data-action="del-project">${state.armed==="del-proj"?"Click again to delete this quote":"Delete quote"}</button></div>`;
 
   const meta=cloudOn()&&cloud.meta.projects&&cloud.meta.projects[p.id];
   return `<div class="section-head"><div><h2>Quote builder</h2><p>Changes save automatically and feed the pipeline &amp; capacity view once the quote has dates.${meta&&meta.by?` <span class="muted">Last saved by ${esc(meta.by)} · ${esc(new Date(meta.at).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</span>`:""}</p></div></div>
-  ${switcher}${bar}
-  <div class="quote-grid"><div>${lines}</div>${viewSummary(p,pc)}</div>`;
+  <div class="quote-3">${side}<div class="q-main">${bar}${lines}</div>${viewSummary(p,pc)}</div>`;
 }
 
 function viewSummary(p,pc){
@@ -872,12 +900,12 @@ function viewSummary(p,pc){
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div class="eyebrow">Who's on it</div>${anyUn?'<button class="btn sm" data-action="auto-assign">Assign least booked</button>':""}</div>
       ${whoRows}<div class="sub">Change who does a single line from the "Done by" menu on that line.</div></div>`:"";
   const creditRows=Object.keys(pc.credits).map(k=>`<dt>${esc(creditName(k))} · ${num(pc.credits[k])} cr</dt><dd>${inr(pc.creditCostBy[k])}</dd>`).join("");
-  return `<aside class="summary">
+  return `<aside class="summary q-sum">
     <div class="panel">
       <div class="sum-hero">
         <div class="eyebrow">Quote value · excl. taxes</div>
         <div class="big">${inr(pc.sp)}</div>
-        ${pc.discount?`<div class="sub">${inr(pc.gross)} less ${nf2.format(+p.discountPct)}% discount (${inr(pc.discount)})</div>`:""}
+        ${(pc.lineDisc>0||pc.discount>0)?`<div class="sub">List ${inr(pc.list)}${pc.lineDisc>0?` · line discounts −${inr(pc.lineDisc)}`:""}${pc.discount>0?` · ${nf2.format(+p.discountPct)}% quote discount −${inr(pc.discount)}`:""}</div>`:""}
         <dl class="kv" style="margin-top:16px">
           <dt>Team time · ${days(pc.days)} d × ${inr(s.dayRate)}</dt><dd>${inr(pc.people)}</dd>
           ${creditRows}
@@ -973,6 +1001,7 @@ function viewPipeline(){
       <td style="min-width:170px"><div class="gantt">${g}</div></td>
       <td class="num">${inr(c.sp)}</td><td class="num">${inr(c.cost)}</td><td class="num">${markupChip(c.sp,c.cost)}</td>
       <td>${peopleCell(c)}</td>
+      <td class="num" style="white-space:nowrap"><button class="btn sm" data-action="open-project" data-id="${esc(p.id)}">Edit</button> <button class="btn ghost sm danger ${state.armed==="del:"+p.id?"armed":""}" data-action="del-row" data-id="${esc(p.id)}">${state.armed==="del:"+p.id?"Sure?":"Delete"}</button></td>
       ${[...prodRoles,...leadRoles].map(r=>`<td class="num">${days(c.roleDays[r.id]||0)}</td>`).join("")}
     </tr>`;
   }).join("");
@@ -993,8 +1022,8 @@ function viewPipeline(){
   <div class="section-head" style="margin-bottom:10px"><h3>Quotes</h3>
     <div class="legend"><span>Open pipeline <b>${inr(tot.sp)}</b></span><span>Confirmed <b>${inr(tot.firm)}</b></span><span>Pitching <b>${inr(tot.pitch)}</b></span><button class="btn sm primary" data-action="new-project">+ New quote</button></div></div>
   <div class="panel"><div class="table-wrap"><table>
-    <thead><tr><th>Quote</th><th>Status</th><th>Dates</th><th>${esc(months[0].label)} – ${esc(last.label)}</th><th class="num">Price</th><th class="num">Cost</th><th class="num">Markup</th><th>People</th>${[...prodRoles,...leadRoles].map(r=>`<th class="num" title="${esc(r.name)}"><span class="dot" style="background:${roleColor(roles.indexOf(r))}"></span> ${esc(abbr(r.name))} d</th>`).join("")}</tr></thead>
-    <tbody>${prow||`<tr><td colspan="${8+roles.length}"><div class="empty"><strong>No quotes yet</strong>Create one in the Quote builder.</div></td></tr>`}</tbody>
+    <thead><tr><th>Quote</th><th>Status</th><th>Dates</th><th>${esc(months[0].label)} – ${esc(last.label)}</th><th class="num">Price</th><th class="num">Cost</th><th class="num">Markup</th><th>People</th><th></th>${[...prodRoles,...leadRoles].map(r=>`<th class="num" title="${esc(r.name)}"><span class="dot" style="background:${roleColor(roles.indexOf(r))}"></span> ${esc(abbr(r.name))} d</th>`).join("")}</tr></thead>
+    <tbody>${prow||`<tr><td colspan="${9+roles.length}"><div class="empty"><strong>No quotes yet</strong>Create one in the Quote builder.</div></td></tr>`}</tbody>
   </table></div></div>`;
 }
 
@@ -1099,7 +1128,7 @@ function viewJobDrawer(){
       </fieldset>
       <fieldset><legend>Who does the work</legend>
         <div class="fgrid"><div class="field"><label for="jd-doer">Production role</label><select class="inp" id="jd-doer" data-k="job.doer">${doerOf(j).mixed||!doerOf(j).id?'<option value="" selected>Choose…</option>':""}${(s.roles||[]).map(r=>`<option value="${esc(r.id)}" ${!doerOf(j).mixed&&doerOf(j).id===r.id?"selected":""}>${esc(r.name)}</option>`).join("")}</select><span class="sub">Gets 100% of the ${days(j.effortDays)} d effort.</span></div></div>
-        <div class="sub" style="margin-top:10px">Creative Director and PM time is added per project in Reference rates → Team.</div>
+        <div class="sub" style="margin-top:10px">Creative Director and PM time isn't set here. It's added per quote from <b>Reference rates → Roles</b> (hours per project and % of production).</div>
       </fieldset>
       ${state.jobErr?`<div class="callout bad">${esc(state.jobErr)}</div>`:""}
     </div>
@@ -1203,6 +1232,7 @@ function onField(e){
   if(e.type==="change"&&el.tagName!=="SELECT"&&el.type!=="checkbox"&&el.type!=="radio"&&el.type!=="date")return;
   const k=el.dataset.k;const v=readVal(el);
   if(k==="curId"){flushProject();state.curId=v;try{localStorage.setItem("sp-cur",v);}catch(e){}const f=state.projects.find(p=>p.id===v);state.cur=f?clone(f):null;state.armed=null;render();return;}
+  if(k==="qFilter"){state.qFilter=v;render();return;}
   if(k==="addJobId"){state.addJobId=v;return;}
   if(k==="addQty"){state.addQty=v;return;}
   if(k==="includePitches"){state.includePitches=v;render();return;}
@@ -1267,6 +1297,13 @@ const actions={
   "dup-project"(){if(!state.cur)return;flushProject();const now=new Date().toISOString();const p=clone(state.cur);p.id=uid("p");p.name=(p.name||"Quote")+" (copy)";p.status="pitch";p.createdAt=now;p.updatedAt=now;p.lines=(p.lines||[]).map(l=>Object.assign(l,{id:uid("l")}));state.projects.push(clone(p));state.curId=p.id;state.cur=p;state.dirty=true;flushProject();render();toast("Quote duplicated");},
   "open-project"(el){flushProject();const f=state.projects.find(p=>p.id===el.dataset.id);if(!f)return;state.curId=f.id;state.cur=clone(f);state.tab="quote";render();window.scrollTo(0,0);},
   "del-project"(){if(state.armed!=="del-proj"){state.armed="del-proj";render();return;}const id=state.curId;clearTimeout(state.saveTimer);state.dirty=false;state.projects=state.projects.filter(p=>p.id!==id);state.cur=null;state.curId=null;state.armed=null;dbDel("projects/"+id);const n=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];if(n){state.curId=n.id;state.cur=clone(n);}render();toast("Quote deleted");},
+  "del-row"(el){const id=el.dataset.id;
+    if(state.armed!=="del:"+id){state.armed="del:"+id;render();return;}
+    state.armed=null;
+    if(state.curId===id){clearTimeout(state.saveTimer);state.dirty=false;state.cur=null;state.curId=null;}
+    state.projects=state.projects.filter(x=>x.id!==id);dbDel("projects/"+id);
+    if(!state.curId)pickCurrent();
+    render();toast("Quote deleted");},
   "add-line"(){const id=state.addJobId&&jobById(state.addJobId)?state.addJobId:(state.jobs[0]&&state.jobs[0].id);const j=jobById(id);if(!j)return;const qty=+state.addQty>0?+state.addQty:1;updateProject(p=>{p.lines=p.lines||[];p.lines.push({id:uid("l"),jobId:id,qty,spOverride:"",baseJobId:isAdapt(j)?defaultBaseId(p):""});});},
   "rm-line"(el){updateProject(p=>{p.lines=(p.lines||[]).filter(l=>l.id!==el.dataset.id);});},
   month(el){const d=+el.dataset.d;state.monthOffset=d===0?0:state.monthOffset+d;render();},
@@ -1304,9 +1341,9 @@ const actions={
   "restore"(){$("#restore-file").click();},
   "reset-defaults"(){if(!SEED){toast("No data/seed.js found next to this file");return;}if(state.armed!=="reset"){state.armed="reset";render();return;}state.armed=null;fromShape(SEED);migrateState();state.sDraft=null;state.sDirty=false;const p=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];state.curId=p?p.id:null;state.cur=p?clone(p):null;render();replaceAllData().then(()=>toast("Reset to the rate card in data/seed.js"));},
   async "export-quote"(){if(!state.cur)return;const p=state.cur,s=S(),pc=projectCalc(p,s);
-    const rows=[["Project",p.name],["Client",p.client],["Status",STATUS_LABEL[p.status]],["Start",p.start],["Delivery",p.end],[],["Category","Job","Variant","Base film","Qty","Unit price","Line price","Internal cost","Markup","Margin %","Workdays","Done by",...(s.roles||[]).map(r=>r.name+" days"),"Credits","Credit provider"]];
-    pc.lines.forEach(({l,c})=>{if(!c)return;rows.push([c.j.category,c.j.name,c.j.variant,c.base?c.base.name+" "+(c.base.variant||""):"",c.qty,Math.round(c.unitSP),Math.round(c.sp),Math.round(c.cost),c.cost>0?(c.sp/c.cost).toFixed(2):"",c.sp>0?((c.sp-c.cost)/c.sp*100).toFixed(1):"",c.days,(()=>{const rid=doerOf(c.j).id;const x=personById(l.assignee)||personById((p.assign||{})[rid]);return x?x.name:"Unassigned";})(),...(s.roles||[]).map(r=>+(c.roleDays[r.id]||0).toFixed(3)),Math.round(c.c.credits*c.qty),c.c.credits?creditName(c.c.creditType):""]);});
-    rows.push([],["Gross",Math.round(pc.gross)],["Discount",Math.round(pc.discount)],["Quote value (excl. taxes)",Math.round(pc.sp)],["Internal cost",Math.round(pc.cost)],["Margin",Math.round(pc.margin)],["Markup",pc.cost>0?pc.markup.toFixed(2):""]);
+    const rows=[["Project",p.name],["Client",p.client],["Status",STATUS_LABEL[p.status]],["Start",p.start],["Delivery",p.end],[],["Category","Job","Variant","Base film","Qty","Unit price","Discount %","Line price","Internal cost","Markup","Margin %","Workdays","Done by","Note",...(s.roles||[]).map(r=>r.name+" days"),"Credits","Credit provider"]];
+    pc.lines.forEach(({l,c})=>{if(!c)return;rows.push([c.j.category,c.j.name,c.j.variant,c.base?c.base.name+" "+(c.base.variant||""):"",c.qty,Math.round(c.unitSP),c.dPct||0,Math.round(c.sp),Math.round(c.cost),c.cost>0?(c.sp/c.cost).toFixed(2):"",c.sp>0?((c.sp-c.cost)/c.sp*100).toFixed(1):"",c.days,(()=>{const rid=doerOf(c.j).id;const x=personById(l.assignee)||personById((p.assign||{})[rid]);return x?x.name:"Unassigned";})(),l.note||"",...(s.roles||[]).map(r=>+(c.roleDays[r.id]||0).toFixed(3)),Math.round(c.c.credits*c.qty),c.c.credits?creditName(c.c.creditType):""]);});
+    rows.push([],["List price",Math.round(pc.list)],["Line discounts",-Math.round(pc.lineDisc)],["After line discounts",Math.round(pc.gross)],["Discount",Math.round(pc.discount)],["Quote value (excl. taxes)",Math.round(pc.sp)],["Internal cost",Math.round(pc.cost)],["Margin",Math.round(pc.margin)],["Markup",pc.cost>0?pc.markup.toFixed(2):""]);
     saveCSV((p.name||"quote").replace(/[^\w\- ]+/g,"").trim()+".csv",rows);},
   async "export-rates"(){const s=S();const rows=[["Category","Job","Variant","Description","Pricing","Selling price","Internal cost","Markup","Margin %","Workdays","Credits","Buffer","Provider","External cost",...(s.roles||[]).map(r=>r.name+" %")]];
     const exBase=jobById(defaultBaseId(null));
@@ -1321,7 +1358,7 @@ document.addEventListener("click",e=>{
   const el=e.target.closest("[data-action]");if(!el)return;
   const a=actions[el.dataset.action];if(!a)return;
   if(el.dataset.action!=="close-drawer-bg")e.preventDefault();
-  if(state.armed&&!["del-project","del-job","reset-defaults"].includes(el.dataset.action))state.armed=null;
+  if(state.armed&&!["del-project","del-job","reset-defaults","del-row"].includes(el.dataset.action))state.armed=null;
   a(el,e);
 });
 window.addEventListener("beforeunload",()=>{flushProject();});

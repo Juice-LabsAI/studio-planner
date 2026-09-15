@@ -32,6 +32,8 @@ Margin % = (price − internal cost) ÷ price
 ```
 
 - **Price ranges** (e.g. ₹2L–5L) use the midpoint. You can override the price on any quote line.
+- **Discounts:** each line has its own **Disc %**, applied to that line only; the quote-level discount then applies to the total. Both show in the quote summary and the CSV export.
+- **Line notes:** every line has a Note box for scope, language or SKU details. Notes are included in the CSV export.
 - **"Quote per brief"** jobs (e.g. Complex CGI) suggest a price of internal cost × target markup.
 - **Complimentary** jobs are quoted at ₹0, but their effort and cost still count.
 - **Who does the work:** each job type's effort is production time only and goes 100% to one role: Video Editor for video, GIF and AI voiceover jobs, Graphic Designer for static and carousel jobs, and PM for artist dubbing and PDP copy.
