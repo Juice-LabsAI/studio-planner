@@ -127,6 +127,28 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
 .st-confirmed{background:var(--accent-soft);color:var(--accent)}
 .st-production{background:var(--warn-soft);color:var(--warn)}
 .st-delivered{background:var(--surface-2);color:var(--ink-3)}
+.pr-critical{background:var(--bad-soft);color:var(--bad)}
+.pr-high{background:var(--warn-soft);color:var(--warn)}
+.pr-medium{background:var(--surface-2);color:var(--ink-2)}
+.pr-low{border:1px solid var(--line-2);color:var(--ink-3)}
+.sch-person{padding:16px 20px 6px;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sch-person h3{display:flex;align-items:center;gap:9px}
+.sch-grid td:first-child,.sch-grid th:first-child{min-width:212px;text-align:left}
+.sch-grid td,.sch-grid th{text-align:right}
+.sch-cell{min-width:88px}
+.tr-st{min-width:134px}
+.tr-pr{min-width:116px}
+.tr-dt{min-width:150px}
+.sch-bar{height:8px;border-radius:2px;background:var(--surface-2);margin-top:6px;overflow:hidden}
+.sch-bar span{display:block;height:100%;border-radius:2px}
+.sch-tot td{font-weight:700;background:var(--surface-2)}
+.sch-none td{color:var(--bad)}
+.cmt-list{display:flex;flex-direction:column;gap:10px;margin:10px 0}
+.cmt{background:var(--surface-2);border-radius:9px;padding:10px 12px;font-size:var(--fs-sm)}
+.cmt .who{font-size:var(--fs-xs);color:var(--ink-3);margin-bottom:3px}
+.cmt-form{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.cmt-form .field{flex:1 1 320px}
+.tr-open td{background:color-mix(in srgb,var(--surface-2) 55%,transparent)}
 
 /* panels */
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px}
@@ -340,6 +362,11 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 const parseNum=v=>{const n=parseFloat(String(v).replace(/[,₹%×\s]/g,""));return isNaN(n)?null:n;};
 const todayISO=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 
+const PRIORITIES=[["critical","Critical"],["high","High"],["medium","Medium"],["low","Low"]];
+const PRI_LABEL=Object.fromEntries(PRIORITIES);
+const PRI_RANK={critical:0,high:1,medium:2,low:3};
+const priOf=p=>PRI_LABEL[p&&p.priority]?p.priority:"medium";
+const priPill=p=>`<span class="pill pr-${esc(priOf(p))}">${esc(PRI_LABEL[priOf(p)])}</span>`;
 const STATUSES=[["pitch","Pitch"],["confirmed","Confirmed"],["production","In production"],["delivered","Delivered"]];
 const STATUS_LABEL=Object.fromEntries(STATUSES);
 const PRICING=[["fixed","Fixed price"],["range","Price range"],["tbd","Quote per brief"],["free","Complimentary"],["adapt","% of base film"]];
@@ -351,7 +378,7 @@ const state={
   settings:null, jobs:[], projects:[], loaded:{settings:false,jobs:false,projects:false},
   curId:null, cur:null, dirty:false, saveTimer:null, saving:false,
   addJobId:"", addQty:1,
-  includePitches:true, monthOffset:0, gran:"month", theme:"auto", qFilter:"",
+  includePitches:true, monthOffset:0, gran:"month", theme:"auto", qFilter:"", trFilter:"", openComments:null, me:"",
   exampleBaseId:"",
   jobDraft:null, jobDraftNew:false, jobErr:"",
   sDraft:null, sDirty:false,
@@ -359,7 +386,8 @@ const state={
 };
 try{const t=localStorage.getItem("sp-tab");if(t)state.tab=t;
   const g=localStorage.getItem("sp-gran");if(g==="week"||g==="month")state.gran=g;
-  const th=localStorage.getItem("sp-theme");if(th)state.theme=th;}catch(e){}
+  const th=localStorage.getItem("sp-theme");if(th)state.theme=th;
+  state.me=localStorage.getItem("sp-me")||"";}catch(e){}
 const S=()=>state.settings||EMPTY_SETTINGS;
 
 /* ---------- calculation engine ---------- */
@@ -718,10 +746,19 @@ async function flushProject(){
   persist();
   await cloudUpsert("projects",[state.cur]);
 }
+const saveTimers={};
+function updateProjectById(id,fn){
+  if(state.cur&&state.cur.id===id){updateProject(fn);return;}
+  const i=state.projects.findIndex(x=>x.id===id);if(i<0)return;
+  const pr=state.projects[i];fn(pr);pr.updatedAt=new Date().toISOString();
+  clearTimeout(saveTimers[id]);
+  saveTimers[id]=setTimeout(()=>{persist();cloudUpsert("projects",[pr]);},550);
+  render();
+}
 function newProject(){
   flushProject();
   const now=new Date().toISOString();
-  const p={id:uid("p"),name:"Untitled quote",client:"",status:"pitch",start:"",end:"",discountPct:0,notes:"",lines:[],createdAt:now,updatedAt:now};
+  const p={id:uid("p"),name:"Untitled quote",client:"",status:"pitch",priority:"medium",start:"",end:"",discountPct:0,notes:"",lines:[],comments:[],createdAt:now,updatedAt:now};
   state.projects.push(clone(p));state.curId=p.id;state.cur=p;state.dirty=true;
   flushProject();state.tab="quote";render();
   setTimeout(()=>{const el=$("#proj-name");if(el){el.focus();el.select();}},30);
@@ -737,13 +774,15 @@ function render(){
   const keep=ae&&ae.id&&(ae.tagName==="INPUT"||ae.tagName==="TEXTAREA"||ae.tagName==="SELECT")?{id:ae.id,v:ae.value,s:ae.selectionStart,e:ae.selectionEnd,type:ae.type}:null;
   const scrollY=window.scrollY;
   const dScroll=$(".drawer-body")?.scrollTop;
-  $("#tabs").innerHTML=[["quote","Quote builder"],["pipeline","Pipeline & capacity"],["rates","Rate card"],["reference","Reference rates"]]
+  $("#tabs").innerHTML=[["quote","Quote builder"],["projects","Projects"],["schedule","Schedule"],["pipeline","Pipeline & capacity"],["rates","Rate card"],["reference","Reference rates"]]
     .map(([k,l])=>`<button class="tab" role="tab" aria-selected="${state.tab===k}" data-action="tab" data-tab="${k}">${l}</button>`).join("");
   banner();setSync();
   const m=$("#main");
   const gated=cloudOn()&&state.cloudView!=="live";
   if(gated){$("#tabs").innerHTML="";m.innerHTML=viewCloud();}
   else if(state.tab==="quote")m.innerHTML=viewQuote();
+  else if(state.tab==="projects")m.innerHTML=viewProjects();
+  else if(state.tab==="schedule")m.innerHTML=viewSchedule();
   else if(state.tab==="pipeline")m.innerHTML=viewPipeline();
   else if(state.tab==="rates")m.innerHTML=viewRates();
   else m.innerHTML=viewReference();
@@ -792,6 +831,7 @@ function viewQuote(){
     <div class="field"><label for="proj-name">Project</label><input class="inp" id="proj-name" data-k="proj.name" value="${esc(p.name)}"></div>
     <div class="field"><label for="proj-client">Client</label><input class="inp" id="proj-client" data-k="proj.client" value="${esc(p.client)}" placeholder="Brand name"></div>
     <div class="field"><label for="proj-status">Status</label><select class="inp" id="proj-status" data-k="proj.status">${STATUSES.map(([k,l])=>`<option value="${k}" ${p.status===k?"selected":""}>${l}</option>`).join("")}</select></div>
+    <div class="field"><label for="proj-pri">Priority</label><select class="inp" id="proj-pri" data-k="proj.priority">${PRIORITIES.map(([k,l])=>`<option value="${k}" ${priOf(p)===k?"selected":""}>${l}</option>`).join("")}</select></div>
     <div class="field"><label for="proj-start">Start</label><input class="inp" type="date" id="proj-start" data-k="proj.start" value="${esc(p.start)}"></div>
     <div class="field"><label for="proj-end">Delivery</label><input class="inp" type="date" id="proj-end" data-k="proj.end" value="${esc(p.end)}"></div>
     <div class="field"><label for="proj-disc">Quote discount %</label><input class="inp numi" inputmode="decimal" id="proj-disc" data-k="proj.discountPct" data-num value="${esc(p.discountPct||0)}"></div>
@@ -932,6 +972,151 @@ function viewSummary(p,pc){
   </aside>`;
 }
 
+/* ----- scheduler ----- */
+const isoOf=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+function buildSchedule(s){
+  s=s||S();
+  const byKey={},alloc={},over={},calcs={};
+  state.projects.forEach(p=>{
+    if(!counted(p)||p.status==="delivered")return;
+    const pd=projDates(p);if(!pd)return;
+    const pc=calcs[p.id]||(calcs[p.id]=projectCalc(p,s));
+    Object.entries(pc.personDays).forEach(([k,d])=>{
+      if(d>0.0001)(byKey[k]=byKey[k]||[]).push({pid:p.id,need:d,a:pd.a,b:pd.b,pri:PRI_RANK[priOf(p)]});
+    });
+  });
+  Object.entries(byKey).forEach(([key,ts])=>{
+    const person=key.startsWith("u:")?null:personById(key,s);
+    const cap=person?personCapPerDay(person):0;
+    if(!(cap>0)){ts.forEach(t=>{(over[key]=over[key]||{})[t.pid]=t.need;});return;}
+    ts.sort((x,y)=>x.pri-y.pri||x.b-y.b||x.a-y.a);
+    const rem=ts.map(t=>t.need);
+    const d=new Date(Math.min(...ts.map(t=>+t.a)));d.setHours(12,0,0,0);
+    const end=new Date(Math.max(...ts.map(t=>+t.b)));
+    let guard=0;
+    while(d<=end&&guard++<2000){
+      const w=d.getDay();
+      if(w!==0&&w!==6){
+        let free=cap;
+        for(let i=0;i<ts.length&&free>1e-9;i++){
+          const t=ts[i];if(rem[i]<=1e-9||d<t.a||d>t.b)continue;
+          const give=Math.min(free,rem[i]);rem[i]-=give;free-=give;
+          const iso=isoOf(d);
+          const A=alloc[key]=alloc[key]||{};const B=A[t.pid]=A[t.pid]||{};
+          B[iso]=(B[iso]||0)+give;
+        }
+      }
+      d.setDate(d.getDate()+1);
+    }
+    ts.forEach((t,i)=>{if(rem[i]>1e-6)(over[key]=over[key]||{})[t.pid]=rem[i];});
+  });
+  return {alloc,over};
+}
+function allocIn(map,a,b){
+  let t=0;if(!map)return 0;
+  const d=new Date(a);d.setHours(12,0,0,0);
+  while(d<=b){t+=map[isoOf(d)]||0;d.setDate(d.getDate()+1);}
+  return t;
+}
+const projById=id=>state.projects.find(p=>p.id===id);
+
+/* ----- schedule view ----- */
+function viewSchedule(){
+  const s=S();const periods=periodsFor();const {alloc,over}=buildSchedule(s);
+  const keys=[...new Set([...Object.keys(alloc),...Object.keys(over)])];
+  const people=(s.people||[]);
+  keys.sort((a,b)=>{
+    const ax=a.startsWith("u:"),bx=b.startsWith("u:");
+    if(ax!==bx)return ax?1:-1;
+    return people.findIndex(x=>x.id===a)-people.findIndex(x=>x.id===b);
+  });
+  const head=`<thead><tr><th>Project</th>${periods.map(m=>`<th${m.now?' class="now"':""}>${m.label}${m.now?' <span class="nowtag">now</span>':""}<div class="sub" style="font-weight:500">${m.n} working day${m.n===1?"":"s"}</div></th>`).join("")}</tr></thead>`;
+  const blocks=keys.map(key=>{
+    const person=key.startsWith("u:")?null:personById(key,s);
+    const capDay=person?personCapPerDay(person):0;
+    const pids=Object.keys(alloc[key]||{});
+    const oPids=Object.keys(over[key]||{});
+    const all=[...new Set([...pids,...oPids])].map(projById).filter(Boolean)
+      .sort((a,b)=>PRI_RANK[priOf(a)]-PRI_RANK[priOf(b)]||(a.end||"").localeCompare(b.end||""));
+    const rows=all.map(p=>{
+      const map=(alloc[key]||{})[p.id];
+      const cells=periods.map(m=>{
+        const v=allocIn(map,m.a,m.b);const cap=capDay*m.n;
+        return `<td class="sch-cell">${v>0.0001?`<div class="top-n"><b>${days(v)}</b><span class="muted"> d</span></div><div class="sch-bar"><span style="width:${Math.min(100,cap>0?v/cap*100:100)}%;background:${priColor(p)}"></span></div>`:'<span class="muted">·</span>'}</td>`;
+      }).join("");
+      const left=(over[key]||{})[p.id];
+      return `<tr><td><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${priPill(p)}<button class="btn ghost sm" style="padding:0;font-weight:600;color:var(--ink)" data-action="open-project" data-id="${esc(p.id)}">${esc(p.name||"Untitled")}</button></div>
+        <div class="sub">${esc(p.client||"")}${p.start?` · ${esc(fmtDate(p.start))} – ${esc(fmtDate(p.end))}`:""}</div>
+        ${left?`<div class="sub" style="color:var(--bad);font-weight:600">${days(left)} d won't fit by ${esc(fmtDate(p.end))}</div>`:""}</td>${cells}</tr>`;
+    }).join("");
+    const totals=periods.map(m=>{
+      const v=pids.reduce((a,pid)=>a+allocIn(alloc[key][pid],m.a,m.b),0);
+      const cap=capDay*m.n;const l=cap>0?v/cap:(v>0?Infinity:0);
+      const cls=l>1.001?"bad":l>.85?"warn":"good";
+      return `<td class="sch-cell"><div class="top-n"><b>${days(v)}</b><span class="muted"> / ${person?days(cap):"—"} d</span></div><div class="pct ${v?cls:""}">${v?(isFinite(l)?pct(l):"no capacity"):"free"}</div></td>`;
+    }).join("");
+    const totalOver=Object.values(over[key]||{}).reduce((a,b)=>a+b,0);
+    return `<div class="panel" style="margin-bottom:18px">
+      <div class="sch-person"><h3>${person?`<span class="avatar" style="background:${keyColor(key,s)}">${esc(initials(person.name))}</span>${esc(person.name)}`:`<span class="dot" style="background:${keyColor(key,s)}"></span>${esc(keyLabel(key,s))}`}</h3>
+        <p class="sub" style="margin:0">${person?`${esc((person.roles||[]).map(rid=>(s.roles.find(r=>r.id===rid)||{}).name).filter(Boolean).join(", "))} · ${esc(person.utilisation)}% utilisation · ${days(capDay)} d per working day`:"No one assigned — pick people on these quotes"}${totalOver>0.0001?` · <b style="color:var(--bad)">${days(totalOver)} d unplaced</b>`:""}</p></div>
+      <div class="table-wrap"><table class="sch-grid cap-grid">${head}<tbody>${rows}<tr class="sch-tot"><td>Total booked</td>${totals}</tr></tbody></table></div>
+    </div>`;
+  }).join("");
+  return `<div class="section-head"><div><h2>Schedule</h2><p>Each person's work laid out over time. Days are filled from each project's start date, highest priority first, up to that person's daily capacity. Anything that can't fit before a delivery date is flagged instead of moving the date.</p></div>
+    <div class="toolbar">
+      <label class="toggle"><input type="checkbox" id="sch-pitch" data-k="includePitches" ${state.includePitches?"checked":""}> Include pitches</label>
+      <div class="seg-sm" role="group" aria-label="Time scale"><button data-action="gran" data-v="week" aria-pressed="${state.gran==="week"}">Weekly</button><button data-action="gran" data-v="month" aria-pressed="${state.gran==="month"}">Monthly</button></div>
+      <div class="month-nav"><button class="btn sm" data-action="month" data-d="-1" aria-label="Earlier">←</button><button class="btn sm" data-action="month" data-d="0">Today</button><button class="btn sm" data-action="month" data-d="1" aria-label="Later">→</button></div>
+    </div></div>
+  ${blocks||`<div class="panel empty"><strong>Nothing to schedule yet</strong>Quotes need dates, deliverables and people assigned.</div>`}
+  <p class="sub" style="margin-top:4px;max-width:90ch">Delivered quotes are left out. Priority is set per project in the Projects tab.</p>`;
+}
+function priColor(p){return {critical:"var(--bad)",high:"var(--warn)",medium:"var(--accent)",low:"var(--ink-3)"}[priOf(p)];}
+
+/* ----- project tracker ----- */
+function viewProjects(){
+  const s=S();const {over}=buildSchedule(s);
+  const q=(state.trFilter||"").trim().toLowerCase();
+  const list=state.projects.filter(p=>!q||`${p.name||""} ${p.client||""}`.toLowerCase().includes(q))
+    .sort((a,b)=>PRI_RANK[priOf(a)]-PRI_RANK[priOf(b)]||(a.start||"9").localeCompare(b.start||"9"));
+  const overFor=pid=>Object.entries(over).reduce((acc,[k,m])=>acc+(m[pid]||0),0);
+  const rows=list.map(p=>{
+    const pc=projectCalc(p,s);const pd=projDates(p);
+    const names=Object.keys(pc.personDays).filter(k=>!k.startsWith("u:")&&personById(k,s)).map(k=>personById(k,s).name);
+    const un=Object.keys(pc.personDays).some(k=>k.startsWith("u:"));
+    const cmts=(p.comments||[]);
+    const late=overFor(p.id);
+    const open=state.openComments===p.id;
+    return `<tr class="${open?"tr-open":""}">
+      <td><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn ghost sm" style="padding:0;font-weight:600;color:var(--ink)" data-action="open-project" data-id="${esc(p.id)}">${esc(p.name||"Untitled")}</button></div>
+        <div class="sub">${esc(p.client||"No client")} · ${inr(pc.sp)} · ${days(pc.days)} production d</div>
+        ${late>0.0001?`<div class="sub" style="color:var(--bad);font-weight:600">${days(late)} d won't fit before delivery</div>`:""}</td>
+      <td class="tr-st"><select class="inp xs" id="tr-st-${esc(p.id)}" data-k="tp.status" data-id="${esc(p.id)}" aria-label="Status">${STATUSES.map(([k,l])=>`<option value="${k}" ${p.status===k?"selected":""}>${l}</option>`).join("")}</select></td>
+      <td class="tr-pr"><select class="inp xs" id="tr-pr-${esc(p.id)}" data-k="tp.priority" data-id="${esc(p.id)}" aria-label="Priority">${PRIORITIES.map(([k,l])=>`<option value="${k}" ${priOf(p)===k?"selected":""}>${l}</option>`).join("")}</select></td>
+      <td class="tr-dt"><input class="inp xs" type="date" id="tr-a-${esc(p.id)}" data-k="tp.start" data-id="${esc(p.id)}" value="${esc(p.start||"")}" aria-label="Start"></td>
+      <td class="tr-dt"><input class="inp xs" type="date" id="tr-b-${esc(p.id)}" data-k="tp.end" data-id="${esc(p.id)}" value="${esc(p.end||"")}" aria-label="Delivery">${pd?`<div class="sub">${pd.n} working days</div>`:'<div class="sub" style="color:var(--warn)">not scheduled</div>'}</td>
+      <td>${names.length?esc(names.join(", ")):'<span class="muted">—</span>'}${un?' <span class="chip warn">unassigned</span>':""}</td>
+      <td class="num"><button class="btn sm" data-action="comments" data-id="${esc(p.id)}">${cmts.length?`${cmts.length} comment${cmts.length===1?"":"s"}`:"Comment"}</button></td>
+      <td class="num" style="white-space:nowrap"><button class="btn sm" data-action="open-project" data-id="${esc(p.id)}">Edit</button> <button class="btn ghost sm danger ${state.armed==="del:"+p.id?"armed":""}" data-action="del-row" data-id="${esc(p.id)}">${state.armed==="del:"+p.id?"Sure?":"Delete"}</button></td>
+    </tr>${open?`<tr class="tr-open"><td colspan="8">
+      <div class="cmt-list">${cmts.length?cmts.slice().reverse().map(c=>`<div class="cmt"><div class="who">${esc(c.by||"Someone")} · ${esc(new Date(c.at).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</div>${esc(c.text)}</div>`).join(""):'<div class="sub">No comments yet.</div>'}</div>
+      <div class="cmt-form">
+        <div class="field" style="flex:0 1 160px"><label for="cmt-me">Your name</label><input class="inp xs" id="cmt-me" data-k="me" value="${esc(state.me||"")}" placeholder="e.g. Kamal"></div>
+        <div class="field"><label for="cmt-text-${esc(p.id)}">Comment</label><input class="inp xs" id="cmt-text-${esc(p.id)}" placeholder="Status, blocker, client feedback…"></div>
+        <button class="btn primary" data-action="add-comment" data-id="${esc(p.id)}">Add</button>
+        <button class="btn ghost" data-action="comments" data-id="${esc(p.id)}">Close</button>
+      </div></td></tr>`:""}`;
+  }).join("");
+  const counts=STATUSES.map(([k,l])=>`${l} ${state.projects.filter(p=>p.status===k).length}`).join(" · ");
+  return `<div class="section-head"><div><h2>Projects</h2><p>Every quote shows up here automatically. Set status, priority and dates, see who's on each project, and keep notes in the comment box. Priority drives the Schedule tab.</p></div>
+    <div class="toolbar"><input class="inp" id="tr-filter" data-k="trFilter" value="${esc(state.trFilter||"")}" placeholder="Search projects…" style="width:220px"><button class="btn primary" data-action="new-project">+ New quote</button></div></div>
+  <div class="panel"><div class="table-wrap"><table>
+    <thead><tr><th>Project</th><th>Status</th><th>Priority</th><th>Start</th><th>Delivery</th><th>Team</th><th class="num">Comments</th><th></th></tr></thead>
+    <tbody>${rows||`<tr><td colspan="8"><div class="empty"><strong>No projects yet</strong>Create a quote and it appears here.</div></td></tr>`}</tbody>
+  </table></div></div>
+  <p class="sub" style="margin-top:12px">${esc(counts)}</p>`;
+}
+
 /* ----- pipeline & capacity ----- */
 function periodsFor(){
   const off=state.monthOffset,today=new Date();today.setHours(12,0,0,0);
@@ -996,7 +1181,7 @@ function viewPipeline(){
     let g="";if(pd){const a=Math.max(pd.a,rangeA),b=Math.min(pd.b,rangeB);if(a<=b){g=`<span class="${p.status==="pitch"?"pitch":""}" style="left:${(a-rangeA)/span*100}%;width:${Math.max(1.2,(b-a)/span*100)}%"></span>`;}}
     return `<tr>
       <td><button class="btn ghost sm" style="padding-left:0;font-weight:600;color:var(--ink)" data-action="open-project" data-id="${esc(p.id)}">${esc(p.name||"Untitled")}</button><div class="sub">${esc(p.client||"")}</div></td>
-      <td><span class="pill st-${esc(p.status)}">${esc(STATUS_LABEL[p.status]||p.status)}</span></td>
+      <td><span class="pill st-${esc(p.status)}">${esc(STATUS_LABEL[p.status]||p.status)}</span><div style="margin-top:5px">${priPill(p)}</div></td>
       <td>${pd?`${esc(fmtDate(p.start))} – ${esc(fmtDate(p.end))}<div class="sub">${pd.n} working days</div>`:'<span class="chip warn">No dates · not counted</span>'}</td>
       <td style="min-width:170px"><div class="gantt">${g}</div></td>
       <td class="num">${inr(c.sp)}</td><td class="num">${inr(c.cost)}</td><td class="num">${markupChip(c.sp,c.cost)}</td>
@@ -1233,6 +1418,9 @@ function onField(e){
   const k=el.dataset.k;const v=readVal(el);
   if(k==="curId"){flushProject();state.curId=v;try{localStorage.setItem("sp-cur",v);}catch(e){}const f=state.projects.find(p=>p.id===v);state.cur=f?clone(f):null;state.armed=null;render();return;}
   if(k==="qFilter"){state.qFilter=v;render();return;}
+  if(k==="trFilter"){state.trFilter=v;render();return;}
+  if(k==="me"){state.me=v;try{localStorage.setItem("sp-me",v);}catch(e){}return;}
+  if(k.startsWith("tp.")){const id=el.dataset.id,f=k.slice(3);updateProjectById(id,pr=>{pr[f]=v;});return;}
   if(k==="addJobId"){state.addJobId=v;return;}
   if(k==="addQty"){state.addQty=v;return;}
   if(k==="includePitches"){state.includePitches=v;render();return;}
@@ -1279,7 +1467,9 @@ document.addEventListener("submit",async e=>{
     state.authBusy=false;if(error){state.authErr="That code didn't work. Check it, or use the link in the email.";render();}
   }
 });
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&state.jobDraft){state.jobDraft=null;state.armed=null;render();}});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&e.target.id&&e.target.id.startsWith("cmt-text-")){e.preventDefault();actions["add-comment"]({dataset:{id:e.target.id.slice(9)}});return;}
+  if(e.key==="Escape"&&state.jobDraft){state.jobDraft=null;state.armed=null;render();}});
 
 const actions={
   "sign-out"(){flushProject();if(cloud.channel){cloud.sb.removeChannel(cloud.channel);cloud.channel=null;}cloud.sb.auth.signOut();cloud.user=null;state.cloudView="signin";state.otpSent=false;render();},
@@ -1297,6 +1487,12 @@ const actions={
   "dup-project"(){if(!state.cur)return;flushProject();const now=new Date().toISOString();const p=clone(state.cur);p.id=uid("p");p.name=(p.name||"Quote")+" (copy)";p.status="pitch";p.createdAt=now;p.updatedAt=now;p.lines=(p.lines||[]).map(l=>Object.assign(l,{id:uid("l")}));state.projects.push(clone(p));state.curId=p.id;state.cur=p;state.dirty=true;flushProject();render();toast("Quote duplicated");},
   "open-project"(el){flushProject();const f=state.projects.find(p=>p.id===el.dataset.id);if(!f)return;state.curId=f.id;state.cur=clone(f);state.tab="quote";render();window.scrollTo(0,0);},
   "del-project"(){if(state.armed!=="del-proj"){state.armed="del-proj";render();return;}const id=state.curId;clearTimeout(state.saveTimer);state.dirty=false;state.projects=state.projects.filter(p=>p.id!==id);state.cur=null;state.curId=null;state.armed=null;dbDel("projects/"+id);const n=[...state.projects].sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];if(n){state.curId=n.id;state.cur=clone(n);}render();toast("Quote deleted");},
+  comments(el){const id=el.dataset.id;state.openComments=state.openComments===id?null:id;render();
+    if(state.openComments)setTimeout(()=>{const t=$("#cmt-text-"+id);if(t)t.focus();},30);},
+  "add-comment"(el){const id=el.dataset.id;const box=$("#cmt-text-"+id);const text=box?box.value.trim():"";
+    if(!text)return;
+    updateProjectById(id,pr=>{pr.comments=(pr.comments||[]).concat([{id:uid("c"),at:new Date().toISOString(),by:(state.me||"").trim()||"Someone",text}]);});
+    setTimeout(()=>{const t=$("#cmt-text-"+id);if(t){t.value="";t.focus();}},20);toast("Comment added");},
   "del-row"(el){const id=el.dataset.id;
     if(state.armed!=="del:"+id){state.armed="del:"+id;render();return;}
     state.armed=null;

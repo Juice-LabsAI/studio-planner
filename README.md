@@ -42,6 +42,11 @@ Margin % = (price − internal cost) ÷ price
 - **Assigning work:** on each quote, pick one person per role under "Who's on it", or click **Assign least booked**. To give a single line to someone else, use its "Done by" menu. For example, split 20 statics into two lines of 10 with different designers. Work with no one picked shows as **Unassigned** until you assign it.
 - **Capacity view:** booked days per person, switchable between **weekly** (8 weeks) and **monthly** (6 months), with a quote's days spread evenly between its start and delivery dates. Unassigned work gets its own section, and pitches are optional.
 
+## Projects and schedule
+
+- **Projects tab:** every quote appears here automatically. Set status, priority (Critical / High / Medium / Low), start and delivery dates inline, see who's on each project, and keep a running comment thread per project. Your name for comments is remembered in your browser.
+- **Schedule tab:** a per-person view of what they're working on, week by week (or month by month). Each person's days are filled from each project's start date, highest priority first, up to their daily capacity (utilisation). Anything that can't fit before the delivery date is flagged as "x d won't fit by <date>" rather than silently moving the date. Delivered projects are excluded; pitches are optional.
+
 ## Where your data lives
 
 The planner saves to a shared **Supabase** database (Postgres), set in `data/config.js`. There's no sign-in: anyone who opens the page sees and edits the same rate card, rates, team and quotes, and open planners update live. **Share the address only with admins.** Anyone who has it, or who reads the key in the page source, can change the data.
