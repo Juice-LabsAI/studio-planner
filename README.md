@@ -10,6 +10,8 @@ data/seed.js    default rate card, reference rates, team, example quotes
 .nojekyll       lets GitHub Pages serve the files as-is
 ```
 
+Tabs: **Dashboard** (opens by default), Quote builder, Projects, Schedule, Pipeline & capacity, Rate card, Reference rates.
+
 ## Run it
 
 - **On your computer:** open `index.html` in a browser.
@@ -42,10 +44,22 @@ Margin % = (price − internal cost) ÷ price
 - **Assigning work:** on each quote, pick one person per role under "Who's on it", or click **Assign least booked**. To give a single line to someone else, use its "Done by" menu. For example, split 20 statics into two lines of 10 with different designers. Work with no one picked shows as **Unassigned** until you assign it.
 - **Capacity view:** booked days per person, switchable between **weekly** (8 weeks) and **monthly** (6 months), with a quote's days spread evenly between its start and delivery dates. Unassigned work gets its own section, and pitches are optional.
 
+## Dashboard
+
+The first tab, and the one to open if you only have a minute.
+
+- **Five numbers:** confirmed value delivering this month (with margin %, and next month underneath), value out on pitches, average markup across priced projects (and how many sit under the markup floor), team load for the next four weeks (and who is over 100%), and how many things need attention.
+- **Needs attention:** one list, worst first — overdue deliveries, work with no free capacity, deliverables overflowing past a delivery date, projects with no dates, work nobody is assigned to, quotes under the markup floor, and credit overspends. Each row has an **Open** button that jumps to the right tab with that project selected.
+- **Team load:** each person's booked days against their capacity for the next four weeks.
+- **Money & spend:** pipeline value by status with the win rate, client concentration, credits to buy this month in rupees, estimate-vs-actual on both credits and days, and delivered value against cost by month.
+
+Everything on it is derived from the quotes, so there's nothing extra to maintain.
+
 ## Projects and schedule
 
 - **Projects tab:** every quote appears here automatically. Set status, priority (Critical / High / Medium / Low), start and delivery dates inline, see who's on each project, and keep a running comment thread per project. Your name for comments is remembered in your browser.
-- **Credits, estimated vs used:** the Projects table has a **Credits · est → used** column. The estimate comes from the quote (credits + buffer per provider). Type in what was actually spent and it shows the variance as a percentage per provider, plus the rupee difference for the project ("₹653 over"). Stored per project as `actual`.
+- **Statuses:** Pitch, Confirmed, In production, Delivered and **Lost**. A lost quote stays on record — it feeds the win rate on the dashboard — but is left out of capacity, the schedule and all pipeline totals.
+- **Actuals, estimated vs used:** the Projects table has an **Actuals · est → used** column. The first row is **days** (quoted production days → what it really took); the rest are credits per provider (credits + buffer → what was really spent). Each shows the variance as a percentage, and the project line underneath totals the rupee difference ("₹12,863 over cost") using the workday rate and credit rates. Stored per project as `actualDays` and `actual`.
 - **Timeline key:** click ⓘ in the Schedule toolbar. A thick solid bar is the project; a thin tinted bar is one deliverable with its own dates; a dashed tinted bar is a deliverable that hasn't been given dates yet, so it can happen anywhere inside the project's dates. Bar colour is the project's priority.
 - **auto-plan:** on an expanded project row, gives every deliverable real dates. It re-runs the scheduler for that project from scratch (ignoring any dates already pinned on its own lines), so the result follows priority: a Critical project takes the early days and a Low one gets what's left. Re-run it after changing a priority.
 - **Work that won't fit:** when a person hasn't enough free capacity inside the dates, the row says "0.5 d won't fit" and a red hatched block appears just past the bar, sized to roughly that much time, with the exact figure in its tooltip. The bar also gets a red right edge.

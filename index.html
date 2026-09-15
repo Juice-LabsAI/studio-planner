@@ -127,6 +127,7 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
 .st-confirmed{background:var(--accent-soft);color:var(--accent)}
 .st-production{background:var(--warn-soft);color:var(--warn)}
 .st-delivered{background:var(--surface-2);color:var(--ink-3)}
+.st-lost{background:var(--bad-soft);color:var(--bad)}
 .pr-critical{background:var(--bad-soft);color:var(--bad)}
 .pr-high{background:var(--warn-soft);color:var(--warn)}
 .pr-medium{background:var(--surface-2);color:var(--ink-2)}
@@ -219,6 +220,46 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
 .cr-grid .est{font-variant-numeric:tabular-nums;font-weight:600}
 .cr-grid .inp{width:78px;padding:3px 6px;font-size:var(--fs-xs)}
 .cr-sum{font-size:var(--fs-xs);margin-top:6px}
+
+/* dashboard */
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:18px}
+@media(max-width:1180px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--surface);padding:15px 17px;min-width:0}
+.kpi .v{font-family:var(--f-display);font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1.15;font-variant-numeric:tabular-nums;margin-top:3px}
+.kpi .v.sm{font-size:21px}
+.kpi .v.bad{color:var(--bad)}.kpi .v.warn{color:var(--warn)}.kpi .v.good{color:var(--good)}
+.kpi .sub{margin-top:5px}
+.dash-2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;align-items:start;margin-bottom:18px}
+@media(max-width:1060px){.dash-2{grid-template-columns:1fr}}
+.attn-row{display:flex;gap:11px;align-items:center;padding:10px 20px;border-top:1px solid var(--line)}
+.attn-row .txt{flex:1;min-width:0;font-size:var(--fs-sm);line-height:1.45}
+.attn-row .tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:999px;flex:none}
+.attn-row .tag.bad{background:var(--bad-soft);color:var(--bad)}
+.attn-row .tag.warn{background:var(--warn-soft);color:var(--warn)}
+.attn-row .tag.info{background:var(--surface-2);color:var(--ink-2)}
+.attn-more{padding:10px 20px;border-top:1px solid var(--line)}
+.ldrow{display:grid;grid-template-columns:minmax(0,164px) repeat(4,minmax(0,1fr));gap:4px 9px;align-items:start;padding:10px 18px;border-top:1px solid var(--line)}
+.ldrow .who{display:flex;gap:8px;align-items:center;min-width:0;font-size:var(--fs-sm);font-weight:600;line-height:1.3}
+.ldrow .who>span.nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ldrow .avatar{width:24px;height:24px;font-size:10.5px}
+.ldc{min-width:0;font-size:var(--fs-xs);font-variant-numeric:tabular-nums}
+.ldc .lbar{height:7px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin-top:3px}
+.ldc .lbar span{display:block;height:100%;border-radius:3px}
+.ldhead{display:grid;grid-template-columns:minmax(0,164px) repeat(4,minmax(0,1fr));gap:9px;padding:0 18px 8px}
+.ldhead div{font-size:var(--fs-xs);color:var(--ink-3);font-weight:600}
+.money{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media(max-width:820px){.money{grid-template-columns:1fr}}
+.srow{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:baseline;font-size:var(--fs-sm)}
+.srow+.srow{margin-top:11px}
+.srow .nb{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.srow .sub{grid-column:1/-1;margin-top:1px}
+.srow .track{height:8px;background:var(--surface-2);border-radius:3px;overflow:hidden;grid-column:1/-1;margin-top:2px}
+.srow .track span{display:block;height:100%;border-radius:3px}
+table.mini{font-size:var(--fs-sm)}
+table.mini th,table.mini td{padding:7px 0;white-space:nowrap}
+table.mini th+th,table.mini td+td{padding-left:16px}
+table.mini th:first-child,table.mini td:first-child{width:99%}
 
 /* panels */
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px}
@@ -445,14 +486,16 @@ const PRI_LABEL=Object.fromEntries(PRIORITIES);
 const PRI_RANK={critical:0,high:1,medium:2,low:3};
 const priOf=p=>PRI_LABEL[p&&p.priority]?p.priority:"medium";
 const priPill=p=>`<span class="pill pr-${esc(priOf(p))}">${esc(PRI_LABEL[priOf(p)])}</span>`;
-const STATUSES=[["pitch","Pitch"],["confirmed","Confirmed"],["production","In production"],["delivered","Delivered"]];
+const STATUSES=[["pitch","Pitch"],["confirmed","Confirmed"],["production","In production"],["delivered","Delivered"],["lost","Lost"]];
+const FIRM=p=>p.status==="confirmed"||p.status==="production"||p.status==="delivered";
+const LIVE=p=>p.status!=="lost";
 const STATUS_LABEL=Object.fromEntries(STATUSES);
 const PRICING=[["fixed","Fixed price"],["range","Price range"],["tbd","Quote per brief"],["free","Complimentary"],["adapt","% of base film"]];
 const EMPTY_SETTINGS={credits:[],dayRate:0,hoursPerDay:8,markupFloor:1.5,targetMarkup:2.5,roles:[],categoryBlurbs:{},history:[]};
 
 /* ---------- state ---------- */
 const state={
-  tab:"quote", dbState:"live",
+  tab:"dash", dbState:"live",
   settings:null, jobs:[], projects:[], loaded:{settings:false,jobs:false,projects:false},
   curId:null, cur:null, dirty:false, saveTimer:null, saving:false,
   addJobId:"", addQty:1,
@@ -561,7 +604,7 @@ function fmtRange(a,b){
     ?`${x.getDate()}–${y.getDate()} ${mon(y)}`
     :`${x.getDate()} ${mon(x)} – ${y.getDate()} ${mon(y)}`;
 }
-const counted=p=>p.status!=="pitch"||state.includePitches;
+const counted=p=>p.status!=="lost"&&(p.status!=="pitch"||state.includePitches);
 function projDates(p){const a=D(p.start),b=D(p.end);return a&&b&&a<=b?{a,b,n:wd(a,b)}:null;}
 
 function roleColor(i){return `var(--role-${i%5})`;}
@@ -863,12 +906,13 @@ function render(){
   const scrollY=window.scrollY;
   const dScroll=$(".drawer-body")?.scrollTop;
   const gw=$("#gt-wrap");const gS=gw?{l:gw.scrollLeft,t:gw.scrollTop}:null;
-  $("#tabs").innerHTML=[["quote","Quote builder"],["projects","Projects"],["schedule","Schedule"],["pipeline","Pipeline & capacity"],["rates","Rate card"],["reference","Reference rates"]]
+  $("#tabs").innerHTML=[["dash","Dashboard"],["quote","Quote builder"],["projects","Projects"],["schedule","Schedule"],["pipeline","Pipeline & capacity"],["rates","Rate card"],["reference","Reference rates"]]
     .map(([k,l])=>`<button class="tab" role="tab" aria-selected="${state.tab===k}" data-action="tab" data-tab="${k}">${l}</button>`).join("");
   banner();setSync();
   const m=$("#main");
   const gated=cloudOn()&&state.cloudView!=="live";
   if(gated){$("#tabs").innerHTML="";m.innerHTML=viewCloud();}
+  else if(state.tab==="dash")m.innerHTML=viewDashboard();
   else if(state.tab==="quote")m.innerHTML=viewQuote();
   else if(state.tab==="projects")m.innerHTML=viewProjects();
   else if(state.tab==="schedule")m.innerHTML=viewSchedule();
@@ -1397,12 +1441,199 @@ function viewPeopleSchedule(){
 }
 function priColor(p){return {critical:"var(--bad)",high:"var(--warn)",medium:"var(--accent)",low:"var(--ink-3)"}[priOf(p)];}
 
+/* ----- dashboard ----- */
+function monthWin(n){
+  const t=new Date();t.setHours(12,0,0,0);
+  const a=new Date(t.getFullYear(),t.getMonth()+n,1,12);
+  const b=new Date(a.getFullYear(),a.getMonth()+1,0,12);
+  return {a,b,label:a.toLocaleDateString("en-IN",{month:"short"}),long:a.toLocaleDateString("en-IN",{month:"long"})};
+}
+function dashData(s){
+  s=s||S();
+  const t=new Date();t.setHours(12,0,0,0);
+  const calcs={};state.projects.forEach(p=>calcs[p.id]=projectCalc(p,s));
+  const sc=buildSchedule(s);
+  const unplaced={};Object.values(sc.over).forEach(m=>{for(const k in m)unplaced[k]=(unplaced[k]||0)+m[k];});
+  const overflow={},unassigned={},credDelta={};
+  state.projects.forEach(p=>{
+    const c=calcs[p.id];
+    if(p.end){let mx=0;c.lines.forEach(({l,c:lc})=>{if(lc&&lc.days>0.0001&&l.start&&l.end)mx=Math.max(mx,diffDays(p.end,l.end));});if(mx>0)overflow[p.id]=mx;}
+    let u=0;for(const k in c.personDays)if(k.startsWith("u:")||!personById(k,s))u+=c.personDays[k];
+    if(u>0.0001)unassigned[p.id]=u;
+    const act=p.actual||{};let dc=0,any=false;
+    (s.credits||[]).forEach(cr=>{const v=act[cr.id];if(v==null||v==="")return;any=true;dc+=((+v)-(c.credits[cr.id]||0))*(+cr.rate||0);});
+    if(any)credDelta[p.id]=dc;
+  });
+  return {calcs,sc,unplaced,overflow,unassigned,credDelta,t,tIso:isoOf(t)};
+}
+function viewDashboard(){
+  const s=S();const d=dashData(s);const calcs=d.calcs;
+  const all=state.projects,live=all.filter(LIVE);
+  const M0=monthWin(0),M1=monthWin(1);
+  const endsIn=(p,w)=>{const e=D(p.end);return !!e&&e>=w.a&&e<=w.b;};
+  const sum=arr=>arr.reduce((a,p)=>{const c=calcs[p.id];a.sp+=c.sp;a.cost+=c.cost;a.n++;return a;},{sp:0,cost:0,n:0});
+  const m0=sum(all.filter(p=>FIRM(p)&&endsIn(p,M0))),m1=sum(all.filter(p=>FIRM(p)&&endsIn(p,M1)));
+  const pit=sum(all.filter(p=>p.status==="pitch"));
+  const openP=all.filter(p=>p.status==="confirmed"||p.status==="production");
+  const mk=sum(live.filter(p=>calcs[p.id].cost>0));
+  const floor=+s.markupFloor||0;
+  const belowFloor=live.filter(p=>{const c=calcs[p.id];return c.cost>0&&c.sp>0&&c.sp/c.cost<floor;});
+  const mkAvg=mk.cost>0?mk.sp/mk.cost:NaN;
+
+  /* team load, next 4 weeks */
+  const wk0=new Date(d.t);wk0.setDate(d.t.getDate()-((d.t.getDay()+6)%7));
+  const weeks=[...Array(4)].map((_,i)=>{const a=new Date(wk0);a.setDate(wk0.getDate()+i*7);const b=new Date(a);b.setDate(a.getDate()+6);
+    return {a,b,n:wd(a,b),label:(i===0?"This week":a.toLocaleDateString("en-IN",{day:"numeric",month:"short"}))};});
+  const rowsLoad=(s.people||[]).map(x=>{
+    const cap=personCapPerDay(x);
+    const cells=weeks.map(w=>{const booked=allocIn((d.sc.dayTot||{})[x.id],w.a,w.b),c=w.n*cap;
+      return {booked,cap:c,l:c>0?booked/c:(booked>0?Infinity:0)};});
+    const tb=cells.reduce((a,c)=>a+c.booked,0),tc=cells.reduce((a,c)=>a+c.cap,0);
+    return {x,cells,tb,tc,l:tc>0?tb/tc:(tb>0?Infinity:0)};
+  });
+  const totB=rowsLoad.reduce((a,r)=>a+r.tb,0),totC=rowsLoad.reduce((a,r)=>a+r.tc,0);
+  const overPeople=rowsLoad.filter(r=>r.l>1.001);
+  const loadPct=totC>0?totB/totC:NaN;
+  const loadCls=loadPct>1.001?"bad":loadPct>.85?"warn":"good";
+
+  /* at risk */
+  const riskIds=new Set();
+  const openish=p=>LIVE(p)&&p.status!=="delivered";
+  Object.keys(d.unplaced).forEach(id=>{if(d.unplaced[id]>0.0001&&openish(projById(id)||{}))riskIds.add(id);});
+  Object.keys(d.overflow).forEach(id=>{if(openish(projById(id)||{}))riskIds.add(id);});
+  all.filter(p=>openish(p)&&!projDates(p)).forEach(p=>riskIds.add(p.id));
+
+  /* needs attention */
+  const attn=[];
+  const push=(sev,cls,tag,text,tab,id)=>attn.push({sev,cls,tag,text,tab,id});
+  const nm=p=>esc(p.name||"Untitled");
+  openP.filter(p=>p.end).forEach(p=>{const n=diffDays(d.tIso,p.end);
+    if(n<0)push(0,"bad","Overdue",`<b>${nm(p)}</b> was due ${esc(fmtDate(p.end))}, ${-n} day${n===-1?"":"s"} ago`,"projects",p.id);
+    else if(n<=7)push(1,"warn","Due soon",`<b>${nm(p)}</b> delivers ${n===0?"today":n===1?"tomorrow":"in "+n+" days"} &middot; ${inr(calcs[p.id].sp)}`,"projects",p.id);});
+  Object.entries(d.unplaced).forEach(([id,v])=>{const p=projById(id);if(p&&openish(p)&&v>0.0001)
+    push(0,"bad","Won't fit",`<b>${nm(p)}</b> has ${days(v)} d of work with no free capacity before ${esc(fmtDate(p.end))}`,"schedule",id);});
+  Object.entries(d.overflow).forEach(([id,v])=>{const p=projById(id);if(p&&openish(p))
+    push(1,"warn","Overflow",`<b>${nm(p)}</b> runs ${v} day${v===1?"":"s"} past its delivery date`,"schedule",id);});
+  all.filter(p=>openish(p)&&!projDates(p)).forEach(p=>push(2,"info","No dates",`<b>${nm(p)}</b> has no dates yet, so it isn't in the schedule`,"projects",p.id));
+  Object.entries(d.unassigned).forEach(([id,v])=>{const p=projById(id);if(p&&openish(p))
+    push(2,"info","Unassigned",`<b>${nm(p)}</b> has ${days(v)} d with nobody on it`,"quote",id);});
+  belowFloor.forEach(p=>{const c=calcs[p.id];push(1,"warn","Thin margin",`<b>${nm(p)}</b> is at ${xfmt(c.sp/c.cost)}, under the ${xfmt(floor)} floor`,"quote",p.id);});
+  Object.entries(d.credDelta).forEach(([id,v])=>{const p=projById(id);if(p&&v>1)
+    push(1,"warn","Overspend",`<b>${nm(p)}</b> spent ${inr(v)} more on credits than estimated`,"projects",id);});
+  attn.sort((a,b)=>a.sev-b.sev);
+  const SHOW=9;
+  const attnHtml=attn.slice(0,SHOW).map(a=>`<div class="attn-row"><span class="tag ${a.cls}">${esc(a.tag)}</span><span class="txt">${a.text}</span>
+    <button class="btn sm" data-action="goto" data-tab="${esc(a.tab)}" data-id="${esc(a.id)}">Open</button></div>`).join("");
+
+  /* money and spend */
+  const byStatus=STATUSES.filter(([k])=>k!=="lost").map(([k,l])=>{const arr=all.filter(p=>p.status===k);const t=sum(arr);return {k,l,t};});
+  const maxSt=Math.max(1,...byStatus.map(x=>x.t.sp));
+  const won=all.filter(FIRM).length,lostN=all.filter(p=>p.status==="lost").length;
+  const winRate=(won+lostN)>0?won/(won+lostN):NaN;
+  const lostVal=sum(all.filter(p=>p.status==="lost"));
+
+  const byClient={};live.forEach(p=>{const k=(p.client||"").trim()||"No client";byClient[k]=(byClient[k]||0)+calcs[p.id].sp;});
+  const cl=Object.entries(byClient).sort((a,b)=>b[1]-a[1]);
+  const clTot=cl.reduce((a,x)=>a+x[1],0);
+  const top3=cl.slice(0,3).reduce((a,x)=>a+x[1],0);
+
+  const credMo=(s.credits||[]).map(c=>{let t=0;
+    all.forEach(p=>{if(!counted(p)||p.status==="delivered")return;const pd=projDates(p);if(!pd)return;
+      const ov=overlapWd(pd.a,pd.b,M0.a,M0.b);if(ov)t+=(calcs[p.id].credits[c.id]||0)*ov/pd.n;});
+    return {c,t,money:t*(+c.rate||0)};}).filter(x=>x.t>0.0001);
+  const credMoTot=credMo.reduce((a,x)=>a+x.money,0);
+  const credVar=Object.values(d.credDelta).reduce((a,v)=>a+v,0);
+  const credVarN=Object.keys(d.credDelta).length;
+  const dayRows=all.filter(p=>p.actualDays!=null&&p.actualDays!=="");
+  const dayEst=dayRows.reduce((a,p)=>a+calcs[p.id].days,0),dayAct=dayRows.reduce((a,p)=>a+(+p.actualDays||0),0);
+
+  const mons=[...Array(6)].map((_,i)=>monthWin(i-5));
+  const delivRows=mons.map(w=>{const arr=all.filter(p=>p.status==="delivered"&&endsIn(p,w));const t=sum(arr);return {w,t};}).filter(r=>r.t.n);
+
+  const kpi=(eyebrow,v,cls,sub,sub2)=>`<div class="kpi"><div class="eyebrow">${eyebrow}</div><div class="v ${cls||""}">${v}</div>
+    <div class="sub">${sub||""}</div>${sub2?`<div class="sub">${sub2}</div>`:""}</div>`;
+
+  return `<div class="section-head"><div><h2>Dashboard</h2><p>Where the studio stands right now: money booked, what needs a decision, and whether the team can take on more.</p></div>
+    <div class="toolbar"><button class="btn primary" data-action="new-project">+ New quote</button></div></div>
+
+  <div class="kpis">
+    ${kpi(`Confirmed &middot; ${esc(M0.long)}`,inr(m0.sp),"",`${m0.n} project${m0.n===1?"":"s"} delivering &middot; ${m0.sp>0?pct((m0.sp-m0.cost)/m0.sp)+" margin":"\u2014"}`,`${esc(M1.label)}: ${inr(m1.sp)} &middot; ${m1.n} project${m1.n===1?"":"s"}`)}
+    ${kpi("Pitching",inr(pit.sp),"",`${pit.n} open pitch${pit.n===1?"":"es"}`,pit.n?`worth ${inr(pit.sp-pit.cost)} in margin if all land`:"Nothing out with clients")}
+    ${kpi("Average markup",xfmt(mkAvg),isFinite(mkAvg)&&mkAvg<floor?"bad":"",`Across ${mk.n} priced project${mk.n===1?"":"s"}`,belowFloor.length?`<b style="color:var(--bad)">${belowFloor.length} under the ${xfmt(floor)} floor</b>`:`All above the ${xfmt(floor)} floor`)}
+    ${kpi("Team load &middot; next 4 weeks",isFinite(loadPct)?pct(loadPct):"\u2014",isFinite(loadPct)?loadCls:"",`${days(totB)} of ${days(totC)} available days booked`,overPeople.length?`<b style="color:var(--bad)">Over 100%: ${esc(overPeople.map(r=>r.x.name).join(", "))}</b>`:"Nobody over capacity")}
+    ${kpi("Needs attention",String(attn.length),attn.some(a=>a.sev===0)?"bad":attn.length?"warn":"good",`${riskIds.size} project${riskIds.size===1?"":"s"} at risk`,attn.length?"Listed below, worst first":"Nothing to chase")}
+  </div>
+
+  <div class="dash-2">
+    <section class="panel">
+      <div class="grid-title"><h3>Needs attention</h3><p>${attn.length?"Worst first. Open takes you to the right tab.":"Everything looks clear."}</p></div>
+      ${attnHtml||'<div class="empty"><strong>Nothing to chase</strong>No overdue dates, capacity clashes or thin margins.</div>'}
+      ${attn.length>SHOW?`<div class="attn-more sub">+${attn.length-SHOW} more \u2014 see the Projects and Schedule tabs.</div>`:""}
+    </section>
+    <section class="panel">
+      <div class="grid-title"><h3>Team load</h3><p>Booked days against each person's capacity, week by week.</p></div>
+      <div class="ldhead"><div>Person</div>${weeks.map(w=>`<div>${esc(w.label)}</div>`).join("")}</div>
+      ${rowsLoad.length?rowsLoad.map(r=>{
+        const col=keyColor(r.x.id,s);
+        return `<div class="ldrow">
+          <div class="who"><span class="avatar" style="background:${col}">${esc(initials(r.x.name))}</span><span class="nm" title="${esc(r.x.name)}">${esc(r.x.name)}</span></div>
+          ${r.cells.map(c=>{const l=c.l,cls=l>1.001?"bad":l>.85?"warn":"good";
+            return `<div class="ldc"><span class="${c.booked?cls==="bad"?"delta-up":"":""}" style="${l>1.001?"color:var(--bad);font-weight:700":""}">${c.cap>0?(isFinite(l)?Math.round(l*100)+"%":"\u2014"):"\u2014"}</span>
+              <div class="lbar" title="${days(c.booked)} of ${days(c.cap)} days"><span style="width:${Math.min(100,(c.cap>0?c.booked/c.cap:0)*100)}%;background:${l>1.001?"var(--bad)":l>.85?"var(--warn)":col}"></span></div></div>`;}).join("")}
+        </div>`;}).join(""):'<div class="empty"><strong>No team yet</strong>Add people in Reference rates \u2192 Team.</div>'}
+      <div class="attn-more sub">Delivered and lost projects are left out. ${state.includePitches?"Pitches are included (change it on the Pipeline tab).":"Pitches are excluded."}</div>
+    </section>
+  </div>
+
+  <div class="money">
+    <section class="panel panel-pad">
+      <h3>Pipeline</h3><p class="hint sub" style="margin-bottom:14px">Total value of every quote, by status.</p>
+      ${byStatus.map(x=>`<div class="srow"><span>${esc(x.l)} <span class="muted">${x.t.n}</span></span><span class="nb">${inr(x.t.sp)}</span>
+        <span class="track"><span style="width:${x.t.sp/maxSt*100}%;background:${x.k==="pitch"?"var(--ink-3)":x.k==="delivered"?"var(--good)":"var(--accent)"}"></span></span></div>`).join("")}
+      <div class="srow" style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px"><span>Win rate <span class="muted">${won} won / ${lostN} lost</span></span><span class="nb">${isFinite(winRate)?pct(winRate):"\u2014"}</span></div>
+      ${lostN?`<div class="sub">${inr(lostVal.sp)} lost to date</div>`:""}
+    </section>
+
+    <section class="panel panel-pad">
+      <h3>Clients</h3><p class="hint sub" style="margin-bottom:14px">Where the money comes from, biggest first. Lost quotes excluded.</p>
+      ${cl.length?cl.slice(0,5).map(([k,v])=>`<div class="srow"><span>${esc(k)}</span><span class="nb">${inr(v)}</span>
+        <span class="track"><span style="width:${clTot>0?v/clTot*100:0}%;background:var(--accent)"></span></span></div>`).join(""):'<p class="sub">No quotes yet.</p>'}
+      ${cl.length>1?`<div class="srow" style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px"><span>Top ${Math.min(3,cl.length)} together</span><span class="nb">${clTot>0?pct(top3/clTot):"\u2014"}</span></div>
+        <div class="sub">${clTot>0&&top3/clTot>.7?"Heavily concentrated \u2014 losing one would hurt.":"Reasonably spread."}</div>`:""}
+    </section>
+
+    <section class="panel panel-pad">
+      <h3>Spend &amp; accuracy</h3><p class="hint sub" style="margin-bottom:14px">Credits to buy this month, and how estimates held up.</p>
+      ${credMo.length?credMo.map(x=>`<div class="srow"><span>${esc(x.c.name)} <span class="muted">${num(x.t)} cr</span></span><span class="nb">${inr(x.money)}</span></div>`).join("")+`<div class="srow" style="border-top:1px solid var(--line);padding-top:12px"><span><b>To buy in ${esc(M0.label)}</b></span><span class="nb">${inr(credMoTot)}</span></div>`:'<p class="sub">No credit spend scheduled this month.</p>'}
+      <div class="srow" style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px"><span>Credits used vs estimate</span>
+        <span class="nb ${credVar>0?"delta-up":credVar<0?"delta-down":""}">${credVarN?(credVar>0?inr(credVar)+" over":credVar<0?inr(-credVar)+" under":"on budget"):"\u2014"}</span>
+        <span class="sub">${credVarN?`Across ${credVarN} project${credVarN===1?"":"s"} with numbers filled in`:"Fill in credits used on the Projects tab"}</span></div>
+      <div class="srow"><span>Days spent vs estimate</span>
+        <span class="nb ${dayAct>dayEst?"delta-up":dayAct<dayEst?"delta-down":""}">${dayRows.length?`${days(dayEst)} \u2192 ${days(dayAct)} d`:"\u2014"}</span>
+        <span class="sub">${dayRows.length?(dayAct>dayEst?`${days(dayAct-dayEst)} d more than quoted on ${dayRows.length} project${dayRows.length===1?"":"s"} (${inr((dayAct-dayEst)*(+s.dayRate||0))})`:dayAct<dayEst?`${days(dayEst-dayAct)} d less than quoted on ${dayRows.length} project${dayRows.length===1?"":"s"}`:"Bang on"):"Fill in actual days on the Projects tab"}</span></div>
+    </section>
+
+    <section class="panel panel-pad">
+      <h3>Delivered</h3><p class="hint sub" style="margin-bottom:14px">Value and cost of what actually shipped, by delivery month.</p>
+      ${delivRows.length?`<table class="mini"><thead><tr><th>Month</th><th class="num">Value</th><th class="num">Cost</th><th class="num">Margin</th></tr></thead>
+        <tbody>${delivRows.map(r=>`<tr><td>${esc(r.w.label)} <span class="muted">${r.t.n}</span></td><td class="num">${inr(r.t.sp)}</td><td class="num">${inr(r.t.cost)}</td><td class="num">${r.t.sp>0?pct((r.t.sp-r.t.cost)/r.t.sp):"\u2014"}</td></tr>`).join("")}</tbody></table>`
+        :'<p class="sub">Nothing marked Delivered in the last six months.</p>'}
+    </section>
+  </div>`;
+}
+
 /* ----- project tracker ----- */
-function creditsCell(p,pc,s){
+function actualsCell(p,pc,s){
   const act=p.actual||{};
   const rows=(s.credits||[]).filter(c=>(pc.credits[c.id]||0)>0.0001||act[c.id]!=null);
-  if(!rows.length)return '<span class="muted">—</span>';
+  const ad=p.actualDays,hasD=ad!=null&&ad!=="";
+  const dOff=hasD&&pc.days>0?((+ad)-pc.days)/pc.days:null;
+  const dayRow=`<span class="nm" title="Production workdays">Days</span>
+      <span class="est">${days(pc.days)}</span><span class="nm">→</span>
+      <input class="inp numi" inputmode="decimal" id="ad-${esc(p.id)}" data-k="tpd" data-id="${esc(p.id)}" data-num data-opt value="${hasD?esc(ad):""}" placeholder="actual" aria-label="Actual days spent on ${esc(p.name||"this project")}">
+      ${hasD?(dOff==null?'<span class="chip">—</span>':`<span class="chip ${dOff>0.02?"bad":dOff<-0.02?"good":""}">${dOff>0?"+":""}${Math.round(dOff*100)}%</span>`):'<span class="muted">—</span>'}`;
   let dCost=0,anyUsed=false;
+  if(hasD)dCost+=((+ad)-pc.days)*(+s.dayRate||0);
   const html=rows.map(c=>{
     const est=pc.credits[c.id]||0;
     const used=act[c.id];
@@ -1415,7 +1646,7 @@ function creditsCell(p,pc,s){
       <input class="inp numi" inputmode="decimal" id="ac-${esc(p.id)}-${esc(c.id)}" data-k="tpa" data-id="${esc(p.id)}" data-prov="${esc(c.id)}" data-num data-opt value="${has?esc(used):""}" placeholder="used" aria-label="Credits used on ${esc(p.name||"this project")} from ${esc(c.name)}">
       ${chip}`;
   }).join("");
-  return `<div class="cr-grid">${html}</div>${anyUsed?`<div class="cr-sum ${dCost>0?"delta-up":dCost<0?"delta-down":""}">${dCost>0?`${inr(dCost)} over`:dCost<0?`${inr(-dCost)} under`:"on budget"}</div>`:'<div class="sub">enter what was used</div>'}`;
+  return `<div class="cr-grid">${dayRow}${html}</div>${anyUsed||hasD?`<div class="cr-sum ${dCost>0?"delta-up":dCost<0?"delta-down":""}">${dCost>0?`${inr(dCost)} over cost`:dCost<0?`${inr(-dCost)} under cost`:"on budget"}</div>`:'<div class="sub">enter what was actually spent</div>'}`;
 }
 
 function viewProjects(){
@@ -1440,7 +1671,7 @@ function viewProjects(){
       <td class="tr-dt"><input class="inp xs" type="date" id="tr-a-${esc(p.id)}" data-k="tp.start" data-id="${esc(p.id)}" value="${esc(p.start||"")}" aria-label="Start"></td>
       <td class="tr-dt"><input class="inp xs" type="date" id="tr-b-${esc(p.id)}" data-k="tp.end" data-id="${esc(p.id)}" value="${esc(p.end||"")}" aria-label="Delivery">${pd?`<div class="sub">${pd.n} working days</div>`:'<div class="sub" style="color:var(--warn)">not scheduled</div>'}</td>
       <td>${names.length?esc(names.join(", ")):'<span class="muted">—</span>'}${un?' <span class="chip warn">unassigned</span>':""}</td>
-      <td class="tr-cr">${creditsCell(p,pc,s)}</td>
+      <td class="tr-cr">${actualsCell(p,pc,s)}</td>
       <td class="num"><button class="btn sm" data-action="comments" data-id="${esc(p.id)}">${cmts.length?`${cmts.length} comment${cmts.length===1?"":"s"}`:"Comment"}</button></td>
       <td>${rowActions(p)}</td>
     </tr>${open?`<tr class="tr-open"><td colspan="9">
@@ -1456,7 +1687,7 @@ function viewProjects(){
   return `<div class="section-head"><div><h2>Projects</h2><p>Every quote shows up here automatically. Set status, priority and dates, see who's on each project, and keep notes in the comment box. Priority drives the Schedule tab.</p></div>
     <div class="toolbar"><input class="inp" id="tr-filter" data-k="trFilter" value="${esc(state.trFilter||"")}" placeholder="Search projects…" style="width:220px"><button class="btn primary" data-action="new-project">+ New quote</button></div></div>
   <div class="panel"><div class="table-wrap"><table>
-    <thead><tr><th>Project</th><th>Status</th><th>Priority</th><th>Start</th><th>Delivery</th><th>Team</th><th>Credits · est → used</th><th class="num">Comments</th><th></th></tr></thead>
+    <thead><tr><th>Project</th><th>Status</th><th>Priority</th><th>Start</th><th>Delivery</th><th>Team</th><th>Actuals · est → used</th><th class="num">Comments</th><th></th></tr></thead>
     <tbody>${rows||`<tr><td colspan="9"><div class="empty"><strong>No projects yet</strong>Create a quote and it appears here.</div></td></tr>`}</tbody>
   </table></div></div>
   <p class="sub" style="margin-top:12px">${esc(counts)}</p>`;
@@ -1486,7 +1717,7 @@ function viewPipeline(){
   const months=periodsFor();
   const calcs={};state.projects.forEach(p=>calcs[p.id]=projectCalc(p,s));
   const load=(key,m,filter)=>{let t=0;state.projects.forEach(p=>{if(!filter(p))return;const pd=projDates(p);if(!pd)return;const ov=overlapWd(pd.a,pd.b,m.a,m.b);if(ov)t+=(calcs[p.id].personDays[key]||0)*ov/pd.n;});return t;};
-  const firm=p=>p.status!=="pitch";const pitch=p=>p.status==="pitch";
+  const firm=p=>p.status!=="pitch"&&p.status!=="lost";const pitch=p=>p.status==="pitch";
   const people=s.people||[];
   const keyRow=(k)=>{
     const x=k.startsWith("u:")?null:personById(k,s);const col=keyColor(k,s);
@@ -1546,7 +1777,7 @@ function viewPipeline(){
       <td>${rowActions(p)}</td>
     </tr>`;
   }).join("");
-  const tot=plist.filter(p=>p.status!=="delivered").reduce((a,p)=>{const c=calcs[p.id];a.sp+=c.sp;a.cost+=c.cost;if(p.status==="pitch")a.pitch+=c.sp;else a.firm+=c.sp;return a;},{sp:0,cost:0,pitch:0,firm:0});
+  const tot=plist.filter(p=>p.status!=="delivered"&&p.status!=="lost").reduce((a,p)=>{const c=calcs[p.id];a.sp+=c.sp;a.cost+=c.cost;if(p.status==="pitch")a.pitch+=c.sp;else a.firm+=c.sp;return a;},{sp:0,cost:0,pitch:0,firm:0});
 
   return `<div class="section-head"><div><h2>Pipeline &amp; capacity</h2><p>Booked days against each person's capacity, ${state.gran==="week"?"week by week":"month by month"}. Each quote's effort is spread evenly across its working days (Mon–Fri) between start and delivery.</p></div>
     <div class="toolbar">
@@ -1777,6 +2008,7 @@ function onField(e){
   if(k==="trFilter"){state.trFilter=v;render();return;}
   if(k==="me"){state.me=v;try{localStorage.setItem("sp-me",v);}catch(e){}return;}
   if(k.startsWith("gline.")){const f=k.slice(6),id=el.dataset.id;updateProjectById(el.dataset.pid,pr=>{const l=(pr.lines||[]).find(x=>x.id===id);if(l)l[f]=v;});return;}
+  if(k==="tpd"){const id=el.dataset.id;updateProjectById(id,pr=>{if(v===""||v==null)delete pr.actualDays;else pr.actualDays=+v;});return;}
   if(k==="tpa"){const id=el.dataset.id,prov=el.dataset.prov;updateProjectById(id,pr=>{pr.actual=Object.assign({},pr.actual||{});if(v===""||v==null)delete pr.actual[prov];else pr.actual[prov]=+v;});return;}
   if(k.startsWith("tp.")){const id=el.dataset.id,f=k.slice(3);updateProjectById(id,pr=>{pr[f]=v;});return;}
   if(k==="addJobId"){state.addJobId=v;return;}
@@ -1841,6 +2073,10 @@ const actions={
   async "setup-import"(){const d=localBackupData();if(!d)return;state.setupBusy=true;render();fromShape(d);migrateState();state.cloudView="live";await cloudReplaceAll();state.setupBusy=false;await cloudLoad();toast("Imported into the shared database");},
   async "setup-seed"(){if(!SEED)return;state.setupBusy=true;render();fromShape(SEED);migrateState();state.cloudView="live";await cloudReplaceAll();state.setupBusy=false;await cloudLoad();toast("Shared database set up from the repo defaults");},
   tab(el){flushProject();state.tab=el.dataset.tab;state.armed=null;try{localStorage.setItem("sp-tab",state.tab);}catch(e){}render();},
+  goto(el){flushProject();const id=el.dataset.id;
+    if(id){const f=state.projects.find(p=>p.id===id);if(f){state.curId=f.id;state.cur=clone(f);try{localStorage.setItem("sp-cur",f.id);}catch(e){}
+      if(el.dataset.tab==="projects"||el.dataset.tab==="schedule")state.gOpen=Object.assign({},state.gOpen,{[f.id]:true});}}
+    state.tab=el.dataset.tab;state.armed=null;try{localStorage.setItem("sp-tab",state.tab);}catch(e){}render();window.scrollTo(0,0);},
   "new-project"(){newProject();},
   "dup-project"(){if(!state.cur)return;flushProject();const now=new Date().toISOString();const p=clone(state.cur);p.id=uid("p");p.name=(p.name||"Quote")+" (copy)";p.status="pitch";p.createdAt=now;p.updatedAt=now;p.lines=(p.lines||[]).map(l=>Object.assign(l,{id:uid("l")}));state.projects.push(clone(p));state.curId=p.id;state.cur=p;state.dirty=true;flushProject();render();toast("Quote duplicated");},
   "open-project"(el){flushProject();const f=state.projects.find(p=>p.id===el.dataset.id);if(!f)return;state.curId=f.id;state.cur=clone(f);state.tab="quote";render();window.scrollTo(0,0);},
