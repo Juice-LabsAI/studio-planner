@@ -162,6 +162,10 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
 .lg.line{height:13px;width:24px;background:color-mix(in srgb,var(--accent) 15%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 40%,var(--surface));border-left:4px solid var(--accent)}
 .lg.dash{height:13px;width:24px;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--accent) 12%,var(--surface)) 0 5px,var(--surface) 5px 10px);border:1px dashed color-mix(in srgb,var(--accent) 45%,var(--surface));border-left:4px solid var(--accent)}
 .gt-bar.out{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--bad)}
+.gt-spill{position:absolute;top:9px;height:26px;border-radius:0 8px 8px 0;border:1.5px solid var(--bad);border-left:0;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--bad) 55%,transparent) 0 4px,transparent 4px 9px);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:var(--bad);white-space:nowrap;overflow:hidden}
+.gt-spill.line{top:10px;height:22px}
+.gt-spill span{background:var(--surface);padding:0 4px;border-radius:5px;line-height:1.5}
+.gt-bar.short{border-right:3px solid var(--bad)}
 .gt-row{display:flex;align-items:stretch;border-bottom:1px solid var(--line)}
 .gt-row:last-child{border-bottom:0}
 .gt-row:hover .gt-label{background:var(--surface-2)}
@@ -1169,14 +1173,21 @@ function viewGantt(){
   const dated=list.filter(p=>projDates(p));
   const rows=dated.map(p=>{
     const pc=projectCalc(p,s);const open=!!state.gOpen[p.id];
+    let unplaced=0;Object.values(sc.over).forEach(m=>{unplaced+=m[p.id]||0;});
     const ovs=pc.lines.map(({l,c})=>(!c||c.days<=0.0001||!l.start||!l.end)?{over:0,early:0}:{over:Math.max(0,diffDays(p.end,l.end)),early:Math.max(0,diffDays(l.start,p.start))});
     const maxOver=Math.max(0,...ovs.map(o=>o.over)),maxEarly=Math.max(0,...ovs.map(o=>o.early));
     const bar=clampBar(p.start,p.end);
-    const barHtml=bar?`<div class="gt-bar" data-drag-bar data-pid="${esc(p.id)}" data-a="${esc(p.start)}" data-b="${esc(p.end)}" tabindex="0" role="button"
+    const barHtml=bar?`<div class="gt-bar ${unplaced>0.0001?"short":""}" data-drag-bar data-pid="${esc(p.id)}" data-a="${esc(p.start)}" data-b="${esc(p.end)}" tabindex="0" role="button"
       aria-label="${esc(p.name||"Quote")} ${esc(fmtRange(p.start,p.end))}. Drag to move, arrow keys to nudge"
       style="left:${bar.left}px;width:${bar.width}px;--bc:${priColor(p)};background:var(--bc)">
       <span class="hd l" data-drag="start"></span><span data-drag="move" style="flex:1;overflow:hidden;text-overflow:ellipsis">${esc(p.name||"Untitled")} <small>${days(pc.days)} d</small></span><span class="hd r" data-drag="end"></span>
     </div>`:"";
+    const spill=(iso,d,cls)=>{
+      if(!(d>0.0001))return "";
+      const w=Math.max(1,Math.ceil(d))*H.dayW;const x=xOf(iso)+H.dayW;
+      if(x>H.w||x+w<0)return "";
+      return `<div class="gt-spill ${cls}" style="left:${x}px;width:${Math.min(w,H.w-x)}px" title="${days(d)} day${d===1?"":"s"} of work can't be placed before ${esc(fmtDate(iso))} — not enough free capacity"><span>+${days(d)} d</span></div>`;
+    };
     const head=`<div class="gt-row">
       <div class="gt-label"><button class="gt-open" data-action="gt-toggle" data-id="${esc(p.id)}" aria-expanded="${open}" aria-label="${open?"Collapse":"Expand"} ${esc(p.name||"quote")}">${ICON.chev}</button>
         <div class="gt-name"><b><span class="pdot" style="background:${priColor(p)}" title="${esc(PRI_LABEL[priOf(p)])} priority"></span>${esc(p.name||"Untitled")}</b>
@@ -1186,7 +1197,7 @@ function viewGantt(){
             ${maxEarly?`<span style="color:var(--warn)">starts ${maxEarly} d early</span>`:""}
             ${open?`<button class="btn ghost sm" style="padding:1px 7px" data-action="gt-autoplan" data-id="${esc(p.id)}" title="Give each deliverable its own dates, in the order the schedule already plans them">auto-plan</button>`:""}
           </div>`:""}</div></div>
-      ${lane(barHtml+todayLine)}
+      ${lane(barHtml+spill(p.end,unplaced,"proj")+todayLine)}
     </div>`;
     if(!open)return head;
     const lines=pc.lines.map(({l,c})=>{
@@ -1198,7 +1209,9 @@ function viewGantt(){
       const left=((sc.overLine[key]||{})[p.id+"|"+l.id])||0;
       const holders=rid?peopleForRole(rid,s):[];
       const outside=own&&(l.start<p.start||l.end>p.end);
-      const bh=lb?`<div class="gt-bar line ${own?"":"inherit"} ${outside?"out":""}" data-drag-bar data-pid="${esc(p.id)}" data-lid="${esc(l.id)}" data-a="${esc(own?l.start:p.start)}" data-b="${esc(own?l.end:p.end)}" tabindex="0" role="button"
+      const who2=who;const capD=who2?personCapPerDay(who2):1;
+      const spillDays=left>0.0001?left/Math.max(0.05,capD):0;
+      const bh=lb?`<div class="gt-bar line ${own?"":"inherit"} ${outside?"out":""} ${left>0.0001?"short":""}" data-drag-bar data-pid="${esc(p.id)}" data-lid="${esc(l.id)}" data-a="${esc(own?l.start:p.start)}" data-b="${esc(own?l.end:p.end)}" tabindex="0" role="button"
         aria-label="${esc(c.j.name)} ${esc(fmtRange(own?l.start:p.start,own?l.end:p.end))}${own?"":" (follows the project)"}"
         style="left:${lb.left}px;width:${lb.width}px;--bc:${priColor(p)}">
         <span class="hd l" data-drag="start"></span><span data-drag="move" style="flex:1;overflow:hidden;text-overflow:ellipsis">${esc(c.j.name)} <small>${days(c.days)} d${own?"":" · auto"}</small></span><span class="hd r" data-drag="end"></span></div>`:"";
@@ -1212,7 +1225,7 @@ function viewGantt(){
               ${own&&l.end>p.end?`<b style="color:var(--bad)">Overflow +${diffDays(p.end,l.end)} d</b>`:""}${own&&l.start<p.start?`<span style="color:var(--warn)">starts ${diffDays(l.start,p.start)} d early</span>`:""}
               ${left>0.0001?`<b style="color:var(--bad)">${days(left)} d won't fit</b>`:""}
             </div></div></div>
-        ${lane(bh+todayLine)}
+        ${lane(bh+spill(own?l.end:p.end,spillDays,"line")+todayLine)}
       </div>`;
     }).join("");
     return head+lines;
@@ -1245,7 +1258,7 @@ function viewGantt(){
     <div class="key-row"><span class="lg dash"></span><div><b>Dashed = the deliverable has no dates of its own yet.</b> New deliverables start this way: they can happen anywhere inside the project's dates, and the schedule sequences them for you. Drag one, or hit <b>auto-plan</b> on the project row, to pin real dates. <b>reset</b> puts it back.</div></div>
     <div class="key-row"><span class="lg" style="background:none;border:0"></span><div>Colour shows how urgent it is: <span class="dot" style="background:var(--bad)"></span> Critical &nbsp;<span class="dot" style="background:var(--warn)"></span> High &nbsp;<span class="dot" style="background:var(--accent)"></span> Medium &nbsp;<span class="dot" style="background:var(--ink-3)"></span> Low</div></div>
     <div class="key-row"><span class="lg" style="background:none;border:0"></span><div><b style="color:var(--bad)">Overflow +3 d</b> means a deliverable runs 3 days past the delivery date. <b>extend</b> pushes the delivery date out to cover it.</div></div>
-    <div class="key-row"><span class="lg" style="background:none;border:0"></span><div><b>0.5 d won't fit</b> means the person doesn't have half a day free inside those dates, once their more urgent work is in.</div></div>
+    <div class="key-row"><span class="lg" style="background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--bad) 55%,transparent) 0 4px,transparent 4px 9px);border:1.5px solid var(--bad)"></span><div><b>0.5 d won't fit</b> means the person doesn't have half a day free inside those dates, once their more urgent work is in. The red hatched block just past the bar shows roughly how much time is homeless — move the bar, extend the dates, or hand some of it to someone else.</div></div>
     <div class="key-row"><span class="lg" style="background:none;border:0"></span><div>Drag the middle of a bar to move it, an edge to make it longer or shorter. Arrow keys move it a day at a time; hold Shift to change its length. The team load rows at the bottom update as you drag.</div></div>
   </div>`:""}
   <div class="gt-wrap" id="gt-wrap">
