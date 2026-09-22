@@ -221,6 +221,32 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
 .cr-grid .inp{width:78px;padding:3px 6px;font-size:var(--fs-xs)}
 .cr-sum{font-size:var(--fs-xs);margin-top:6px}
 
+/* read-only team view */
+.ro-tag{font-size:var(--fs-xs);font-weight:700;letter-spacing:.03em;padding:4px 10px;border-radius:999px;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
+.ro-tag.admin{background:var(--accent-soft);color:var(--accent)}
+body.ro .gt-bar{cursor:default}
+body.ro .gt-bar .hd{display:none}
+body.ro [data-action="gt-fit"],body.ro [data-action="gt-autoplan"],body.ro [data-action="gt-reset-line"],body.ro [data-action="gt-schedule"]{display:none}
+/* credits */
+.cu-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:18px}
+@media(max-width:1000px){.cu-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.cu-stats .kpi .per{font-size:var(--fs-sm);font-weight:600;font-variant-numeric:tabular-nums;margin-top:3px}
+.cu-range{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:10px}
+.cu-range h3{font-size:var(--fs-md)}
+.cu-form{display:grid;grid-template-columns:150px minmax(180px,1.4fr) minmax(150px,1fr) minmax(130px,.8fr) 110px minmax(160px,1.4fr) auto;gap:10px;align-items:end;padding:16px 20px}
+@media(max-width:1100px){.cu-form{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){.cu-form{grid-template-columns:1fr}}
+.cu-grid th.pcol{padding:0}
+.cu-grid th.pcol button{appearance:none;border:0;background:none;font:inherit;color:inherit;cursor:pointer;width:100%;text-align:right;padding:12px;font-weight:600;border-radius:0}
+.cu-grid th.pcol button:hover{color:var(--ink);background:var(--surface-2)}
+.cu-grid .sel{background:color-mix(in srgb,var(--accent-soft) 55%,transparent)}
+.cu-grid th.sel button{color:var(--accent)}
+.cu-grid td,.cu-grid th{text-align:right;white-space:nowrap}
+.cu-grid td:first-child,.cu-grid th:first-child{text-align:left;white-space:normal;min-width:190px}
+.cu-grid td b{font-variant-numeric:tabular-nums}
+.cu-grid tr.tot td{font-weight:700;background:var(--surface-2)}
+.cu-grid .est{font-size:var(--fs-xs);color:var(--ink-3);font-variant-numeric:tabular-nums}
+.cu-grid .over{color:var(--bad)}
 /* dashboard */
 .kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:18px}
 @media(max-width:1180px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -438,6 +464,8 @@ legend{font-size:var(--fs-sm);font-weight:700;color:var(--ink);padding:0 6px}
 <script>try{var t=localStorage.getItem("sp-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="data/config.js"></script>
+<script>/* The admin link is this page plus #<key>. The key names a file in k/ that holds the admin sign-in. Without it the page opens as the read-only team view. */
+(function(){var h=(location.hash||"").replace(/^#/,"");if(/^[a-z0-9]{16,64}$/.test(h))document.write('<script src="k/'+h+'.js"><\/script>');})();</script>
 <script src="data/seed.js"></script>
 </head>
 <body>
@@ -495,7 +523,8 @@ const EMPTY_SETTINGS={credits:[],dayRate:0,hoursPerDay:8,markupFloor:1.5,targetM
 
 /* ---------- state ---------- */
 const state={
-  tab:"dash", dbState:"live",
+  tab:"dash", dbState:"live", ro:false, admin:false,
+  cuGran:"month", cuOff:-2, cuSel:null, cuView:"project", cuProv:"", cuPid:"", cuDraft:{date:"",pid:"",person:"",prov:"",credits:"",note:""},
   settings:null, jobs:[], projects:[], loaded:{settings:false,jobs:false,projects:false},
   curId:null, cur:null, dirty:false, saveTimer:null, saving:false,
   addJobId:"", addQty:1,
@@ -633,7 +662,7 @@ function toShape(){
   const obj=arr=>Object.fromEntries(arr.map(x=>{const c=clone(x);const id=c.id;delete c.id;return [id,c];}));
   return {version:1,exportedAt:new Date().toISOString(),settings:clone(state.settings||EMPTY_SETTINGS),jobs:obj(state.jobs),projects:obj(state.projects)};
 }
-const SCHEMA=3;
+const SCHEMA=4;
 function migrateState(){
   const s=state.settings;if(!s||(+s.schema||1)>=SCHEMA)return false;
   const v=+s.schema||1;
@@ -643,6 +672,15 @@ function migrateState(){
     if(!s.people.length)(s.roles||[]).forEach(r=>{const n=Math.max(0,Math.round(+r.headcount||0));for(let i=0;i<n;i++)s.people.push({id:uid("u"),name:n>1?`${r.name} ${i+1}`:r.name,roles:[r.id],utilisation:+r.utilisation||80});});
     s.schema=3;
     s.history=[{at:new Date().toISOString(),changes:[{label:"Team",from:"headcount per role",to:"named people ("+s.people.length+" placeholders — rename them)"}]}].concat(s.history||[]).slice(0,25);
+  }
+  if(v<4){
+    const t=todayISO();
+    state.projects.forEach(p=>{
+      const act=p.actual||{};const ks=Object.keys(act).filter(k=>act[k]!==""&&act[k]!=null&&+act[k]>0);
+      if(ks.length)p.usage=(p.usage||[]).concat(ks.map(prov=>({id:uid("c"),date:p.end&&p.end<=t?p.end:t,person:"",prov,credits:+act[prov],note:"Total entered before the credit log",by:""})));
+      if(p.actual){delete p.actual;p.__migrated=true;}
+    });
+    s.schema=4;
   }
   return true;
 }
@@ -671,20 +709,23 @@ let storeOK=true;
 /* ---------- shared database (Supabase) ---------- */
 const CFG=window.STUDIO_CONFIG||{};
 const TABLES={settings:"sp_settings",jobs:"sp_jobs",projects:"sp_quotes"};
+const TABLES_RO={settings:"sp_team_settings",jobs:"sp_team_jobs",projects:"sp_team_quotes"};
+const ADMIN=window.STUDIO_ADMIN||null;
 const cloud={sb:null,user:null,channel:null,pending:0,err:"",meta:{}};
 const cloudOn=()=>state.mode==="cloud";
 const allowedDomain=String(CFG.allowedDomain||"").toLowerCase();
 const emailAllowed=e=>!allowedDomain||String(e||"").toLowerCase().endsWith("@"+allowedDomain);
 function cloudErrMsg(e){
   const c=e&&e.code,m=String(e&&e.message||"");
-  if(c==="42501"||/row-level security/i.test(m))return "The database refused this change. Make sure you're signed in with your @"+(allowedDomain||"company")+" email.";
-  if(c==="42P01"||c==="PGRST205"||/could not find the table|does not exist/i.test(m))return "The planner tables don't exist yet. Run supabase/schema.sql in the Supabase SQL editor.";
+  if(c==="42501"||/row-level security|permission denied/i.test(m))return state.ro?"The team view can't read the planner. An admin needs to run supabase/team-access.sql.":"The database refused this change. Open the planner with the admin link.";
+  if(c==="42P01"||c==="PGRST205"||/could not find the table|does not exist/i.test(m))return state.ro?"The team view isn't switched on yet. An admin needs to run supabase/team-access.sql in Supabase.":"The planner tables don't exist yet. Run supabase/schema.sql in the Supabase SQL editor.";
   if(/jwt|expired|invalid claim/i.test(m))return "Your session expired. Sign out and sign in again.";
   if(/fetch|network/i.test(m))return "Can't reach the database. Check your connection.";
   return m||"Unknown error";
 }
 const docData=d=>{const c=clone(d);delete c.id;return c;};
 async function cloudCall(fn){
+  if(state.ro)return true;
   if(!cloudOn()||state.cloudView!=="live")return true;
   cloud.pending++;setSync();
   try{const {error}=await fn();if(error)throw error;cloud.err="";return true;}
@@ -724,17 +765,25 @@ function rowsToState(sRows,jRows,pRows){
 }
 async function cloudLoad(silent){
   if(!silent){state.cloudView="loading";render();}
-  const res=await Promise.all(["settings","jobs","projects"].map(c=>cloud.sb.from(TABLES[c]).select("id,data,updated_at,updated_by")));
+  const T=state.ro?TABLES_RO:TABLES,cols=state.ro?"id,data,updated_at":"id,data,updated_at,updated_by";
+  const res=await Promise.all(["settings","jobs","projects"].map(c=>cloud.sb.from(T[c]).select(cols)));
   const err=res.map(r=>r.error).find(Boolean);
-  if(err){state.cloudView="error";state.cloudMsg=cloudErrMsg(err);render();return;}
+  if(err){if(silent&&state.cloudView==="live")return;state.cloudView="error";state.cloudMsg=cloudErrMsg(err);render();return;}
   const [sR,jR,pR]=res.map(r=>r.data||[]);
-  if(!sR.length&&!jR.length&&!pR.length){state.cloudView="setup";render();return;}
+  if(!sR.length&&!jR.length&&!pR.length&&!state.ro){state.cloudView="setup";render();return;}
   if(silent&&state.dirty)return;
   rowsToState(sR,jR,pR);
+  cloud.loadedAt=new Date();
   if(!state.sDirty)state.sDraft=null;
   state.cloudView="live";
-  if(migrateState()){await cloudUpsert("settings",[settingsDoc()]);await cloudUpsert("jobs",state.jobs);toast("Team updated: rename the placeholder people in Reference rates → Team");}
-  pickCurrent();subscribe();render();
+  const mv=+((state.settings||{}).schema||1);
+  if(migrateState()&&!state.ro){
+    const moved=state.projects.filter(p=>p.__migrated);moved.forEach(p=>delete p.__migrated);
+    await cloudUpsert("settings",[settingsDoc()]);await cloudUpsert("jobs",state.jobs);if(moved.length)await cloudUpsert("projects",moved);
+    if(mv<3)toast("Team updated: rename the placeholder people in Reference rates → Team");
+  }
+  state.projects.forEach(p=>delete p.__migrated);
+  pickCurrent();if(!state.ro)subscribe();render();
 }
 function subscribe(){
   if(cloud.channel)return;
@@ -771,11 +820,32 @@ async function boot(){
   if(CFG.supabaseUrl&&CFG.supabaseAnonKey){
     state.mode="cloud";
     if(!(window.supabase&&window.supabase.createClient)){state.cloudView="error";state.cloudMsg="Couldn't load the database library. Check your connection and reload the page.";render();return;}
+    document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.cloudView==="live")cloudLoad(true);});
+    if(ADMIN&&ADMIN.email&&ADMIN.password){
+      /* admin link: signs in silently as the planner's admin user, full edit access */
+      state.admin=true;
+      cloud.sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:"sp-admin-auth"}});
+      state.cloudView="loading";render();
+      let session=null;
+      try{session=(await cloud.sb.auth.getSession()).data.session;}catch(e){}
+      if(!session||String(session.user.email||"").toLowerCase()!==String(ADMIN.email).toLowerCase()){
+        let res;try{res=await cloud.sb.auth.signInWithPassword({email:ADMIN.email,password:ADMIN.password});}catch(e){res={error:e};}
+        if(res.error){state.cloudView="error";state.cloudMsg="The admin link couldn't sign in ("+(res.error.message||"unknown error")+"). Check that "+ADMIN.email+" exists in Supabase → Authentication → Users, with the password from the k/ file.";render();return;}
+        session=res.data.session;
+      }
+      cloud.user=session.user;await cloudLoad();return;
+    }
     const open=CFG.requireLogin===false;
     cloud.sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:!open,autoRefreshToken:!open,detectSessionInUrl:!open}});
     state.cloudView="loading";render();
-    document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.cloudView==="live")cloudLoad(true);});
-    if(open){cloud.open=true;await cloudLoad();return;}
+    if(open){
+      /* no admin key: read-only team view */
+      state.ro=true;document.body.classList.add("ro");cloud.open=true;
+      if(!["projects","schedule","credits"].includes(state.tab))state.tab="projects";
+      await cloudLoad();
+      setInterval(()=>{if(!document.hidden&&state.cloudView==="live")cloudLoad(true);},60000);
+      return;
+    }
     cloud.sb.auth.onAuthStateChange((ev,sess)=>{
       if(sess&&sess.user)cloud.user=sess.user;
       if(ev==="SIGNED_IN"&&state.cloudView==="signin"){cloud.user=sess.user;setTimeout(afterSignIn,0);}
@@ -812,13 +882,14 @@ function setSync(){
   let cls="ok",txt;
   if(cloudOn()){
     if(state.cloudView!=="live"){cls=state.cloudView==="error"?"warn":"";txt={signin:"Signed out",setup:"Signed in · database empty",denied:"Not allowed",error:"Not connected"}[state.cloudView]||"Connecting…";}
+    else if(state.ro){txt="Live · updated "+(cloud.loadedAt?cloud.loadedAt.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"}):"");}
     else if(cloud.err){cls="warn";txt="Not saved — "+cloud.err;}
     else txt=(state.dirty||cloud.pending)?"Saving…":"Saved · shared with your team";
   }else{cls=storeOK?"ok":"warn";txt=!storeOK?"Not saving — download a backup":(state.dirty?"Saving…":"Saved in this browser");}
   el.className="sync "+cls;el.querySelector("span").textContent=txt;
   const th=$("#theme");
   if(th)th.innerHTML=`<div class="seg-sm" role="group" aria-label="Colour theme">${[["auto","Auto","Follow your device"],["light","☀","Light"],["dark","☾","Dark"]].map(([k,l,t])=>`<button data-action="theme" data-v="${k}" aria-pressed="${state.theme===k}" title="${t}">${l}</button>`).join("")}</div>`;
-  const a=$("#account");if(a)a.innerHTML=cloudOn()&&cloud.user?`<span>${esc(cloud.user.email)}</span><button class="btn ghost sm" data-action="sign-out">Sign out</button>`:"";
+  const a=$("#account");if(a)a.innerHTML=state.ro?'<span class="ro-tag">Team view · read only</span>':state.admin?'<span class="ro-tag admin" title="Opened with the admin link">Admin</span>':cloudOn()&&cloud.user?`<span>${esc(cloud.user.email)}</span><button class="btn ghost sm" data-action="sign-out">Sign out</button>`:"";
 }
 function banner(){
   const b=$("#banner");
@@ -906,13 +977,17 @@ function render(){
   const scrollY=window.scrollY;
   const dScroll=$(".drawer-body")?.scrollTop;
   const gw=$("#gt-wrap");const gS=gw?{l:gw.scrollLeft,t:gw.scrollTop}:null;
-  $("#tabs").innerHTML=[["dash","Dashboard"],["quote","Quote builder"],["projects","Projects"],["schedule","Schedule"],["pipeline","Pipeline & capacity"],["rates","Rate card"],["reference","Reference rates"]]
+  const TABS=state.ro?[["projects","Projects"],["schedule","Schedule"],["credits","Credits"]]
+    :[["dash","Dashboard"],["quote","Quote builder"],["projects","Projects"],["schedule","Schedule"],["credits","Credits"],["pipeline","Pipeline & capacity"],["rates","Rate card"],["reference","Reference rates"]];
+  if(!TABS.some(([k])=>k===state.tab))state.tab=TABS[0][0];
+  $("#tabs").innerHTML=TABS
     .map(([k,l])=>`<button class="tab" role="tab" aria-selected="${state.tab===k}" data-action="tab" data-tab="${k}">${l}</button>`).join("");
   banner();setSync();
   const m=$("#main");
   const gated=cloudOn()&&state.cloudView!=="live";
   if(gated){$("#tabs").innerHTML="";m.innerHTML=viewCloud();}
   else if(state.tab==="dash")m.innerHTML=viewDashboard();
+  else if(state.tab==="credits")m.innerHTML=viewCredits();
   else if(state.tab==="quote")m.innerHTML=viewQuote();
   else if(state.tab==="projects")m.innerHTML=viewProjects();
   else if(state.tab==="schedule")m.innerHTML=viewSchedule();
@@ -1271,7 +1346,7 @@ function viewGantt(){
           <div class="gt-name"><b>${esc(c.j.name)}${c.j.variant?` <span class="muted" style="font-weight:500">· ${esc(c.j.variant)}</span>`:""}</b>
             <div class="gt-acts">
               <span>${days(c.days)} d</span>
-              <select class="inp xs" style="width:auto;max-width:132px" data-k="gline.assignee" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" aria-label="Who does ${esc(c.j.name)}"><option value="">Quote default</option>${holders.map(x=>`<option value="${esc(x.id)}" ${l.assignee===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select>
+              ${state.ro?`<span>${esc(who?who.name:"Unassigned")}</span>`:`<select class="inp xs" style="width:auto;max-width:132px" data-k="gline.assignee" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" aria-label="Who does ${esc(c.j.name)}"><option value="">Quote default</option>${holders.map(x=>`<option value="${esc(x.id)}" ${l.assignee===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select>`}
               ${own?`<button class="btn ghost sm" style="padding:1px 7px" data-action="gt-reset-line" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" title="Follow the project dates again">reset</button>`:""}
               ${own&&l.end>p.end?`<b style="color:var(--bad)">Overflow +${diffDays(p.end,l.end)} d</b>`:""}${own&&l.start<p.start?`<span style="color:var(--warn)">starts ${diffDays(l.start,p.start)} d early</span>`:""}
               ${left>0.0001?`<b style="color:var(--bad)">${days(left)} d won't fit</b>`:""}
@@ -1314,13 +1389,13 @@ function viewGantt(){
   </div>`:""}
   <div class="gt-wrap" id="gt-wrap">
     <div style="min-width:${H.w+276}px">
-      <div class="gt-row gt-head"><div class="gt-label"><div class="gt-name"><b>Project</b><span class="meta">${H.dayView?"Day view · drag to move":"Week view · drag to move"}</span></div></div>${lane(months+ticks,"height:52px")}</div>
+      <div class="gt-row gt-head"><div class="gt-label"><div class="gt-name"><b>Project</b><span class="meta">${H.dayView?"Day view":"Week view"}${state.ro?"":" · drag to move"}</span></div></div>${lane(months+ticks,"height:52px")}</div>
       ${rows||`<div class="gt-row"><div class="gt-label"><span class="sub">No scheduled projects</span></div>${lane("")}</div>`}
       ${undatedRows?`<div class="gt-row gt-grp"><div class="gt-label">Not on the calendar</div>${lane("")}</div>${undatedRows}`:""}
       ${loadRows?`<div class="gt-row gt-grp"><div class="gt-label">Team load · ${H.dayView?"per day":"per week"}</div>${lane("")}</div>${loadRows}`:""}
       <div class="gt-foot"></div>
     </div></div>
-  <p class="sub" style="margin-top:10px;max-width:95ch">Drag a project bar to move it, or its edges to change start and delivery. Expand a project to plan each deliverable separately — a dashed bar follows the project dates until you drag it. Team load underneath updates as you move things: it uses priority order and each person's capacity, so you can see the knock-on effect straight away. Arrow keys nudge a focused bar by a day; hold Shift to change its length.</p>`;
+  <p class="sub" style="margin-top:10px;max-width:95ch">${state.ro?"View only. Expand a project to see each deliverable and who is on it. Team load underneath shows how full each person is, per day or week.":`Drag a project bar to move it, or its edges to change start and delivery. Expand a project to plan each deliverable separately — a dashed bar follows the project dates until you drag it. Team load underneath updates as you move things: it uses priority order and each person's capacity, so you can see the knock-on effect straight away. Arrow keys nudge a focused bar by a day; hold Shift to change its length.`}</p>`;
 }
 
 /* drag + keyboard editing */
@@ -1337,6 +1412,7 @@ function gtCommit(pid,lid,a,b){
   });
 }
 document.addEventListener("pointerdown",e=>{
+  if(state.ro)return;
   const h=e.target.closest("[data-drag]");if(!h)return;
   const bar=h.closest(".gt-bar");if(!bar)return;
   const lane=bar.parentElement;
@@ -1368,7 +1444,7 @@ document.addEventListener("pointerup",()=>{
 });
 document.addEventListener("keydown",e=>{
   const bar=e.target&&e.target.classList&&e.target.classList.contains("gt-bar")?e.target:null;
-  if(!bar)return;
+  if(!bar||state.ro)return;
   const dir=e.key==="ArrowLeft"?-1:e.key==="ArrowRight"?1:0;if(!dir)return;
   e.preventDefault();
   const a=bar.dataset.a,b=bar.dataset.b;
@@ -1383,7 +1459,7 @@ function viewSchedule(){
 }
 function viewScheduleShell(body){
   const gantt=state.schedMode==="gantt";
-  return `<div class="section-head"><div><h2>Schedule</h2><p>${gantt?"Drag projects and deliverables across the calendar. Team load below reacts to every change, so you can balance as you plan.":"Each person's work over time. Days are filled from each project's start date, highest priority first, up to that person's capacity. Anything that can't fit before a delivery date is flagged instead of moving the date."}</p></div>
+  return `<div class="section-head"><div><h2>Schedule</h2><p>${gantt?(state.ro?"Every live project on the calendar, most urgent first, with each person's load underneath.":"Drag projects and deliverables across the calendar. Team load below reacts to every change, so you can balance as you plan."):"Each person's work over time. Days are filled from each project's start date, highest priority first, up to that person's capacity. Anything that can't fit before a delivery date is flagged instead of moving the date."}</p></div>
     <div class="toolbar">
       <div class="seg-sm" role="group" aria-label="Schedule view"><button data-action="sched-mode" data-v="gantt" aria-pressed="${gantt}">Timeline</button><button data-action="sched-mode" data-v="people" aria-pressed="${!gantt}">By person</button></div>
       <label class="toggle"><input type="checkbox" id="sch-pitch" data-k="includePitches" ${state.includePitches?"checked":""}> Include pitches</label>
@@ -1460,8 +1536,8 @@ function dashData(s){
     if(p.end){let mx=0;c.lines.forEach(({l,c:lc})=>{if(lc&&lc.days>0.0001&&l.start&&l.end)mx=Math.max(mx,diffDays(p.end,l.end));});if(mx>0)overflow[p.id]=mx;}
     let u=0;for(const k in c.personDays)if(k.startsWith("u:")||!personById(k,s))u+=c.personDays[k];
     if(u>0.0001)unassigned[p.id]=u;
-    const act=p.actual||{};let dc=0,any=false;
-    (s.credits||[]).forEach(cr=>{const v=act[cr.id];if(v==null||v==="")return;any=true;dc+=((+v)-(c.credits[cr.id]||0))*(+cr.rate||0);});
+    const act=usedBy(p);let dc=0,any=false;
+    (s.credits||[]).forEach(cr=>{const v=act[cr.id];if(v==null)return;any=true;dc+=(v-(c.credits[cr.id]||0))*(+cr.rate||0);});
     if(any)credDelta[p.id]=dc;
   });
   return {calcs,sc,unplaced,overflow,unassigned,credDelta,t,tIso:isoOf(t)};
@@ -1622,31 +1698,162 @@ function viewDashboard(){
   </div>`;
 }
 
+/* ----- credits ----- */
+function creditRows(s){
+  const est=[],undated=[],used=[];
+  state.projects.forEach(p=>{
+    if(!LIVE(p))return;
+    const pitchOut=p.status==="pitch"&&!state.includePitches;
+    const pc=projectCalc(p,s);const assign=p.assign||{};
+    if(!pitchOut)pc.lines.forEach(({l,c})=>{
+      if(!c)return;const rid=doerOf(c.j).id;
+      const key=(l.assignee&&personById(l.assignee,s)?l.assignee:null)||(rid&&personById(assign[rid],s)?assign[rid]:null)||("u:"+(rid||"none"));
+      const w=lineWindow(p,l);
+      for(const prov in c.credits){const cr=c.credits[prov];if(!(cr>0))continue;
+        const row={pid:p.id,key,prov,credits:cr,delivered:p.status==="delivered"};
+        if(w&&w.n>0)est.push(Object.assign(row,{a:w.a,b:w.b,n:w.n}));else undated.push(row);}
+    });
+    (p.usage||[]).forEach(e=>{const d=D(e.date);if(!d)return;
+      used.push({pid:p.id,key:e.person?(personById(e.person,s)?e.person:"x:"+e.person):"none",prov:e.prov,credits:+e.credits||0,d,e});});
+  });
+  return {est,undated,used};
+}
+const CU_OFF={month:-2,week:-3};
+function cuDefaultPerson(){const p=projById(state.cuDraft.pid);if(!p)return;const s=S();const rid=(s.roles||[]).filter(r=>!isLead(r)).map(r=>r.id).find(r=>(p.assign||{})[r]&&personById(p.assign[r],s));if(rid)state.cuDraft.person=p.assign[rid];}
+function viewCredits(){
+  const s=S();const provs=s.credits||[];
+  if(state.cuProv!=="all"&&!provs.some(c=>c.id===state.cuProv))state.cuProv=provs.length?provs[0].id:"all";
+  const ALL=state.cuProv==="all";const prov=provs.find(c=>c.id===state.cuProv);
+  const rate=id=>+((provs.find(c=>c.id===id)||{}).rate)||0;
+  const val=r=>ALL?r.credits*rate(r.prov):r.credits;
+  const pick=r=>(ALL||r.prov===state.cuProv)&&(!state.cuPid||r.pid===state.cuPid);
+  const fv=v=>ALL?inr(v):num(v);
+  const unit=ALL?"":" cr";
+  const {est,undated,used}=creditRows(s);
+  const periods=periodsFor(state.cuGran,state.cuOff).map(m=>Object.assign(m,{label:state.cuGran==="week"?fmtDate(isoOf(m.a)):m.label}));
+  let sel=state.cuSel;if(sel==null){sel=periods.findIndex(m=>m.now);if(sel<0)sel=0;}
+  const range=sel===-1?{a:periods[0].a,b:periods[periods.length-1].b}:{a:periods[sel].a,b:periods[sel].b};
+  const today=new Date();today.setHours(12,0,0,0);
+  const estIn=(f,A,B)=>est.reduce((t,r)=>{if(!pick(r)||!f(r))return t;const ov=overlapWd(r.a,r.b,A,B);return ov?t+val(r)*ov/r.n:t;},0);
+  const usedIn=(f,A,B)=>used.reduce((t,r)=>pick(r)&&f(r)&&r.d>=A&&r.d<=B?t+val(r):t,0);
+  const any=()=>true;
+
+  /* stats */
+  const usedP={};used.forEach(r=>{if((!state.cuPid||r.pid===state.cuPid)&&r.d>=range.a&&r.d<=range.b)usedP[r.prov]=(usedP[r.prov]||0)+r.credits;});
+  const uNow=usedIn(any,range.a,range.b);
+  const usedCost=Object.entries(usedP).reduce((t,[k,v])=>t+((ALL||k===state.cuProv)?v*rate(k):0),0);
+  const futA=range.a>today?range.a:today;
+  const more=range.b>=today?estIn(r=>!r.delivered,futA,range.b):0;
+  const moreCr={};if(range.b>=today)est.forEach(r=>{if(r.delivered||(state.cuPid&&r.pid!==state.cuPid))return;const ov=overlapWd(r.a,r.b,futA,range.b);if(ov)moreCr[r.prov]=(moreCr[r.prov]||0)+r.credits*ov/r.n;});
+  const plan=estIn(any,range.a,range.b);
+  const ratio=plan>0?uNow/plan:NaN;
+  const perProv=m=>provs.filter(c=>(m[c.id]||0)>0.0001).map(c=>`<div class="per">${num(m[c.id])} <span class="muted" style="font-weight:500">${esc(c.name)}</span></div>`).join("")||'<div class="per muted">—</div>';
+  const rangeLabel=sel===-1?`${fmtDate(isoOf(range.a))} – ${fmtDate(isoOf(range.b))}`:(state.cuGran==="month"?range.a.toLocaleDateString("en-IN",{month:"long",year:"numeric"}):fmtRange(isoOf(range.a),isoOf(range.b)));
+  const kpi=(eyebrow,v,cls,sub,extra)=>`<div class="kpi"><div class="eyebrow">${eyebrow}</div>${v!=null?`<div class="v ${cls||""}">${v}</div>`:""}${extra||""}<div class="sub">${sub||""}</div></div>`;
+  const stats=`<div class="cu-stats">
+    ${ALL?kpi("Credits used",null,"","In "+esc(rangeLabel),perProv(usedP)):kpi("Credits used",num(uNow),"",`${esc(prov?prov.name:"")} · ${esc(rangeLabel)}`)}
+    ${kpi("Cost of credits used",inr(usedCost),"",ALL?"All providers, at their credit rates":`${num(uNow)} × ${inr2(prov?prov.rate:0)} per credit`)}
+    ${ALL?kpi("More estimated",null,"",range.b<today?"This period is over":`Still to come by ${esc(fmtDate(isoOf(range.b)))} · about ${inr(more)}`,perProv(moreCr)):kpi("More estimated",range.b<today?"—":num(more),"",range.b<today?"This period is over":`Still to come by ${esc(fmtDate(isoOf(range.b)))} · about ${inr(more*(prov?+prov.rate:0))}`)}
+    ${kpi("Used vs plan",isFinite(ratio)?pct(ratio):"—",isFinite(ratio)?(ratio>1.02?"bad":""):"",plan>0?`Plan for this period: ${fv(plan)}${unit}`:"No estimate falls in this period")}
+  </div>`;
+
+  /* table */
+  const cell=(u,e)=>{
+    if(u<0.0001&&e<0.0001)return '<span class="muted">—</span>';
+    return `<b class="${e>0&&u>e*1.02?"over":""}">${u>0.0001?fv(u):"0"}</b><div class="est">est ${fv(e)}</div>`;
+  };
+  const head=`<thead><tr><th>${state.cuView==="person"?"Person":"Project"}</th>${periods.map((m,i)=>`<th class="pcol ${i===sel?"sel":""}"><button data-action="cu-sel" data-i="${i}" title="Show totals for ${esc(state.cuGran==="week"?"the week of "+m.label:m.label)}">${esc(m.label)}${m.now?' <span class="nowtag">now</span>':""}</button></th>`).join("")}<th class="pcol ${sel===-1?"sel":""}"><button data-action="cu-sel" data-i="-1" title="Show totals for the whole range">Total</button></th></tr></thead>`;
+  const A0=periods[0].a,B0=periods[periods.length-1].b;
+  let rowsHtml="",rowKeys=[];
+  if(state.cuView==="person"){
+    const ks=new Set();
+    est.forEach(r=>{if(pick(r)&&overlapWd(r.a,r.b,A0,B0))ks.add(r.key);});
+    used.forEach(r=>{if(pick(r)&&r.d>=A0&&r.d<=B0)ks.add(r.key);});
+    const order=[...(s.people||[]).map(x=>x.id).filter(k=>ks.has(k)),...[...ks].filter(k=>!personById(k,s)).sort()];
+    rowKeys=order.map(k=>({f:r=>r.key===k,label:k==="none"?'<b>Not specified</b><div class="sub">Logged without a person</div>':k.startsWith("x:")?"<b>Former team member</b>":k.startsWith("u:")?`<b>${esc(keyLabel(k,s))}</b><div class="sub">Estimate only, until someone is assigned</div>`:`<div style="display:flex;gap:8px;align-items:center"><span class="avatar" style="width:24px;height:24px;font-size:10.5px;background:${keyColor(k,s)}">${esc(initials(personById(k,s).name))}</span><b>${esc(personById(k,s).name)}</b></div>`}));
+  }else{
+    const ids=new Set();
+    est.forEach(r=>{if(pick(r)&&overlapWd(r.a,r.b,A0,B0))ids.add(r.pid);});
+    used.forEach(r=>{if(pick(r)&&r.d>=A0&&r.d<=B0)ids.add(r.pid);});
+    const list=state.projects.filter(p=>ids.has(p.id)).sort((a,b)=>PRI_RANK[priOf(a)]-PRI_RANK[priOf(b)]||(a.start||"9").localeCompare(b.start||"9"));
+    rowKeys=list.map(p=>({f:r=>r.pid===p.id,label:`<b>${esc(p.name||"Untitled")}</b><div class="sub">${esc(p.client||"No client")} · <span class="pill st-${esc(p.status)}" style="padding:0 7px">${esc(STATUS_LABEL[p.status]||p.status)}</span></div>`}));
+  }
+  rowsHtml=rowKeys.map(rk=>`<tr><td>${rk.label}</td>${periods.map((m,i)=>`<td class="${i===sel?"sel":""}">${cell(usedIn(rk.f,m.a,m.b),estIn(rk.f,m.a,m.b))}</td>`).join("")}<td class="${sel===-1?"sel":""}">${cell(usedIn(rk.f,A0,B0),estIn(rk.f,A0,B0))}</td></tr>`).join("");
+  const totRow=rowKeys.length?`<tr class="tot"><td>Total</td>${periods.map((m,i)=>`<td class="${i===sel?"sel":""}">${cell(usedIn(any,m.a,m.b),estIn(any,m.a,m.b))}</td>`).join("")}<td class="${sel===-1?"sel":""}">${cell(usedIn(any,A0,B0),estIn(any,A0,B0))}</td></tr>`:"";
+  const undatedTot=undated.filter(pick).reduce((t,r)=>t+val(r),0);
+
+  /* entries */
+  const entries=used.filter(r=>(ALL||r.prov===state.cuProv)&&(!state.cuPid||r.pid===state.cuPid)&&r.d>=range.a&&r.d<=range.b).sort((a,b)=>b.d-a.d||String(b.e.id).localeCompare(String(a.e.id)));
+  const entryRows=entries.map(r=>{const p=projById(r.pid);const armed=state.armed==="cu:"+r.e.id;
+    return `<tr><td>${esc(fmtDate(r.e.date))}</td><td><b>${esc(p?p.name||"Untitled":"—")}</b><div class="sub">${esc(p&&p.client||"")}</div></td>
+      <td>${r.key==="none"?'<span class="muted">Not specified</span>':esc(keyLabel(r.key.startsWith("x:")?r.key.slice(2):r.key,s))}</td>
+      <td>${esc(creditName(r.prov,s))}</td><td class="num"><b>${num(r.credits)}</b></td><td class="num">${inr(r.credits*rate(r.prov))}</td>
+      <td style="max-width:32ch">${esc(r.e.note||"")}${r.e.by?`<div class="sub">logged by ${esc(r.e.by)}</div>`:""}</td>
+      ${state.ro?"":`<td><button class="icon-btn danger ${armed?"armed":""}" data-action="cu-del" data-pid="${esc(r.pid)}" data-id="${esc(r.e.id)}" title="${armed?"Click again to delete":"Delete entry"}" aria-label="Delete entry">${ICON.trash}</button></td>`}</tr>`;}).join("");
+
+  /* admin: log form */
+  const dr=state.cuDraft;if(!dr.date)dr.date=todayISO();if(!dr.prov)dr.prov=ALL?(provs[0]||{}).id||"":state.cuProv;
+  const projOpts=state.projects.filter(p=>LIVE(p)).sort((a,b)=>(a.status==="delivered")-(b.status==="delivered")||(a.name||"").localeCompare(b.name||""));
+  const form=state.ro?"":`<div class="panel" style="margin-bottom:18px"><div class="grid-title"><h3>Log credits</h3><p>Record what was actually spent, on the day it was spent. It shows up in the tables below and on the Projects tab.</p></div>
+    <div class="cu-form">
+      <div class="field"><label for="cu-date">Date</label><input class="inp" type="date" id="cu-date" data-k="cu.date" value="${esc(dr.date)}"></div>
+      <div class="field"><label for="cu-pid">Project</label><select class="inp" id="cu-pid" data-k="cu.pid"><option value="">Choose…</option>${projOpts.map(p=>`<option value="${esc(p.id)}" ${dr.pid===p.id?"selected":""}>${esc(p.name||"Untitled")}${p.client?" · "+esc(p.client):""}</option>`).join("")}</select></div>
+      <div class="field"><label for="cu-person">Person</label><select class="inp" id="cu-person" data-k="cu.person"><option value="">Not specified</option>${(s.people||[]).map(x=>`<option value="${esc(x.id)}" ${dr.person===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></div>
+      <div class="field"><label for="cu-prov">Provider</label><select class="inp" id="cu-prov" data-k="cu.prov">${provs.map(c=>`<option value="${esc(c.id)}" ${dr.prov===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div>
+      <div class="field"><label for="cu-cr">Credits</label><input class="inp numi" inputmode="decimal" id="cu-cr" data-k="cu.credits" value="${esc(dr.credits)}" placeholder="0"></div>
+      <div class="field"><label for="cu-note">Note <span class="muted" style="font-weight:500">(optional)</span></label><input class="inp" id="cu-note" data-k="cu.note" value="${esc(dr.note)}" placeholder="e.g. hero shot re-renders"></div>
+      <button class="btn primary" data-action="cu-add" style="margin-bottom:1px">Add</button>
+    </div></div>`;
+
+  const seg=(k,l)=>`<button data-action="cu-view" data-v="${k}" aria-pressed="${state.cuView===k}">${l}</button>`;
+  const gseg=(k,l)=>`<button data-action="cu-gran" data-v="${k}" aria-pressed="${state.cuGran===k}">${l}</button>`;
+  const fProj=state.cuPid?projById(state.cuPid):null;
+  return `<div class="section-head"><div><h2>Credits</h2><p>Credits actually used against the estimate from each quote, by project or person, week by week or month by month. Estimates are spread evenly across each deliverable's working days. Click a column heading to see its totals in the bar at the top.</p></div>
+    <div class="toolbar">
+      <select class="inp xs" style="width:auto" id="cu-provsel" data-k="cuProv" aria-label="Provider">${provs.map(c=>`<option value="${esc(c.id)}" ${state.cuProv===c.id?"selected":""}>${esc(c.name)} credits</option>`).join("")}<option value="all" ${ALL?"selected":""}>All providers (₹)</option></select>
+      <select class="inp xs" style="width:auto;max-width:220px" id="cu-pidsel" data-k="cuPid" aria-label="Project"><option value="">All projects</option>${state.projects.filter(LIVE).map(p=>`<option value="${esc(p.id)}" ${state.cuPid===p.id?"selected":""}>${esc(p.name||"Untitled")}</option>`).join("")}</select>
+      <div class="seg-sm" role="group" aria-label="Time scale">${gseg("week","Weekly")}${gseg("month","Monthly")}</div>
+      <div class="month-nav"><button class="btn sm" data-action="cu-nav" data-d="-1" aria-label="Earlier">←</button><button class="btn sm" data-action="cu-nav" data-d="0">Today</button><button class="btn sm" data-action="cu-nav" data-d="1" aria-label="Later">→</button></div>
+    </div></div>
+  <div class="cu-range"><h3>${esc(rangeLabel)}</h3><span class="sub">${fProj?`${esc(fProj.name||"Untitled")} only · `:""}${ALL?"all providers, in rupees":esc(prov?prov.name:"")+" credits"}${sel!==-1?` · <button class="btn ghost sm" style="padding:0 4px" data-action="cu-sel" data-i="-1">show whole range</button>`:""}</span></div>
+  ${stats}
+  ${form}
+  <div class="panel">
+    <div class="grid-title"><div class="seg-sm" role="group" aria-label="Group by">${seg("project","By project")}${seg("person","By person")}${seg("entries","Entries")}</div>
+      <p>${state.cuView==="entries"?`${entries.length} entr${entries.length===1?"y":"ies"} in ${esc(rangeLabel)}`:"Bold = used · grey = estimate · red = over estimate"}</p></div>
+    ${state.cuView==="entries"
+      ?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Project</th><th>Person</th><th>Provider</th><th class="num">Credits</th><th class="num">Cost</th><th>Note</th>${state.ro?"":"<th></th>"}</tr></thead>
+        <tbody>${entryRows||`<tr><td colspan="8"><div class="empty"><strong>Nothing logged in this period</strong>${state.ro?"Admins log credits as they're used.":"Use the form above to log credits."}</div></td></tr>`}</tbody></table></div>`
+      :`<div class="table-wrap"><table class="cu-grid">${head}<tbody>${rowsHtml||`<tr><td colspan="${periods.length+2}"><div class="empty"><strong>Nothing in this range</strong>No estimates or logged credits fall in these ${state.cuGran==="week"?"weeks":"months"}.</div></td></tr>`}${totRow}</tbody></table></div>`}
+  </div>
+  <p class="sub" style="margin-top:12px;max-width:95ch">${undatedTot>0.0001?`${fv(undatedTot)}${unit} more is estimated on deliverables with no dates yet, so it isn't in the columns. `:""}Lost quotes are left out${state.includePitches?"; pitches are included":"; pitches are left out"} (change it on the Schedule tab).</p>`;
+}
+
 /* ----- project tracker ----- */
+function usedBy(p){const u={};(p.usage||[]).forEach(e=>{if(e.prov)u[e.prov]=(u[e.prov]||0)+(+e.credits||0);});return u;}
 function actualsCell(p,pc,s){
-  const act=p.actual||{};
+  const act=usedBy(p);
   const rows=(s.credits||[]).filter(c=>(pc.credits[c.id]||0)>0.0001||act[c.id]!=null);
   const ad=p.actualDays,hasD=ad!=null&&ad!=="";
   const dOff=hasD&&pc.days>0?((+ad)-pc.days)/pc.days:null;
+  const chipOf=off=>off==null?'<span class="chip">—</span>':`<span class="chip ${off>0.02?"bad":off<-0.02?"good":""}">${off>0?"+":""}${Math.round(off*100)}%</span>`;
   const dayRow=`<span class="nm" title="Production workdays">Days</span>
       <span class="est">${days(pc.days)}</span><span class="nm">→</span>
-      <input class="inp numi" inputmode="decimal" id="ad-${esc(p.id)}" data-k="tpd" data-id="${esc(p.id)}" data-num data-opt value="${hasD?esc(ad):""}" placeholder="actual" aria-label="Actual days spent on ${esc(p.name||"this project")}">
-      ${hasD?(dOff==null?'<span class="chip">—</span>':`<span class="chip ${dOff>0.02?"bad":dOff<-0.02?"good":""}">${dOff>0?"+":""}${Math.round(dOff*100)}%</span>`):'<span class="muted">—</span>'}`;
+      ${state.ro?`<span class="est">${hasD?days(ad):'<span class="muted">—</span>'}</span>`:`<input class="inp numi" inputmode="decimal" id="ad-${esc(p.id)}" data-k="tpd" data-id="${esc(p.id)}" data-num data-opt value="${hasD?esc(ad):""}" placeholder="actual" aria-label="Actual days spent on ${esc(p.name||"this project")}">`}
+      ${hasD?chipOf(dOff):'<span class="muted">—</span>'}`;
   let dCost=0,anyUsed=false;
-  if(hasD)dCost+=((+ad)-pc.days)*(+s.dayRate||0);
+  if(hasD&&!state.ro)dCost+=((+ad)-pc.days)*(+s.dayRate||0);
   const html=rows.map(c=>{
     const est=pc.credits[c.id]||0;
-    const used=act[c.id];
-    const has=used!=null&&used!=="";
-    if(has){anyUsed=true;dCost+=((+used)-est)*(+c.rate||0);}
-    const off=has&&est>0?((+used)-est)/est:null;
-    const chip=has?(off==null?'<span class="chip">—</span>':`<span class="chip ${off>0.02?"bad":off<-0.02?"good":""}">${off>0?"+":""}${Math.round(off*100)}%</span>`):'<span class="muted">—</span>';
+    const has=act[c.id]!=null;const used=act[c.id]||0;
+    if(has){anyUsed=true;dCost+=(used-est)*(+c.rate||0);}
     return `<span class="nm" title="${esc(c.name)} · ${inr2(c.rate)} per credit">${esc(c.name.slice(0,10))}</span>
       <span class="est">${num(est)}</span><span class="nm">→</span>
-      <input class="inp numi" inputmode="decimal" id="ac-${esc(p.id)}-${esc(c.id)}" data-k="tpa" data-id="${esc(p.id)}" data-prov="${esc(c.id)}" data-num data-opt value="${has?esc(used):""}" placeholder="used" aria-label="Credits used on ${esc(p.name||"this project")} from ${esc(c.name)}">
-      ${chip}`;
+      <span class="est">${has?num(used):'<span class="muted">—</span>'}</span>
+      ${has?(est>0?chipOf((used-est)/est):'<span class="chip">—</span>'):'<span class="muted">—</span>'}`;
   }).join("");
-  return `<div class="cr-grid">${dayRow}${html}</div>${anyUsed||hasD?`<div class="cr-sum ${dCost>0?"delta-up":dCost<0?"delta-down":""}">${dCost>0?`${inr(dCost)} over cost`:dCost<0?`${inr(-dCost)} under cost`:"on budget"}</div>`:'<div class="sub">enter what was actually spent</div>'}`;
+  const link=`<button class="btn ghost sm" style="padding:2px 6px;margin-top:4px" data-action="cu-open" data-id="${esc(p.id)}">${state.ro?"Credit log →":"Log credits →"}</button>`;
+  return `<div class="cr-grid">${dayRow}${html}</div>${anyUsed||(hasD&&!state.ro)?`<div class="cr-sum ${dCost>0?"delta-up":dCost<0?"delta-down":""}">${dCost>0?`${inr(dCost)} over ${state.ro?"on credits":"cost"}`:dCost<0?`${inr(-dCost)} under ${state.ro?"on credits":"cost"}`:"on budget"}</div>`:""}${link}`;
 }
 
 function viewProjects(){
@@ -1663,29 +1870,30 @@ function viewProjects(){
     const late=overFor(p.id);
     const open=state.openComments===p.id;
     return `<tr class="${open?"tr-open":""}">
-      <td class="tr-nm"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn ghost sm" style="padding:0;font-weight:600;color:var(--ink)" data-action="open-project" data-id="${esc(p.id)}">${esc(p.name||"Untitled")}</button></div>
-        <div class="sub">${esc(p.client||"No client")} · ${inr(pc.sp)} · ${days(pc.days)} production d</div>
+      <td class="tr-nm"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${state.ro?`<b>${esc(p.name||"Untitled")}</b>`:`<button class="btn ghost sm" style="padding:0;font-weight:600;color:var(--ink)" data-action="open-project" data-id="${esc(p.id)}">${esc(p.name||"Untitled")}</button>`}</div>
+        <div class="sub">${esc(p.client||"No client")}${state.ro?"":" · "+inr(pc.sp)} · ${days(pc.days)} production d</div>
         ${late>0.0001?`<div class="sub" style="color:var(--bad);font-weight:600">${days(late)} d won't fit before delivery</div>`:""}</td>
-      <td class="tr-st"><select class="inp xs" id="tr-st-${esc(p.id)}" data-k="tp.status" data-id="${esc(p.id)}" aria-label="Status">${STATUSES.map(([k,l])=>`<option value="${k}" ${p.status===k?"selected":""}>${l}</option>`).join("")}</select></td>
+      ${state.ro?`<td class="tr-st"><span class="pill st-${esc(p.status)}">${esc(STATUS_LABEL[p.status]||p.status)}</span></td><td class="tr-pr">${priPill(p)}</td>
+      <td class="tr-dt">${p.start?esc(fmtDate(p.start)):'<span class="muted">—</span>'}</td><td class="tr-dt">${p.end?esc(fmtDate(p.end)):'<span class="muted">—</span>'}${pd?`<div class="sub">${pd.n} working days</div>`:""}</td>`:`<td class="tr-st"><select class="inp xs" id="tr-st-${esc(p.id)}" data-k="tp.status" data-id="${esc(p.id)}" aria-label="Status">${STATUSES.map(([k,l])=>`<option value="${k}" ${p.status===k?"selected":""}>${l}</option>`).join("")}</select></td>
       <td class="tr-pr"><select class="inp xs" id="tr-pr-${esc(p.id)}" data-k="tp.priority" data-id="${esc(p.id)}" aria-label="Priority">${PRIORITIES.map(([k,l])=>`<option value="${k}" ${priOf(p)===k?"selected":""}>${l}</option>`).join("")}</select></td>
       <td class="tr-dt"><input class="inp xs" type="date" id="tr-a-${esc(p.id)}" data-k="tp.start" data-id="${esc(p.id)}" value="${esc(p.start||"")}" aria-label="Start"></td>
-      <td class="tr-dt"><input class="inp xs" type="date" id="tr-b-${esc(p.id)}" data-k="tp.end" data-id="${esc(p.id)}" value="${esc(p.end||"")}" aria-label="Delivery">${pd?`<div class="sub">${pd.n} working days</div>`:'<div class="sub" style="color:var(--warn)">not scheduled</div>'}</td>
+      <td class="tr-dt"><input class="inp xs" type="date" id="tr-b-${esc(p.id)}" data-k="tp.end" data-id="${esc(p.id)}" value="${esc(p.end||"")}" aria-label="Delivery">${pd?`<div class="sub">${pd.n} working days</div>`:'<div class="sub" style="color:var(--warn)">not scheduled</div>'}</td>`}
       <td>${names.length?esc(names.join(", ")):'<span class="muted">—</span>'}${un?' <span class="chip warn">unassigned</span>':""}</td>
       <td class="tr-cr">${actualsCell(p,pc,s)}</td>
-      <td class="num"><button class="btn sm" data-action="comments" data-id="${esc(p.id)}">${cmts.length?`${cmts.length} comment${cmts.length===1?"":"s"}`:"Comment"}</button></td>
-      <td>${rowActions(p)}</td>
+      <td class="num">${state.ro&&!cmts.length?'<span class="muted">—</span>':`<button class="btn sm" data-action="comments" data-id="${esc(p.id)}">${cmts.length?`${cmts.length} comment${cmts.length===1?"":"s"}`:"Comment"}</button>`}</td>
+      <td>${state.ro?"":rowActions(p)}</td>
     </tr>${open?`<tr class="tr-open"><td colspan="9">
       <div class="cmt-list">${cmts.length?cmts.slice().reverse().map(c=>`<div class="cmt"><div class="who">${esc(c.by||"Someone")} · ${esc(new Date(c.at).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</div>${esc(c.text)}</div>`).join(""):'<div class="sub">No comments yet.</div>'}</div>
-      <div class="cmt-form">
+      ${state.ro?`<button class="btn ghost" data-action="comments" data-id="${esc(p.id)}">Close</button>`:`<div class="cmt-form">
         <div class="field" style="flex:0 1 160px"><label for="cmt-me">Your name</label><input class="inp xs" id="cmt-me" data-k="me" value="${esc(state.me||"")}" placeholder="e.g. Kamal"></div>
         <div class="field"><label for="cmt-text-${esc(p.id)}">Comment</label><input class="inp xs" id="cmt-text-${esc(p.id)}" placeholder="Status, blocker, client feedback…"></div>
         <button class="btn primary" data-action="add-comment" data-id="${esc(p.id)}">Add</button>
         <button class="btn ghost" data-action="comments" data-id="${esc(p.id)}">Close</button>
-      </div></td></tr>`:""}`;
+      </div>`}</td></tr>`:""}`;
   }).join("");
   const counts=STATUSES.map(([k,l])=>`${l} ${state.projects.filter(p=>p.status===k).length}`).join(" · ");
-  return `<div class="section-head"><div><h2>Projects</h2><p>Every quote shows up here automatically. Set status, priority and dates, see who's on each project, and keep notes in the comment box. Priority drives the Schedule tab.</p></div>
-    <div class="toolbar"><input class="inp" id="tr-filter" data-k="trFilter" value="${esc(state.trFilter||"")}" placeholder="Search projects…" style="width:220px"><button class="btn primary" data-action="new-project">+ New quote</button></div></div>
+  return `<div class="section-head"><div><h2>Projects</h2><p>${state.ro?"Every live project, most urgent first: status, dates, who's on it, and how the days and credits are tracking against the estimate.":"Every quote shows up here automatically. Set status, priority and dates, see who's on each project, and keep notes in the comment box. Priority drives the Schedule tab."}</p></div>
+    <div class="toolbar"><input class="inp" id="tr-filter" data-k="trFilter" value="${esc(state.trFilter||"")}" placeholder="Search projects…" style="width:220px">${state.ro?"":'<button class="btn primary" data-action="new-project">+ New quote</button>'}</div></div>
   <div class="panel"><div class="table-wrap"><table>
     <thead><tr><th>Project</th><th>Status</th><th>Priority</th><th>Start</th><th>Delivery</th><th>Team</th><th>Actuals · est → used</th><th class="num">Comments</th><th></th></tr></thead>
     <tbody>${rows||`<tr><td colspan="9"><div class="empty"><strong>No projects yet</strong>Create a quote and it appears here.</div></td></tr>`}</tbody>
@@ -1694,10 +1902,11 @@ function viewProjects(){
 }
 
 /* ----- pipeline & capacity ----- */
-function periodsFor(){
-  const off=state.monthOffset,today=new Date();today.setHours(12,0,0,0);
+function periodsFor(gran,off){
+  gran=gran||state.gran;if(off==null)off=state.monthOffset;
+  const today=new Date();today.setHours(12,0,0,0);
   const mark=x=>{x.now=today>=x.a&&today<=x.b;return x;};
-  if(state.gran==="week"){
+  if(gran==="week"){
     const d=new Date(today.getFullYear(),today.getMonth(),today.getDate(),12);
     d.setDate(d.getDate()-((d.getDay()+6)%7)+off*7);
     return [...Array(8)].map((_,i)=>{
@@ -2003,8 +2212,13 @@ function onField(e){
   if(e.type==="input"&&(el.tagName==="SELECT"||el.type==="checkbox"||el.type==="radio"||el.type==="date"))return;
   if(e.type==="change"&&el.tagName!=="SELECT"&&el.type!=="checkbox"&&el.type!=="radio"&&el.type!=="date")return;
   const k=el.dataset.k;const v=readVal(el);
+  if(state.ro&&!["trFilter","includePitches","cuPid","cuProv"].includes(k))return;
   if(k==="curId"){flushProject();state.curId=v;try{localStorage.setItem("sp-cur",v);}catch(e){}const f=state.projects.find(p=>p.id===v);state.cur=f?clone(f):null;state.armed=null;render();return;}
   if(k==="qFilter"){state.qFilter=v;render();return;}
+  if(k==="cuProv"||k==="cuPid"){state[k]=v;render();return;}
+  if(k.startsWith("cu.")){const f=k.slice(3);state.cuDraft[f]=v;
+    if(f==="pid"&&!state.cuDraft.person)cuDefaultPerson();
+    if(el.tagName==="SELECT")render();return;}
   if(k==="trFilter"){state.trFilter=v;render();return;}
   if(k==="me"){state.me=v;try{localStorage.setItem("sp-me",v);}catch(e){}return;}
   if(k.startsWith("gline.")){const f=k.slice(6),id=el.dataset.id;updateProjectById(el.dataset.pid,pr=>{const l=(pr.lines||[]).find(x=>x.id===id);if(l)l[f]=v;});return;}
@@ -2073,6 +2287,22 @@ const actions={
   async "setup-import"(){const d=localBackupData();if(!d)return;state.setupBusy=true;render();fromShape(d);migrateState();state.cloudView="live";await cloudReplaceAll();state.setupBusy=false;await cloudLoad();toast("Imported into the shared database");},
   async "setup-seed"(){if(!SEED)return;state.setupBusy=true;render();fromShape(SEED);migrateState();state.cloudView="live";await cloudReplaceAll();state.setupBusy=false;await cloudLoad();toast("Shared database set up from the repo defaults");},
   tab(el){flushProject();state.tab=el.dataset.tab;state.armed=null;try{localStorage.setItem("sp-tab",state.tab);}catch(e){}render();},
+  "cu-gran"(el){state.cuGran=el.dataset.v;state.cuOff=CU_OFF[state.cuGran];state.cuSel=null;render();},
+  "cu-nav"(el){const d=+el.dataset.d;state.cuOff=d===0?CU_OFF[state.cuGran]:state.cuOff+d*(state.cuGran==="week"?4:3);state.cuSel=d===0?null:-1;render();},
+  "cu-view"(el){state.cuView=el.dataset.v;render();},
+  "cu-sel"(el){state.cuSel=+el.dataset.i;render();},
+  "cu-open"(el){flushProject();state.tab="credits";state.cuPid=el.dataset.id;state.cuView="entries";state.cuSel=-1;
+    if(!state.ro){state.cuDraft.pid=el.dataset.id;state.cuDraft.person="";cuDefaultPerson();}
+    try{localStorage.setItem("sp-tab","credits");}catch(e){}render();window.scrollTo(0,0);},
+  "cu-add"(){const d=state.cuDraft;const cr=parseNum(d.credits);
+    if(!d.pid){toast("Choose a project");return;}
+    if(!(cr>0)){toast("Enter how many credits were used");return;}
+    if(!d.date){toast("Pick a date");return;}
+    const e={id:uid("c"),date:d.date,person:d.person||"",prov:d.prov,credits:cr,note:(d.note||"").trim(),by:state.me||"",at:new Date().toISOString()};
+    updateProjectById(d.pid,pr=>{pr.usage=(pr.usage||[]).concat([e]);});
+    state.cuDraft=Object.assign({},d,{credits:"",note:""});render();toast("Logged "+num(cr)+" "+creditName(d.prov)+" credits");},
+  "cu-del"(el){const key="cu:"+el.dataset.id;if(state.armed!==key){state.armed=key;render();return;}state.armed=null;
+    updateProjectById(el.dataset.pid,pr=>{pr.usage=(pr.usage||[]).filter(x=>x.id!==el.dataset.id);});render();toast("Entry deleted");},
   goto(el){flushProject();const id=el.dataset.id;
     if(id){const f=state.projects.find(p=>p.id===id);if(f){state.curId=f.id;state.cur=clone(f);try{localStorage.setItem("sp-cur",f.id);}catch(e){}
       if(el.dataset.tab==="projects"||el.dataset.tab==="schedule")state.gOpen=Object.assign({},state.gOpen,{[f.id]:true});}}
@@ -2177,11 +2407,13 @@ async function saveCSV(name,rows){
   const csv=rows.map(r=>r.map(v=>{v=v==null?"":String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(",")).join("\n");
   downloadFile(name,"\uFEFF"+csv,"text/csv;charset=utf-8");toast("Exported "+name);
 }
+const RO_ACTIONS=["theme","gran","month","retry","tab","goto","sched-mode","zoom","gshift","gt-toggle","gt-legend","comments","cu-gran","cu-nav","cu-view","cu-sel","cu-open"];
 document.addEventListener("click",e=>{
   const el=e.target.closest("[data-action]");if(!el)return;
   const a=actions[el.dataset.action];if(!a)return;
+  if(state.ro&&!RO_ACTIONS.includes(el.dataset.action))return;
   if(el.dataset.action!=="close-drawer-bg")e.preventDefault();
-  if(state.armed&&!["del-project","del-job","reset-defaults","del-row"].includes(el.dataset.action))state.armed=null;
+  if(state.armed&&!["del-project","del-job","reset-defaults","del-row","cu-del"].includes(el.dataset.action))state.armed=null;
   a(el,e);
 });
 window.addEventListener("beforeunload",()=>{flushProject();});

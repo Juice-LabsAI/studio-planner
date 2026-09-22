@@ -6,11 +6,25 @@ It's a single static page with no build step and no server.
 
 ```
 index.html      the app
+data/config.js  Supabase address and public (anon) key
 data/seed.js    default rate card, reference rates, team, example quotes
+k/<key>.js      admin sign-in for the admin link (see "Two links" below)
+supabase/       database setup scripts
 .nojekyll       lets GitHub Pages serve the files as-is
 ```
 
-Tabs: **Dashboard** (opens by default), Quote builder, Projects, Schedule, Pipeline & capacity, Rate card, Reference rates.
+## Two links: admin and team
+
+There's no sign-in screen. Which planner you get depends on the address:
+
+| Link | Who | What they get |
+|---|---|---|
+| **Site address** (e.g. studio-planner-chi.vercel.app) | Video editors, designers, the rest of the team | **Read-only team view**: Projects, Schedule and Credits. No prices, discounts, margins or day rate, and lost quotes are hidden. Refreshes every minute. |
+| **Site address + `#<key>`** | Admins only | The full planner: Dashboard, Quote builder, Projects, Schedule, Credits, Pipeline & capacity, Rate card, Reference rates. |
+
+How it works: the `#<key>` part names a file in `k/`. That file holds the admin user's email and password, and the page signs in with it silently. Without the key, the page only has the public anon key, and the database lets that key read three stripped-down views (`sp_team_settings`, `sp_team_jobs`, `sp_team_quotes`) and nothing else. So the team view is read-only because the **database** refuses anything else, not just because the buttons are hidden.
+
+Keep the admin link to admins. Anyone who has it has full edit access. To change it, rename the file in `k/` (the new file name is the new key) and push. The repo should stay private, because the key file is in it.
 
 ## Run it
 
@@ -55,11 +69,22 @@ The first tab, and the one to open if you only have a minute.
 
 Everything on it is derived from the quotes, so there's nothing extra to maintain.
 
+## Credits
+
+A tab in both the admin and the team view.
+
+- **Log credits** (admins only): date, project, person, provider, credits, and an optional note. Pick a project and the person defaults to whoever is assigned to it. Each entry is stored on its project (`usage`).
+- **Tables:** by project or by person, weekly (8 weeks) or monthly (6 months), with ← Today → to move. Each cell shows credits **used** (bold, red when over) and the **estimate** (grey). The estimate is each deliverable's credits + buffer from the quote, spread evenly across its working days and attributed to whoever is doing it. **Entries** lists every log entry in the selected period.
+- **Stats bar:** for the selected period, **credits used**, **cost of credits used** (₹), **more estimated** (estimate for the rest of the period, from today) and **used vs plan**. Click a column heading to select that week or month, or Total for the whole range.
+- **Provider:** pick Higgsfield or ElevenLabs to see credits, or **All providers (₹)** to add them up in rupees. Credits from different providers aren't comparable, so they're never added together as credits.
+- Filter to one project with the project menu, or use **Log credits →** / **Credit log →** on any row of the Projects tab.
+- Totals entered before the credit log existed were carried over as one entry per provider, dated on the project's delivery date (or the day of the upgrade if that date is still ahead).
+
 ## Projects and schedule
 
 - **Projects tab:** every quote appears here automatically. Set status, priority (Critical / High / Medium / Low), start and delivery dates inline, see who's on each project, and keep a running comment thread per project. Your name for comments is remembered in your browser.
 - **Statuses:** Pitch, Confirmed, In production, Delivered and **Lost**. A lost quote stays on record — it feeds the win rate on the dashboard — but is left out of capacity, the schedule and all pipeline totals.
-- **Actuals, estimated vs used:** the Projects table has an **Actuals · est → used** column. The first row is **days** (quoted production days → what it really took); the rest are credits per provider (credits + buffer → what was really spent). Each shows the variance as a percentage, and the project line underneath totals the rupee difference ("₹12,863 over cost") using the workday rate and credit rates. Stored per project as `actualDays` and `actual`.
+- **Actuals, estimated vs used:** the Projects table has an **Actuals · est → used** column. The first row is **days** (quoted production days → what it really took, typed in by an admin); the rest are credits per provider (credits + buffer → the total of the credit log). Each shows the variance as a percentage, and the line underneath totals the rupee difference ("₹12,863 over cost") using the workday rate and credit rates. Stored per project as `actualDays` and `usage`.
 - **Timeline key:** click ⓘ in the Schedule toolbar. A thick solid bar is the project; a thin tinted bar is one deliverable with its own dates; a dashed tinted bar is a deliverable that hasn't been given dates yet, so it can happen anywhere inside the project's dates. Bar colour is the project's priority.
 - **auto-plan:** on an expanded project row, gives every deliverable real dates. It re-runs the scheduler for that project from scratch (ignoring any dates already pinned on its own lines), so the result follows priority: a Critical project takes the early days and a Low one gets what's left. Re-run it after changing a priority.
 - **Work that won't fit:** when a person hasn't enough free capacity inside the dates, the row says "0.5 d won't fit" and a red hatched block appears just past the bar, sized to roughly that much time, with the exact figure in its tooltip. The bar also gets a red right edge.
@@ -69,7 +94,7 @@ Everything on it is derived from the quotes, so there's nothing extra to maintai
 
 ## Where your data lives
 
-The planner saves to a shared **Supabase** database (Postgres), set in `data/config.js`. There's no sign-in: anyone who opens the page sees and edits the same rate card, rates, team and quotes, and open planners update live. **Share the address only with admins.** Anyone who has it, or who reads the key in the page source, can change the data.
+The planner saves to a shared **Supabase** database (Postgres), set in `data/config.js`. Admins see each other's changes live. The team view reloads every minute and whenever its tab comes back into focus.
 
 It uses three tables, all prefixed `sp_` so other apps can share the same Supabase project:
 
@@ -79,17 +104,20 @@ It uses three tables, all prefixed `sp_` so other apps can share the same Supaba
 | `sp_jobs` | Rate card job types |
 | `sp_quotes` | Quotes |
 
-Each row stores one JSON document (`data`), plus `updated_at` and `updated_by`.
+Each row stores one JSON document (`data`), plus `updated_at` and `updated_by`. The team view reads `sp_team_*` views of the same tables instead.
 
 ### One-time setup
 
-1. In Supabase, open **SQL Editor** and run `supabase/schema.sql`, which creates the tables. Then run `supabase/open-access.sql`, which allows access without signing in.
-2. Open the planner **in the browser that has your existing data**. The database is empty the first time, so choose **Import from this browser**.
+1. In Supabase, open **SQL Editor** and run `supabase/schema.sql`, which creates the tables.
+2. Under **Authentication → Users → Add user → Create new user**, add the admin user with the email and password from the file in `k/`, and tick **Auto Confirm User**.
+3. Run `supabase/team-access.sql`. It makes the tables admin-only and creates the read-only team views. (`open-access.sql` is the older no-sign-in setup and is no longer used.)
+4. Open the admin link. If the database is empty, choose **Import from this browser** or **Start from the repo defaults**.
 
-To lock it down later, set `requireLogin: true` in `data/config.js` and re-run `schema.sql`. Only @juicelabs.ai emails will then get in, by emailed sign-in link. You'll also need to set the Site URL under Authentication → URL Configuration.
+To use per-person email sign-in instead, set `requireLogin: true` in `data/config.js` and remove the file in `k/`. Only @juicelabs.ai emails will then get in, by emailed sign-in link, and you'll need to set the Site URL under Authentication → URL Configuration.
 
 ### Backups and defaults
 
 - **Reference rates → Download backup** saves everything as a JSON file. **Restore from backup** loads one back, for everyone.
 - **Download seed.js** exports the current rate card, rates and team. Commit it as `data/seed.js` to change the repo defaults.
 - To run the planner without the database, in this browser only, delete `data/config.js`.
+- Opening `index.html` from your computer works the same way: add `#<key>` to the address for the admin planner.

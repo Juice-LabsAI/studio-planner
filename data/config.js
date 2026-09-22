@@ -1,7 +1,9 @@
 /* Shared database for Juice Studio Planner (Supabase).
-   requireLogin: false means the planner opens without signing in. Anyone who has
-   this page's address can read and edit the data, so share the link only with admins.
-   Set requireLogin to true (and re-run the member policies) to require an email sign-in again.
+   With requireLogin: false there's no sign-in screen:
+   - the plain site address opens the read-only TEAM view (Projects, Schedule, Credits; no prices);
+   - the admin link (site address + #key, see the k/ folder) opens the full planner.
+   The anon key below only lets the team view read the sp_team_* views
+   (see supabase/team-access.sql); it can't change anything.
    Delete this file (or blank the values) to run the planner in browser-only mode. */
 window.STUDIO_CONFIG = {
   supabaseUrl: "https://cncuwzfertyourwdqqsi.supabase.co",
