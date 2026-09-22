@@ -19,10 +19,10 @@ There's no sign-in screen. Which planner you get depends on the address:
 
 | Link | Who | What they get |
 |---|---|---|
-| **Site address** (e.g. studio-planner-chi.vercel.app) | Video editors, designers, the rest of the team | **Read-only team view**: Projects, Schedule and Credits. No prices, discounts, margins or day rate, and lost quotes are hidden. Refreshes every minute. |
+| **Site address** (e.g. studio-planner-chi.vercel.app) | Video editors, designers, the rest of the team | **Team view**: Projects, Schedule and Credits, read-only except for **logging credits**. No prices, discounts, margins or day rate, and lost quotes are hidden. Refreshes every minute. |
 | **Site address + `#<key>`** | Admins only | The full planner: Dashboard, Quote builder, Projects, Schedule, Credits, Pipeline & capacity, Rate card, Reference rates. |
 
-How it works: the `#<key>` part names a file in `k/`. That file holds the admin user's email and password, and the page signs in with it silently. Without the key, the page only has the public anon key, and the database lets that key read three stripped-down views (`sp_team_settings`, `sp_team_jobs`, `sp_team_quotes`) and nothing else. So the team view is read-only because the **database** refuses anything else, not just because the buttons are hidden.
+How it works: the `#<key>` part names a file in `k/`. That file holds the admin user's email and password, and the page signs in with it silently. Without the key, the page only has the public anon key, and the database lets that key read three stripped-down views (`sp_team_settings`, `sp_team_jobs`, `sp_team_quotes`) and call two narrow functions: `sp_log_credits` (add one credit entry to a project) and `sp_undo_credit` (remove your own entry within 15 minutes). Nothing else. So the team view can't edit projects because the **database** refuses it, not just because the buttons are hidden.
 
 Keep the admin link to admins. Anyone who has it has full edit access. To change it, rename the file in `k/` (the new file name is the new key) and push. The repo should stay private, because the key file is in it.
 
@@ -73,7 +73,9 @@ Everything on it is derived from the quotes, so there's nothing extra to maintai
 
 A tab in both the admin and the team view.
 
-- **Log credits** (admins only): date, project, person, provider, credits, and an optional note. Pick a project and the person defaults to whoever is assigned to it. Each entry is stored on its project (`usage`).
+- **Log credits** (team and admins): **who's logging** (required, remembered in that browser), project, date used, provider, credits, who used them (defaults to the person logging) and an optional note. Picking a project shows its estimate — credits + buffer — with how much is used and left. **+ Log** on any project row in the table picks that project. Each entry is stored on its project (`usage`), and the Projects tab's "used" figures are the running total of these entries, so the two always match.
+- **Undo:** the team can undo their own entry for 15 minutes (Entries view). After that, an admin can delete it from the admin link.
+- **Estimate for reference:** each project row shows `Est. 2,000 + 500 buffer = 2,500 Higgsfield · used 1,850 · 650 left`.
 - **Tables:** by project or by person, weekly (8 weeks) or monthly (6 months), with ← Today → to move. Each cell shows credits **used** (bold, red when over) and the **estimate** (grey). The estimate is each deliverable's credits + buffer from the quote, spread evenly across its working days and attributed to whoever is doing it. **Entries** lists every log entry in the selected period.
 - **Stats bar:** for the selected period, **credits used**, **cost of credits used** (₹), **more estimated** (estimate for the rest of the period, from today) and **used vs plan**. Click a column heading to select that week or month, or Total for the whole range.
 - **Provider:** pick Higgsfield or ElevenLabs to see credits, or **All providers (₹)** to add them up in rupees. Credits from different providers aren't comparable, so they're never added together as credits.
@@ -110,7 +112,7 @@ Each row stores one JSON document (`data`), plus `updated_at` and `updated_by`. 
 
 1. In Supabase, open **SQL Editor** and run `supabase/schema.sql`, which creates the tables.
 2. Under **Authentication → Users → Add user → Create new user**, add the admin user with the email and password from the file in `k/`, and tick **Auto Confirm User**.
-3. Run `supabase/team-access.sql`. It makes the tables admin-only and creates the read-only team views. (`open-access.sql` is the older no-sign-in setup and is no longer used.)
+3. Run `supabase/team-access.sql`. It makes the tables admin-only and creates the read-only team views. Then run `supabase/team-credit-log.sql`, which lets the team view log credits. (`open-access.sql` is the older no-sign-in setup and is no longer used.)
 4. Open the admin link. If the database is empty, choose **Import from this browser** or **Start from the repo defaults**.
 
 To use per-person email sign-in instead, set `requireLogin: true` in `data/config.js` and remove the file in `k/`. Only @juicelabs.ai emails will then get in, by emailed sign-in link, and you'll need to set the Site URL under Authentication → URL Configuration.

@@ -233,7 +233,7 @@ body.ro [data-action="gt-fit"],body.ro [data-action="gt-autoplan"],body.ro [data
 .cu-stats .kpi .per{font-size:var(--fs-sm);font-weight:600;font-variant-numeric:tabular-nums;margin-top:3px}
 .cu-range{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:10px}
 .cu-range h3{font-size:var(--fs-md)}
-.cu-form{display:grid;grid-template-columns:150px minmax(180px,1.4fr) minmax(150px,1fr) minmax(130px,.8fr) 110px minmax(160px,1.4fr) auto;gap:10px;align-items:end;padding:16px 20px}
+.cu-form{display:grid;grid-template-columns:minmax(150px,1fr) minmax(180px,1.4fr) 150px minmax(120px,.8fr) 110px minmax(150px,1fr) auto;gap:10px;align-items:end;padding:16px 20px}
 @media(max-width:1100px){.cu-form{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){.cu-form{grid-template-columns:1fr}}
 .cu-grid th.pcol{padding:0}
@@ -247,6 +247,10 @@ body.ro [data-action="gt-fit"],body.ro [data-action="gt-autoplan"],body.ro [data
 .cu-grid tr.tot td{font-weight:700;background:var(--surface-2)}
 .cu-grid .est{font-size:var(--fs-xs);color:var(--ink-3);font-variant-numeric:tabular-nums}
 .cu-grid .over{color:var(--bad)}
+.cu-est{font-size:var(--fs-xs);color:var(--ink-2);margin-top:3px;font-variant-numeric:tabular-nums;line-height:1.45}
+.cu-est b{color:var(--ink)}
+.cu-hint{grid-column:1/-1;margin-top:-2px}
+.cu-form .req{color:var(--bad)}
 /* dashboard */
 .kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:18px}
 @media(max-width:1180px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -524,7 +528,7 @@ const EMPTY_SETTINGS={credits:[],dayRate:0,hoursPerDay:8,markupFloor:1.5,targetM
 /* ---------- state ---------- */
 const state={
   tab:"dash", dbState:"live", ro:false, admin:false,
-  cuGran:"month", cuOff:-2, cuSel:null, cuView:"project", cuProv:"", cuPid:"", cuDraft:{date:"",pid:"",person:"",prov:"",credits:"",note:""},
+  cuGran:"month", cuOff:-2, cuSel:null, cuView:"project", cuProv:"", cuPid:"", cuDraft:{date:"",pid:"",person:"",prov:"",credits:"",note:"",by:""}, cuMine:[],
   settings:null, jobs:[], projects:[], loaded:{settings:false,jobs:false,projects:false},
   curId:null, cur:null, dirty:false, saveTimer:null, saving:false,
   addJobId:"", addQty:1,
@@ -538,6 +542,8 @@ try{const t=localStorage.getItem("sp-tab");if(t)state.tab=t;
   const g=localStorage.getItem("sp-gran");if(g==="week"||g==="month")state.gran=g;
   const th=localStorage.getItem("sp-theme");if(th)state.theme=th;
   state.me=localStorage.getItem("sp-me")||"";
+  state.cuDraft.by=localStorage.getItem("sp-logby")||"";
+  try{state.cuMine=JSON.parse(localStorage.getItem("sp-mine")||"[]");}catch(e){state.cuMine=[];}
   const sm=localStorage.getItem("sp-schedmode");if(sm)state.schedMode=sm;
   const z=localStorage.getItem("sp-zoom");if(z==="day"||z==="week")state.zoom=z;}catch(e){}
 const S=()=>state.settings||EMPTY_SETTINGS;
@@ -1719,7 +1725,25 @@ function creditRows(s){
   return {est,undated,used};
 }
 const CU_OFF={month:-2,week:-3};
-function cuDefaultPerson(){const p=projById(state.cuDraft.pid);if(!p)return;const s=S();const rid=(s.roles||[]).filter(r=>!isLead(r)).map(r=>r.id).find(r=>(p.assign||{})[r]&&personById(p.assign[r],s));if(rid)state.cuDraft.person=p.assign[rid];}
+function creditSplit(p){
+  const out={};
+  (p.lines||[]).forEach(l=>{
+    const j=jobById(l.jobId);if(!j)return;const q=Math.max(0,+l.qty||0);let b=0,f=0,prov;
+    if(isAdapt(j)){const bj=jobById(l.baseJobId);if(!bj)return;const sh=+j.adaptShare||0;b=sh*(+bj.credits||0);f=sh*(+bj.buffer||0);prov=bj.creditType;}
+    else{b=+j.credits||0;f=+j.buffer||0;prov=j.creditType;}
+    if(!prov||!(b+f>0))return;const o=out[prov]=out[prov]||{base:0,buf:0};o.base+=b*q;o.buf+=f*q;
+  });
+  return out;
+}
+function estLine(p,only,s){
+  s=s||S();const sp=creditSplit(p),u=usedBy(p);
+  const ids=(s.credits||[]).map(c=>c.id).filter(id=>(!only||id===only)&&(sp[id]||u[id]!=null));
+  if(!ids.length)return '<span class="muted">No credits in the estimate</span>';
+  return ids.map(id=>{const e=sp[id]||{base:0,buf:0},tot=e.base+e.buf,used=u[id]||0;
+    return `Est. <b>${num(e.base)}</b> + ${num(e.buf)} buffer = <b>${num(tot)}</b> ${esc(creditName(id,s))} · used ${num(used)}${tot>0?(used>tot?` · <span class="delta-up">${num(used-tot)} over</span>`:` · ${num(tot-used)} left`):""}`;}).join("<br>");
+}
+const personName=(id,s)=>{const x=personById(id,s);return x?x.name:(id==="admin"?"Admin":id||"");};
+function cuDefaultPerson(){if(personById(state.cuDraft.by)){state.cuDraft.person=state.cuDraft.by;return;}const p=projById(state.cuDraft.pid);if(!p)return;const s=S();const rid=(s.roles||[]).filter(r=>!isLead(r)).map(r=>r.id).find(r=>(p.assign||{})[r]&&personById(p.assign[r],s));if(rid)state.cuDraft.person=p.assign[rid];}
 function viewCredits(){
   const s=S();const provs=s.credits||[];
   if(state.cuProv!=="all"&&!provs.some(c=>c.id===state.cuProv))state.cuProv=provs.length?provs[0].id:"all";
@@ -1776,7 +1800,7 @@ function viewCredits(){
     est.forEach(r=>{if(pick(r)&&overlapWd(r.a,r.b,A0,B0))ids.add(r.pid);});
     used.forEach(r=>{if(pick(r)&&r.d>=A0&&r.d<=B0)ids.add(r.pid);});
     const list=state.projects.filter(p=>ids.has(p.id)).sort((a,b)=>PRI_RANK[priOf(a)]-PRI_RANK[priOf(b)]||(a.start||"9").localeCompare(b.start||"9"));
-    rowKeys=list.map(p=>({f:r=>r.pid===p.id,label:`<b>${esc(p.name||"Untitled")}</b><div class="sub">${esc(p.client||"No client")} · <span class="pill st-${esc(p.status)}" style="padding:0 7px">${esc(STATUS_LABEL[p.status]||p.status)}</span></div>`}));
+    rowKeys=list.map(p=>({f:r=>r.pid===p.id,label:`<div style="display:flex;gap:8px;align-items:baseline;justify-content:space-between"><b>${esc(p.name||"Untitled")}</b>${p.status!=="delivered"?`<button class="btn ghost sm" style="padding:0 6px" data-action="cu-pick" data-id="${esc(p.id)}" title="Log credits for this project">+ Log</button>`:""}</div><div class="sub">${esc(p.client||"No client")} · <span class="pill st-${esc(p.status)}" style="padding:0 7px">${esc(STATUS_LABEL[p.status]||p.status)}</span></div><div class="cu-est">${estLine(p,ALL?"":state.cuProv,s)}</div>`}));
   }
   rowsHtml=rowKeys.map(rk=>`<tr><td>${rk.label}</td>${periods.map((m,i)=>`<td class="${i===sel?"sel":""}">${cell(usedIn(rk.f,m.a,m.b),estIn(rk.f,m.a,m.b))}</td>`).join("")}<td class="${sel===-1?"sel":""}">${cell(usedIn(rk.f,A0,B0),estIn(rk.f,A0,B0))}</td></tr>`).join("");
   const totRow=rowKeys.length?`<tr class="tot"><td>Total</td>${periods.map((m,i)=>`<td class="${i===sel?"sel":""}">${cell(usedIn(any,m.a,m.b),estIn(any,m.a,m.b))}</td>`).join("")}<td class="${sel===-1?"sel":""}">${cell(usedIn(any,A0,B0),estIn(any,A0,B0))}</td></tr>`:"";
@@ -1788,27 +1812,34 @@ function viewCredits(){
     return `<tr><td>${esc(fmtDate(r.e.date))}</td><td><b>${esc(p?p.name||"Untitled":"—")}</b><div class="sub">${esc(p&&p.client||"")}</div></td>
       <td>${r.key==="none"?'<span class="muted">Not specified</span>':esc(keyLabel(r.key.startsWith("x:")?r.key.slice(2):r.key,s))}</td>
       <td>${esc(creditName(r.prov,s))}</td><td class="num"><b>${num(r.credits)}</b></td><td class="num">${inr(r.credits*rate(r.prov))}</td>
-      <td style="max-width:32ch">${esc(r.e.note||"")}${r.e.by?`<div class="sub">logged by ${esc(r.e.by)}</div>`:""}</td>
-      ${state.ro?"":`<td><button class="icon-btn danger ${armed?"armed":""}" data-action="cu-del" data-pid="${esc(r.pid)}" data-id="${esc(r.e.id)}" title="${armed?"Click again to delete":"Delete entry"}" aria-label="Delete entry">${ICON.trash}</button></td>`}</tr>`;}).join("");
+      <td>${r.e.by?esc(personName(r.e.by,s)):'<span class="muted">—</span>'}${r.e.at?`<div class="sub">${esc(new Date(r.e.at).toLocaleString("en-IN",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))}</div>`:""}</td>
+      <td style="max-width:32ch">${esc(r.e.note||"")}</td>
+      <td>${state.ro
+        ?(state.cuMine.includes(r.e.id)&&r.e.at&&Date.now()-new Date(r.e.at)<14*6e4?`<button class="btn sm" data-action="cu-undo" data-pid="${esc(r.pid)}" data-id="${esc(r.e.id)}" title="You can undo your own entry for 15 minutes">Undo</button>`:"")
+        :`<button class="icon-btn danger ${armed?"armed":""}" data-action="cu-del" data-pid="${esc(r.pid)}" data-id="${esc(r.e.id)}" title="${armed?"Click again to delete":"Delete entry"}" aria-label="Delete entry">${ICON.trash}</button>`}</td></tr>`;}).join("");
 
-  /* admin: log form */
+  /* log form (admins and team) */
   const dr=state.cuDraft;if(!dr.date)dr.date=todayISO();if(!dr.prov)dr.prov=ALL?(provs[0]||{}).id||"":state.cuProv;
-  const projOpts=state.projects.filter(p=>LIVE(p)).sort((a,b)=>(a.status==="delivered")-(b.status==="delivered")||(a.name||"").localeCompare(b.name||""));
-  const form=state.ro?"":`<div class="panel" style="margin-bottom:18px"><div class="grid-title"><h3>Log credits</h3><p>Record what was actually spent, on the day it was spent. It shows up in the tables below and on the Projects tab.</p></div>
+  const projOpts=state.projects.filter(p=>LIVE(p)&&p.status!=="delivered").sort((a,b)=>PRI_RANK[priOf(a)]-PRI_RANK[priOf(b)]||(a.name||"").localeCompare(b.name||""));
+  const dp=projById(dr.pid);
+  const peopleOpts=sel=>(s.people||[]).map(x=>`<option value="${esc(x.id)}" ${sel===x.id?"selected":""}>${esc(x.name)}</option>`).join("");
+  const form=`<div class="panel" style="margin-bottom:18px"><div class="grid-title"><h3>Log credits</h3><p>${state.ro?"Log credits as you use them. Your entry shows up here and on the Projects tab straight away.":"Record what was actually spent, on the day it was spent. It shows up in the tables below and on the Projects tab."}</p></div>
     <div class="cu-form">
-      <div class="field"><label for="cu-date">Date</label><input class="inp" type="date" id="cu-date" data-k="cu.date" value="${esc(dr.date)}"></div>
-      <div class="field"><label for="cu-pid">Project</label><select class="inp" id="cu-pid" data-k="cu.pid"><option value="">Choose…</option>${projOpts.map(p=>`<option value="${esc(p.id)}" ${dr.pid===p.id?"selected":""}>${esc(p.name||"Untitled")}${p.client?" · "+esc(p.client):""}</option>`).join("")}</select></div>
-      <div class="field"><label for="cu-person">Person</label><select class="inp" id="cu-person" data-k="cu.person"><option value="">Not specified</option>${(s.people||[]).map(x=>`<option value="${esc(x.id)}" ${dr.person===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></div>
+      <div class="field"><label for="cu-by">Who's logging? <span class="req">*</span></label><select class="inp" id="cu-by" data-k="cu.by"><option value="">Choose your name…</option>${peopleOpts(dr.by)}${state.ro?"":`<option value="admin" ${dr.by==="admin"?"selected":""}>Admin</option>`}</select></div>
+      <div class="field"><label for="cu-pid">Project <span class="req">*</span></label><select class="inp" id="cu-pid" data-k="cu.pid"><option value="">Choose…</option>${projOpts.map(p=>`<option value="${esc(p.id)}" ${dr.pid===p.id?"selected":""}>${esc(p.name||"Untitled")}${p.client?" · "+esc(p.client):""}</option>`).join("")}</select></div>
+      <div class="field"><label for="cu-date">Date used</label><input class="inp" type="date" id="cu-date" data-k="cu.date" value="${esc(dr.date)}"></div>
       <div class="field"><label for="cu-prov">Provider</label><select class="inp" id="cu-prov" data-k="cu.prov">${provs.map(c=>`<option value="${esc(c.id)}" ${dr.prov===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div>
-      <div class="field"><label for="cu-cr">Credits</label><input class="inp numi" inputmode="decimal" id="cu-cr" data-k="cu.credits" value="${esc(dr.credits)}" placeholder="0"></div>
-      <div class="field"><label for="cu-note">Note <span class="muted" style="font-weight:500">(optional)</span></label><input class="inp" id="cu-note" data-k="cu.note" value="${esc(dr.note)}" placeholder="e.g. hero shot re-renders"></div>
-      <button class="btn primary" data-action="cu-add" style="margin-bottom:1px">Add</button>
+      <div class="field"><label for="cu-cr">Credits <span class="req">*</span></label><input class="inp numi" inputmode="decimal" id="cu-cr" data-k="cu.credits" value="${esc(dr.credits)}" placeholder="0"></div>
+      <div class="field"><label for="cu-person">Used by</label><select class="inp" id="cu-person" data-k="cu.person"><option value="">Not specified</option>${peopleOpts(dr.person)}</select></div>
+      <button class="btn primary" data-action="cu-add" style="margin-bottom:1px" ${state.cuBusy?"disabled":""}>${state.cuBusy?"Saving…":"Add"}</button>
+      <div class="field" style="grid-column:1/-1"><label for="cu-note">Note <span class="muted" style="font-weight:500">(optional)</span></label><input class="inp" id="cu-note" data-k="cu.note" value="${esc(dr.note)}" placeholder="e.g. hero shot re-renders"></div>
+      ${dp?`<div class="callout cu-hint">${estLine(dp,"",s)}</div>`:""}
     </div></div>`;
 
   const seg=(k,l)=>`<button data-action="cu-view" data-v="${k}" aria-pressed="${state.cuView===k}">${l}</button>`;
   const gseg=(k,l)=>`<button data-action="cu-gran" data-v="${k}" aria-pressed="${state.cuGran===k}">${l}</button>`;
   const fProj=state.cuPid?projById(state.cuPid):null;
-  return `<div class="section-head"><div><h2>Credits</h2><p>Credits actually used against the estimate from each quote, by project or person, week by week or month by month. Estimates are spread evenly across each deliverable's working days. Click a column heading to see its totals in the bar at the top.</p></div>
+  return `<div class="section-head"><div><h2>Credits</h2><p>Log the credits you use, and see them against each project's estimate (credits + buffer), by project or person, week by week or month by month. Click a column heading to see its totals in the bar at the top.</p></div>
     <div class="toolbar">
       <select class="inp xs" style="width:auto" id="cu-provsel" data-k="cuProv" aria-label="Provider">${provs.map(c=>`<option value="${esc(c.id)}" ${state.cuProv===c.id?"selected":""}>${esc(c.name)} credits</option>`).join("")}<option value="all" ${ALL?"selected":""}>All providers (₹)</option></select>
       <select class="inp xs" style="width:auto;max-width:220px" id="cu-pidsel" data-k="cuPid" aria-label="Project"><option value="">All projects</option>${state.projects.filter(LIVE).map(p=>`<option value="${esc(p.id)}" ${state.cuPid===p.id?"selected":""}>${esc(p.name||"Untitled")}</option>`).join("")}</select>
@@ -1822,8 +1853,8 @@ function viewCredits(){
     <div class="grid-title"><div class="seg-sm" role="group" aria-label="Group by">${seg("project","By project")}${seg("person","By person")}${seg("entries","Entries")}</div>
       <p>${state.cuView==="entries"?`${entries.length} entr${entries.length===1?"y":"ies"} in ${esc(rangeLabel)}`:"Bold = used · grey = estimate · red = over estimate"}</p></div>
     ${state.cuView==="entries"
-      ?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Project</th><th>Person</th><th>Provider</th><th class="num">Credits</th><th class="num">Cost</th><th>Note</th>${state.ro?"":"<th></th>"}</tr></thead>
-        <tbody>${entryRows||`<tr><td colspan="8"><div class="empty"><strong>Nothing logged in this period</strong>${state.ro?"Admins log credits as they're used.":"Use the form above to log credits."}</div></td></tr>`}</tbody></table></div>`
+      ?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Project</th><th>Used by</th><th>Provider</th><th class="num">Credits</th><th class="num">Cost</th><th>Logged by</th><th>Note</th><th></th></tr></thead>
+        <tbody>${entryRows||`<tr><td colspan="9"><div class="empty"><strong>Nothing logged in this period</strong>Use the form above to log credits.</div></td></tr>`}</tbody></table></div>`
       :`<div class="table-wrap"><table class="cu-grid">${head}<tbody>${rowsHtml||`<tr><td colspan="${periods.length+2}"><div class="empty"><strong>Nothing in this range</strong>No estimates or logged credits fall in these ${state.cuGran==="week"?"weeks":"months"}.</div></td></tr>`}${totRow}</tbody></table></div>`}
   </div>
   <p class="sub" style="margin-top:12px;max-width:95ch">${undatedTot>0.0001?`${fv(undatedTot)}${unit} more is estimated on deliverables with no dates yet, so it isn't in the columns. `:""}Lost quotes are left out${state.includePitches?"; pitches are included":"; pitches are left out"} (change it on the Schedule tab).</p>`;
@@ -2212,11 +2243,12 @@ function onField(e){
   if(e.type==="input"&&(el.tagName==="SELECT"||el.type==="checkbox"||el.type==="radio"||el.type==="date"))return;
   if(e.type==="change"&&el.tagName!=="SELECT"&&el.type!=="checkbox"&&el.type!=="radio"&&el.type!=="date")return;
   const k=el.dataset.k;const v=readVal(el);
-  if(state.ro&&!["trFilter","includePitches","cuPid","cuProv"].includes(k))return;
+  if(state.ro&&!["trFilter","includePitches","cuPid","cuProv"].includes(k)&&!k.startsWith("cu."))return;
   if(k==="curId"){flushProject();state.curId=v;try{localStorage.setItem("sp-cur",v);}catch(e){}const f=state.projects.find(p=>p.id===v);state.cur=f?clone(f):null;state.armed=null;render();return;}
   if(k==="qFilter"){state.qFilter=v;render();return;}
   if(k==="cuProv"||k==="cuPid"){state[k]=v;render();return;}
-  if(k.startsWith("cu.")){const f=k.slice(3);state.cuDraft[f]=v;
+  if(k.startsWith("cu.")){const f=k.slice(3);const prevBy=state.cuDraft.by;state.cuDraft[f]=v;
+    if(f==="by"){try{localStorage.setItem("sp-logby",v);}catch(e){}if(!state.cuDraft.person||state.cuDraft.person===prevBy)state.cuDraft.person=personById(v)?v:"";}
     if(f==="pid"&&!state.cuDraft.person)cuDefaultPerson();
     if(el.tagName==="SELECT")render();return;}
   if(k==="trFilter"){state.trFilter=v;render();return;}
@@ -2292,15 +2324,30 @@ const actions={
   "cu-view"(el){state.cuView=el.dataset.v;render();},
   "cu-sel"(el){state.cuSel=+el.dataset.i;render();},
   "cu-open"(el){flushProject();state.tab="credits";state.cuPid=el.dataset.id;state.cuView="entries";state.cuSel=-1;
-    if(!state.ro){state.cuDraft.pid=el.dataset.id;state.cuDraft.person="";cuDefaultPerson();}
+    if(projById(el.dataset.id)&&projById(el.dataset.id).status!=="delivered"){state.cuDraft.pid=el.dataset.id;if(!state.cuDraft.person)cuDefaultPerson();}
     try{localStorage.setItem("sp-tab","credits");}catch(e){}render();window.scrollTo(0,0);},
-  "cu-add"(){const d=state.cuDraft;const cr=parseNum(d.credits);
+  async "cu-add"(){const d=state.cuDraft;const cr=parseNum(d.credits);
+    if(!d.by){toast("Pick who is logging");$("#cu-by")&&$("#cu-by").focus();return;}
     if(!d.pid){toast("Choose a project");return;}
     if(!(cr>0)){toast("Enter how many credits were used");return;}
     if(!d.date){toast("Pick a date");return;}
-    const e={id:uid("c"),date:d.date,person:d.person||"",prov:d.prov,credits:cr,note:(d.note||"").trim(),by:state.me||"",at:new Date().toISOString()};
-    updateProjectById(d.pid,pr=>{pr.usage=(pr.usage||[]).concat([e]);});
-    state.cuDraft=Object.assign({},d,{credits:"",note:""});render();toast("Logged "+num(cr)+" "+creditName(d.prov)+" credits");},
+    const e={id:uid("c"),date:d.date,person:d.person||"",prov:d.prov,credits:cr,note:(d.note||"").trim(),by:d.by,at:new Date().toISOString()};
+    if(state.ro){
+      state.cuBusy=true;render();
+      let res;try{res=await cloud.sb.rpc("sp_log_credits",{p_quote:d.pid,p_entry:e});}catch(err){res={error:err};}
+      state.cuBusy=false;
+      if(res.error){render();toast("Not saved: "+(/function|schema cache|does not exist/i.test(res.error.message||"")?"credit logging isn't switched on yet. An admin needs to run supabase/team-credit-log.sql.":res.error.message));return;}
+      const saved=Object.assign({},e,res.data||{});const p=projById(d.pid);if(p)p.usage=(p.usage||[]).concat([saved]);
+      state.cuMine=state.cuMine.concat([saved.id]).slice(-50);try{localStorage.setItem("sp-mine",JSON.stringify(state.cuMine));}catch(err){}
+    }else{
+      updateProjectById(d.pid,pr=>{pr.usage=(pr.usage||[]).concat([e]);});
+    }
+    state.cuDraft=Object.assign({},d,{credits:"",note:""});render();toast("Logged "+num(cr)+" "+creditName(d.prov)+" credits on "+((projById(d.pid)||{}).name||"the project"));},
+  async "cu-undo"(el){const pid=el.dataset.pid,id=el.dataset.id;
+    let res;try{res=await cloud.sb.rpc("sp_undo_credit",{p_quote:pid,p_id:id});}catch(err){res={error:err};}
+    if(res.error||!res.data){toast(res.error?"Couldn't undo: "+res.error.message:"Too late to undo. Ask an admin to remove it.");return;}
+    const p=projById(pid);if(p)p.usage=(p.usage||[]).filter(x=>x.id!==id);render();toast("Entry removed");},
+  "cu-pick"(el){state.cuDraft.pid=el.dataset.id;if(!state.cuDraft.person)cuDefaultPerson();render();const f=$("#cu-cr")||$("#cu-by");if(f){f.scrollIntoView({block:"center"});f.focus();}},
   "cu-del"(el){const key="cu:"+el.dataset.id;if(state.armed!==key){state.armed=key;render();return;}state.armed=null;
     updateProjectById(el.dataset.pid,pr=>{pr.usage=(pr.usage||[]).filter(x=>x.id!==el.dataset.id);});render();toast("Entry deleted");},
   goto(el){flushProject();const id=el.dataset.id;
@@ -2407,7 +2454,7 @@ async function saveCSV(name,rows){
   const csv=rows.map(r=>r.map(v=>{v=v==null?"":String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(",")).join("\n");
   downloadFile(name,"\uFEFF"+csv,"text/csv;charset=utf-8");toast("Exported "+name);
 }
-const RO_ACTIONS=["theme","gran","month","retry","tab","goto","sched-mode","zoom","gshift","gt-toggle","gt-legend","comments","cu-gran","cu-nav","cu-view","cu-sel","cu-open"];
+const RO_ACTIONS=["theme","gran","month","retry","tab","goto","sched-mode","zoom","gshift","gt-toggle","gt-legend","comments","cu-gran","cu-nav","cu-view","cu-sel","cu-open","cu-add","cu-undo","cu-pick"];
 document.addEventListener("click",e=>{
   const el=e.target.closest("[data-action]");if(!el)return;
   const a=actions[el.dataset.action];if(!a)return;
