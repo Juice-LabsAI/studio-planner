@@ -1,5 +1,5 @@
 /* Admin access for Juice Studio Planner.
-   Opening the planner as  <site address>/#fgg6d4qhajdzpl3svl6msrqf  loads this file and signs in
+   Opening the planner as  <site address>/#admin-only  loads this file and signs in
    silently as the admin user below, with full edit access. Without it, the page is
    the read-only team view. Keep this link to admins.
 

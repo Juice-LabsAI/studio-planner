@@ -465,7 +465,7 @@ legend{font-size:var(--fs-sm);font-weight:700;color:var(--ink);padding:0 6px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="data/config.js"></script>
 <script>/* The admin link is this page plus #<key>. The key names a file in k/ that holds the admin sign-in. Without it the page opens as the read-only team view. */
-(function(){var h=(location.hash||"").replace(/^#/,"");if(/^[a-z0-9]{16,64}$/.test(h))document.write('<script src="k/'+h+'.js"><\/script>');})();</script>
+(function(){var h=(location.hash||"").replace(/^#/,"");if(/^[a-z0-9-]{3,64}$/.test(h))document.write('<script src="k/'+h+'.js"><\/script>');})();</script>
 <script src="data/seed.js"></script>
 </head>
 <body>
