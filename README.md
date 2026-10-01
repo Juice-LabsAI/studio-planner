@@ -22,7 +22,7 @@ There's no sign-in screen. Which planner you get depends on the address:
 | **Site address** (e.g. studio-planner-chi.vercel.app) | Video editors, designers, the rest of the team | **Team view**: Job status, Daily updates, Projects, Schedule and Credits. They can keep the job status, post daily updates and log credits; they can't see or change prices, and lost quotes are hidden. Refreshes every minute. |
 | **Site address + `#<key>`** | Admins only | The full planner: Dashboard, Quote builder, Job status, Daily updates, Projects, Schedule, Credits, Pipeline & capacity, Rate card, Reference rates. |
 
-How it works: the `#<key>` part names a file in `k/`. That file holds the admin user's email and password, and the page signs in with it silently. Without the key, the page only has the public anon key, and the database lets that key read three stripped-down views (`sp_team_settings`, `sp_team_jobs`, `sp_team_quotes`) and call a handful of narrow functions: `sp_log_credits` / `sp_undo_credit` (credit entries), `sp_set_line` (the tracking fields on one deliverable, and nothing else — prices, quantities and job types are refused) and `sp_log_update` / `sp_undo_update` (daily updates). So the team view can't change prices or create work because the **database** refuses it, not just because the buttons are hidden.
+How it works: the `#<key>` part names a file in `k/`. That file holds the admin user's email and password, and the page signs in with it silently. Without the key, the page only has the public anon key, and the database lets that key read three stripped-down views (`sp_team_settings`, `sp_team_jobs`, `sp_team_quotes`) and call a handful of narrow functions: `sp_log_credits` / `sp_undo_credit` (credit entries), `sp_set_line` (the tracking fields on one deliverable, and nothing else — prices, quantities and job types are refused), `sp_log_update` / `sp_undo_update` (daily updates) and `sp_add_brief` / `sp_patch_brief` / `sp_del_brief` (incoming briefs; the team can't link a brief to a quote). So the team view can't change prices or create work because the **database** refuses it, not just because the buttons are hidden.
 
 Keep the admin link to admins. Anyone who has it has full edit access. To change it, rename the file in `k/` (the new file name is the new key) and push. The repo should stay private, because the key file is in it.
 
@@ -84,7 +84,15 @@ A tab in both the admin and the team view.
 
 ## Job status
 
-The deliverable-by-deliverable tracker, and the team's home tab. One row per quote line, grouped by brand and project:
+The deliverable-by-deliverable tracker, and the team's home tab.
+
+### Incoming briefs
+
+At the top of the tab: jobs the client has asked for that nobody has quoted yet — the rows that used to sit half-empty in the sheet. Anyone adds one with brand, project, what's been asked for, received and target dates, who added it and notes. The team can edit a waiting brief or mark it **Dropped**; only an admin can clear it, either with **Create quote** (starts a pitch with the brand, name and target date filled in, the brief kept as the first comment, and jumps to the Quote builder) or **or add to…** an existing quote. Briefs then show as **Quoted** with a link, and are hidden unless you tick "Show quoted and dropped". Waiting briefs appear in the dashboard's Needs attention list. They're stored in the settings row, so they're in the backup.
+
+### Deliverables
+
+One row per quote line, grouped by brand and project:
 
 - **Client brief** — Not received / Received / Clarification required.
 - **Client assets** — Not received / Received / Some pending.
@@ -98,7 +106,7 @@ The deliverable-by-deliverable tracker, and the team's home tab. One row per quo
 
 Filter by brand, person, blocked-only, and whether to include pitches. Blockers and deliverables waiting on a brief or assets near a delivery date show up in the dashboard's Needs attention list. Project rows (here and on the Projects tab) show **3/7 delivered** and the blocked count.
 
-New deliverables are added by an admin in the Quote builder, so everything stays priced and in capacity.
+New deliverables are added by an admin in the Quote builder, so everything stays priced and in capacity — start from a brief above, and nothing gets lost in between.
 
 ## Daily updates
 
@@ -134,7 +142,7 @@ Each row stores one JSON document (`data`), plus `updated_at` and `updated_by`. 
 
 1. In Supabase, open **SQL Editor** and run `supabase/schema.sql`, which creates the tables.
 2. Under **Authentication → Users → Add user → Create new user**, add the admin user with the email and password from the file in `k/`, and tick **Auto Confirm User**.
-3. Run `supabase/team-access.sql`. It makes the tables admin-only and creates the read-only team views. Then run `supabase/team-credit-log.sql` (team credit logging) and `supabase/team-job-status.sql` (team job status and daily updates). (`open-access.sql` is the older no-sign-in setup and is no longer used.)
+3. Run `supabase/team-access.sql`. It makes the tables admin-only and creates the read-only team views. Then run `supabase/team-credit-log.sql` (team credit logging), `supabase/team-job-status.sql` (team job status and daily updates) and `supabase/team-briefs.sql` (incoming briefs). (`open-access.sql` is the older no-sign-in setup and is no longer used.)
 4. Open the admin link. If the database is empty, choose **Import from this browser** or **Start from the repo defaults**.
 
 To use per-person email sign-in instead, set `requireLogin: true` in `data/config.js` and remove the file in `k/`. Only @juicelabs.ai emails will then get in, by emailed sign-in link, and you'll need to set the Site URL under Authentication → URL Configuration.
