@@ -92,7 +92,9 @@ At the top of the tab: jobs the client has asked for that nobody has quoted yet 
 
 ### Deliverables
 
-One row per quote line, grouped by brand and project:
+A spreadsheet-style grid: one line per deliverable, grouped by brand and project, with a sticky header and first column so you can scan a lot of rows at once. Every cell edits in place — pick a value and it saves. Click the arrow on a row to open its details (the job's own name, what it is on the rate card, and the blocker notes).
+
+Columns:
 
 - **Client brief** — Not received / Received / Clarification required.
 - **Client assets** — Not received / Received / Some pending.
@@ -102,7 +104,7 @@ One row per quote line, grouped by brand and project:
 - **Status** — Not started / In progress / Under review / Complete.
 - **Blocker** — pick a type (client feedback, client assets, internal approval, creative issue, technical issue, other) and the row opens a red strip for what the blocker is and the action to clear it.
 - **Delivered** — a tick. Delivered rows are hidden unless you ask for them.
-- **Rename for the client**: each row can carry its own name ("10s product forward") on top of the rate-card job name.
+- **Name for this job** (in the row's details): what you and the client call it — "10s product forward" — shown instead of the rate-card name wherever the deliverable appears.
 
 Filter by brand, person, blocked-only, and whether to include pitches. Blockers and deliverables waiting on a brief or assets near a delivery date show up in the dashboard's Needs attention list. Project rows (here and on the Projects tab) show **3/7 delivered** and the blocked count.
 

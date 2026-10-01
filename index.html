@@ -227,27 +227,64 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
 body.ro .gt-bar{cursor:default}
 body.ro .gt-bar .hd{display:none}
 body.ro [data-action="gt-fit"],body.ro [data-action="gt-autoplan"],body.ro [data-action="gt-reset-line"],body.ro [data-action="gt-schedule"]{display:none}
-/* job status */
-.jb-grid{min-width:1480px}
-.jb-grid th,.jb-grid td{padding:9px 8px;vertical-align:top}
-.jb-grid td:first-child,.jb-grid th:first-child{padding-left:14px;position:sticky;left:0;z-index:2;background:var(--surface);box-shadow:1px 0 0 var(--line)}
-.jb-grid tr:hover td:first-child{background:color-mix(in srgb,var(--surface-2) 45%,var(--surface))}
-.jb-grid .jb-grp td:first-child{background:var(--surface-2)}
-.jb-grid .jb-blk td:first-child{background:var(--bad-soft)}
-.table-wrap{scrollbar-width:thin}
-.jb-grid .inp.xs{padding:5px 7px}
-.jb-grid select.inp{min-width:112px}
-.jb-name{font-weight:600;font-size:var(--fs-sm);line-height:1.3}
-.jb-name .muted{font-weight:500}
-.jb-grp td{background:var(--surface-2);padding:12px 14px}
-.jb-grp .nm{font-family:var(--f-display);font-weight:600;font-size:var(--fs-md)}
-.jb-grp .meta{font-size:var(--fs-xs);color:var(--ink-2);margin-top:2px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-tbody tr.jb-grp:hover td{background:var(--surface-2)}
-.jb-blk td{background:var(--bad-soft);padding-top:0}
-tbody tr.jb-blk:hover td{background:var(--bad-soft)}
-.jb-blk .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
-.jb-blk .field{flex:1 1 260px}
-.jb-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;flex:none}
+/* job status: spreadsheet grid */
+.jb-wrap{overflow:auto;max-height:74vh;border:1px solid var(--line);border-radius:12px;background:var(--surface);scrollbar-width:thin;scrollbar-color:var(--line-2) transparent;scrollbar-gutter:stable}
+.jb-wrap::-webkit-scrollbar{height:12px;width:12px}
+.jb-wrap::-webkit-scrollbar-track{background:transparent}
+.jb-wrap::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:99px;border:3px solid var(--surface);background-clip:padding-box}
+.jb-grid{min-width:1468px;width:1468px;table-layout:fixed;font-size:12.5px;border-collapse:separate;border-spacing:0}
+.jb-grid td{overflow:hidden}
+.jb-grid th{position:sticky;top:0;z-index:3;background:var(--surface);font-size:11.5px;letter-spacing:.02em;padding:9px 10px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+.jb-grid td{padding:3px 10px;border-bottom:1px solid var(--line);vertical-align:middle;height:34px;white-space:nowrap;line-height:1.4}
+.jb-grid tbody tr:hover td{background:color-mix(in srgb,var(--surface-2) 40%,transparent)}
+.jb-grid th:first-child,.jb-grid td:first-child{position:sticky;left:0;z-index:2;background:var(--surface);box-shadow:1px 0 0 var(--line);padding-left:8px}
+.jb-grid th:first-child{z-index:4}
+.jb-grid tbody tr:hover td:first-child{background:color-mix(in srgb,var(--surface-2) 40%,var(--surface))}
+.jb-grid tr.blk td:first-child{box-shadow:1px 0 0 var(--line),inset 3px 0 0 var(--bad)}
+.jb-grid tr.done td{color:var(--ink-3)}
+.jb-grid tr.done .c-nm{text-decoration:line-through;text-decoration-color:var(--line-2)}
+.c-name{width:270px;max-width:270px}
+.c-name .row{display:flex;align-items:center;gap:4px;min-width:0}
+.c-nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.jb-exp{appearance:none;border:0;background:none;cursor:pointer;color:var(--ink-3);padding:0;width:20px;height:20px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.jb-exp:hover{background:var(--surface-2);color:var(--ink)}
+.jb-exp svg{width:12px;height:12px;transition:transform .12s}
+.jb-exp[aria-expanded="true"] svg{transform:rotate(90deg)}
+@media (prefers-reduced-motion:reduce){.jb-exp svg{transition:none}}
+.cellsel{appearance:none;border:0;background:var(--surface-2);color:var(--ink-2);font:inherit;font-weight:600;padding:3px 9px;border-radius:999px;max-width:100%;cursor:pointer;line-height:1.5}
+.cellsel.v-none{background:transparent;color:var(--ink-3);font-weight:500}
+.cellsel.good{background:var(--good-soft);color:var(--good)}
+.cellsel.warn{background:var(--warn-soft);color:var(--warn)}
+.cellsel.bad{background:var(--bad-soft);color:var(--bad)}
+.cellsel.acc{background:var(--accent-soft);color:var(--accent)}
+.cellsel:hover{box-shadow:inset 0 0 0 1px var(--line-2)}
+.cellsel.who{background:transparent;color:var(--ink);font-weight:600;padding-left:4px;max-width:100%;text-overflow:ellipsis}
+.cellsel.who.v-none{color:var(--ink-3);font-weight:500}
+.cellsel:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.celltext{border:0;background:transparent;font:inherit;color:inherit;padding:4px 6px;width:100%;border-radius:5px;text-overflow:ellipsis}
+.celltext::placeholder{color:var(--ink-3)}
+.celltext:hover{background:var(--surface-2)}
+.celltext:focus{background:var(--surface);box-shadow:0 0 0 2px var(--accent-soft);outline:none}
+.dwrap{position:relative;display:inline-block}
+.dwrap::before{content:"—";position:absolute;left:7px;top:4px;color:var(--ink-3);pointer-events:none;opacity:0}
+.dwrap[data-empty]::before{opacity:1}
+.celldate{border:0;background:transparent;font:inherit;color:inherit;padding:4px 6px;width:104px;border-radius:5px}
+.dwrap[data-empty] .celldate{color:transparent}
+.dwrap:hover .celldate,.celldate:focus{color:inherit;background:var(--surface-2)}
+.dwrap:hover::before,.dwrap:focus-within::before{opacity:0}
+.celldate:focus{background:var(--surface);box-shadow:0 0 0 2px var(--accent-soft);outline:none}
+.celldate::-webkit-calendar-picker-indicator{opacity:0;cursor:pointer;margin-left:0;padding:0}
+.dwrap:hover .celldate::-webkit-calendar-picker-indicator,.celldate:focus::-webkit-calendar-picker-indicator{opacity:.75}
+.c-chk{text-align:center;width:72px}
+.c-chk input{accent-color:var(--accent);width:16px;height:16px;cursor:pointer}
+.jb-grp td{background:var(--surface-2)!important;padding:8px 12px;border-bottom:1px solid var(--line-2);height:auto}
+.jb-grp .nm{font-weight:700;font-size:13px}
+.jb-grp .meta{color:var(--ink-2);display:inline-flex;gap:9px;flex-wrap:wrap;align-items:center;margin-left:10px;font-size:12px}
+.jb-det td{background:color-mix(in srgb,var(--surface-2) 45%,transparent);padding:12px 14px 14px 36px;white-space:normal;height:auto}
+.jb-det .row{display:flex;gap:14px;flex-wrap:wrap;align-items:end}
+.jb-det .field{flex:1 1 240px}
+.jb-det .field label{font-size:var(--fs-xs)}
+.jb-det .inp{font-size:var(--fs-sm)}
 .jb-chk{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--ink-2);white-space:nowrap}
 .jb-chk input{accent-color:var(--accent);width:16px;height:16px}
 .st-progress{background:var(--warn-soft);color:var(--warn)}
@@ -578,8 +615,8 @@ const STATUSES=[["pitch","Pitch"],["confirmed","Confirmed"],["production","In pr
 const FIRM=p=>p.status==="confirmed"||p.status==="production"||p.status==="delivered";
 const LIVE=p=>p.status!=="lost";
 const STATUS_LABEL=Object.fromEntries(STATUSES);
-const BRIEF=[["","Not set"],["none","Not received"],["received","Received"],["clarify","Clarification required"]];
-const ASSETS=[["","Not set"],["none","Not received"],["received","Received"],["partial","Some pending"]];
+const BRIEF=[["","Not set"],["none","Not received"],["received","Received"],["clarify","Query"]];
+const ASSETS=[["","Not set"],["none","Not received"],["received","Received"],["partial","Partial"]];
 const STAGES=[["","Not started"],["scripting","Scripting"],["storyboard","Storyboard"],["production","Production"],["editing","Editing"],["post","Post production"]];
 const WSTATUS=[["","Not started"],["progress","In progress"],["review","Under review"],["complete","Complete"]];
 const BTYPES=[["feedback","Client feedback"],["assets","Client assets"],["approval","Internal approval"],["creative","Creative issue"],["technical","Technical issue"],["other","Other"]];
@@ -1967,11 +2004,12 @@ function lineStats(p){
   (p.lines||[]).forEach(l=>{out.n++;if(l.delivered)out.done++;else out.open++;if(l.blocked)out.blocked++;});
   return out;
 }
-function peopleOptions(rid,sel,s){
+function peopleOptions(rid,sel,s,empty){
   s=s||S();const hold=rid?peopleForRole(rid,s):[];const rest=(s.people||[]).filter(x=>!hold.some(h=>h.id===x.id));
   const o=x=>`<option value="${esc(x.id)}" ${sel===x.id?"selected":""}>${esc(x.name)}</option>`;
-  return `<option value="">Unassigned</option>${hold.length?`<optgroup label="Can do this">${hold.map(o).join("")}</optgroup>`:""}${rest.length?`<optgroup label="Everyone else">${rest.map(o).join("")}</optgroup>`:""}`;
+  return `<option value="">${esc(empty||"Unassigned")}</option>${hold.length?`<optgroup label="Can do this">${hold.map(o).join("")}</optgroup>`:""}${rest.length?`<optgroup label="Everyone else">${rest.map(o).join("")}</optgroup>`:""}`;
 }
+const CHIP={brief:{received:"good",none:"bad",clarify:"warn"},assets:{received:"good",none:"bad",partial:"warn"},wstatus:{progress:"warn",review:"acc",complete:"good"}};
 const selOpts=(arr,v)=>arr.map(([k,l])=>`<option value="${esc(k)}" ${(v||"")===k?"selected":""}>${esc(l)}</option>`).join("");
 
 function viewJobs(){
@@ -1995,37 +2033,46 @@ function viewJobs(){
     if(!items.length)return;
     const st=lineStats(p);shown+=items.length;
     rows+=`<tr class="jb-grp"><td colspan="11">
-      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
-        <div><div class="nm">${esc(p.client||"No brand")} <span class="muted">·</span> ${esc(p.name||"Untitled")}</div>
-        <div class="meta"><span class="pill st-${esc(p.status)}">${esc(STATUS_LABEL[p.status]||p.status)}</span>${priPill(p)}
-          <span>${projDates(p)?esc(fmtRange(p.start,p.end)):"no dates"}</span>
-          <span><b>${st.done}/${st.n}</b> delivered</span>${st.blocked?`<span style="color:var(--bad);font-weight:700">${st.blocked} blocked</span>`:""}</div></div>
-        ${state.ro?"":`<button class="btn ghost sm" data-action="open-project" data-id="${esc(p.id)}">Open quote</button>`}
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+        <div style="min-width:0"><span class="nm">${esc(p.client||"No brand")} <span class="muted">·</span> ${esc(p.name||"Untitled")}</span>
+          <span class="meta"><span class="pill st-${esc(p.status)}">${esc(STATUS_LABEL[p.status]||p.status)}</span>${priPill(p)}
+            <span>${projDates(p)?esc(fmtRange(p.start,p.end)):"no dates"}</span>
+            <span><b>${st.done}/${st.n}</b> delivered</span>${st.blocked?`<span style="color:var(--bad);font-weight:700">${st.blocked} blocked</span>`:""}</span></div>
+        ${state.ro?"":`<button class="btn ghost sm" style="padding:2px 8px" data-action="open-project" data-id="${esc(p.id)}">Open quote</button>`}
       </div></td></tr>`;
     items.forEach(({l,c})=>{
       const rid=doerOf(c.j).id;const who=assignOf(p,l,c);
+      const key=p.id+"|"+l.id;const open=!!state.jbOpen[key];
       const id=x=>`jb-${x}-${esc(p.id)}-${esc(l.id)}`;
-      const d=(k,label,val,type)=>`<input class="inp xs" type="${type||"text"}" id="${id(k)}" data-k="jl.${k}" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" value="${esc(val||"")}" aria-label="${label}">`;
-      const sel=(k,arr,val,label)=>`<select class="inp xs" id="${id(k)}" data-k="jl.${k}" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" aria-label="${label}">${selOpts(arr,val)}</select>`;
-      rows+=`<tr>
-        <td style="min-width:200px"><div class="jb-name">${esc(lineName(c.j,l))}</div>
-          <div class="sub">${esc(c.j.name)}${c.qty>1?` · ×${num(c.qty)}`:""} · ${days(c.days)} d</div>
-          <input class="inp xs" style="margin-top:5px" id="${id("label")}" data-k="jl.label" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" value="${esc(l.label||"")}" placeholder="Rename for the client" aria-label="Deliverable name">
-        </td>
-        <td>${sel("brief",BRIEF,l.brief,"Client brief")}</td>
-        <td>${sel("assets",ASSETS,l.assets,"Client assets")}</td>
-        <td><select class="inp xs" style="min-width:150px" id="${id("assignee")}" data-k="jl.assignee" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" aria-label="Assigned to">${peopleOptions(rid,who,s)}</select></td>
-        <td>${d("start","Start date",l.start,"date")}</td>
-        <td>${d("end","Due date",l.end,"date")}${l.end&&p.end&&l.end>p.end?`<div class="sub" style="color:var(--bad)">${diffDays(p.end,l.end)} d past delivery</div>`:""}</td>
-        <td>${sel("stage",STAGES,l.stage,"Stage")}</td>
-        <td style="min-width:180px">${d("stageNote","Stage progress",l.stageNote)}</td>
-        <td>${sel("wstatus",WSTATUS,l.wstatus,"Status")}</td>
-        <td><select class="inp xs" id="${id("blocker")}" data-k="jl2.blocker" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" aria-label="Blocker">${selOpts([["","No blocker"]].concat(BTYPES),l.blocked?(l.btype||"other"):"")}</select></td>
-        <td><label class="jb-chk"><input type="checkbox" id="${id("delivered")}" data-k="jl.delivered" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" ${l.delivered?"checked":""}> Delivered</label></td>
-      </tr>${l.blocked?`<tr class="jb-blk"><td colspan="11"><div class="row">
-        <div class="field"><label for="${id("bdetail")}">What's the blocker?</label><input class="inp xs" id="${id("bdetail")}" data-k="jl.bdetail" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" value="${esc(l.bdetail||"")}" placeholder="e.g. final packshot not shared"></div>
-        <div class="field"><label for="${id("baction")}">Action to clear it</label><input class="inp xs" id="${id("baction")}" data-k="jl.baction" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" value="${esc(l.baction||"")}" placeholder="e.g. Laksh to chase the client"></div>
-      </div></td></tr>`:""}`;
+      const dd=(k,label,val)=>`<span class="dwrap" ${val?"":'data-empty="1"'}><input class="celldate" type="date" id="${id(k)}" data-k="jl.${k}" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" value="${esc(val||"")}" aria-label="${label}"></span>`;
+      const cellSel=(k,arr,val,label,cls,dash)=>`<select class="cellsel ${val?(cls||""):"v-none"}" id="${id(k)}" data-k="jl.${k}" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" aria-label="${label}">${arr.map(([kk,ll])=>`<option value="${esc(kk)}" ${(val||"")===kk?"selected":""}>${esc(kk===""?(dash||"—"):ll)}</option>`).join("")}</select>`;
+      const late=l.end&&p.end&&l.end>p.end?diffDays(p.end,l.end):0;
+      rows+=`<tr class="${l.blocked?"blk":""} ${l.delivered?"done":""}">
+        <td class="c-name"><div class="row">
+          <button class="jb-exp" data-action="jb-exp" data-id="${esc(key)}" aria-expanded="${open}" aria-label="${open?"Hide":"Show"} details for ${esc(lineName(c.j,l))}">${ICON.chev}</button>
+          <span class="c-nm" title="${esc(lineName(c.j,l))} — ${esc(c.j.name)}${c.qty>1?" ×"+num(c.qty):""} · ${days(c.days)} d${l.bdetail?"\nBlocker: "+esc(l.bdetail):""}">${esc(lineName(c.j,l))}</span>
+        </div></td>
+        <td>${cellSel("brief",BRIEF,l.brief,"Client brief",CHIP.brief[l.brief])}</td>
+        <td>${cellSel("assets",ASSETS,l.assets,"Client assets",CHIP.assets[l.assets])}</td>
+        <td><select class="cellsel who ${who?"":"v-none"}" id="${id("assignee")}" data-k="jl.assignee" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" aria-label="Assigned to">${peopleOptions(rid,who,s,"—")}</select></td>
+        <td>${dd("start","Start date",l.start)}</td>
+        <td>${dd("end","Due date",l.end)}${late?`<span class="chip bad" style="font-size:11px;padding:1px 6px" title="Runs ${late} day${late===1?"":"s"} past the project's delivery date">+${late}d</span>`:""}</td>
+        <td>${cellSel("stage",STAGES,l.stage,"Stage","acc")}</td>
+        <td>${cellSel("wstatus",WSTATUS,l.wstatus,"Status",CHIP.wstatus[l.wstatus],"Not started")}</td>
+        <td style="min-width:240px"><input class="celltext" id="${id("stageNote")}" data-k="jl.stageNote" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" value="${esc(l.stageNote||"")}" placeholder="—" aria-label="Stage progress" title="${esc(l.stageNote||"")}"></td>
+        <td>${cellSel("blocker",[["","—"]].concat(BTYPES),l.blocked?(l.btype||"other"):"","Blocker","bad").replace('data-k="jl.blocker"','data-k="jl2.blocker"')}</td>
+        <td class="c-chk"><input type="checkbox" id="${id("delivered")}" data-k="jl.delivered" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" ${l.delivered?"checked":""} aria-label="Delivered"></td>
+      </tr>${open?`<tr class="jb-det"><td colspan="11">
+        <div class="row" style="margin-bottom:10px">
+          <div class="field"><label for="${id("label")}">Name for this job <span class="muted" style="font-weight:500">— what you and the client call it</span></label>
+            <input class="inp xs" id="${id("label")}" data-k="jl.label" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" value="${esc(l.label||"")}" placeholder="${esc(c.j.name)}"></div>
+          <div class="field" style="flex:0 1 260px"><label>From the rate card</label><div class="sub" style="margin:0">${esc(c.j.name)}${c.j.variant?` · ${esc(c.j.variant)}`:""}${c.qty>1?` · ×${num(c.qty)}`:""} · ${days(c.days)} d${l.note?` · ${esc(l.note)}`:""}</div></div>
+        </div>
+        ${l.blocked?`<div class="row">
+          <div class="field"><label for="${id("bdetail")}">What's the blocker?</label><input class="inp xs" id="${id("bdetail")}" data-k="jl.bdetail" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" value="${esc(l.bdetail||"")}" placeholder="e.g. final packshot not shared"></div>
+          <div class="field"><label for="${id("baction")}">Action to clear it</label><input class="inp xs" id="${id("baction")}" data-k="jl.baction" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" value="${esc(l.baction||"")}" placeholder="e.g. Laksh to chase the client"></div>
+        </div>`:'<div class="sub">No blocker on this one. Pick a blocker type in the row to add the details.</div>'}
+      </td></tr>`:""}`;
     });
   });
   const seg=(k,on,label,title)=>`<label class="jb-chk" title="${title}"><input type="checkbox" data-k="${k}" ${on?"checked":""}> ${label}</label>`;
@@ -2039,11 +2086,12 @@ function viewJobs(){
       ${seg("includePitches",state.includePitches,"Pitches","Include quotes still at pitch stage")}
     </div></div>
   ${viewBriefs()}
-  <div class="panel"><div class="table-wrap"><table class="jb-grid">
-    <thead><tr><th>Deliverable</th><th>Client brief</th><th>Client assets</th><th>Assigned to</th><th>Start</th><th>Due</th><th>Stage</th><th>Stage progress</th><th>Status</th><th>Blocker</th><th>Delivered</th></tr></thead>
+  <div class="jb-wrap"><table class="jb-grid">
+    <colgroup><col style="width:268px"><col style="width:128px"><col style="width:128px"><col style="width:136px"><col style="width:112px"><col style="width:140px"><col style="width:124px"><col style="width:120px"><col style="width:220px"><col style="width:136px"><col style="width:56px"></colgroup>
+    <thead><tr><th>Deliverable</th><th title="Has the client sent the brief?">Brief</th><th title="Has the client sent the assets?">Assets</th><th>Owner</th><th>Start</th><th>Due</th><th>Stage</th><th>Status</th><th>Progress</th><th>Blocker</th><th title="Delivered">Done</th></tr></thead>
     <tbody>${rows||`<tr><td colspan="11"><div class="empty"><strong>Nothing to show</strong>${state.jbBlocked?"Nothing is blocked right now.":"Deliverables appear here as soon as a quote has lines."}</div></td></tr>`}</tbody>
-  </table></div></div>
-  <p class="sub" style="margin-top:12px">${shown} deliverable${shown===1?"":"s"} shown. Delivered ones are hidden unless you tick "Show delivered". New deliverables are added by an admin in the Quote builder.</p>`;
+  </table></div>
+  <p class="sub" style="margin-top:12px">${shown} deliverable${shown===1?"":"s"} shown. Click the arrow on a row for its name, rate-card details and blocker notes. Delivered ones are hidden unless you tick "Show delivered"; new deliverables are added by an admin in the Quote builder.</p>`;
 }
 
 /* ----- incoming briefs ----- */
@@ -2730,6 +2778,7 @@ const actions={
     const p=projById(pid);if(p)p.updates=(p.updates||[]).filter(x=>x.id!==id);render();toast("Update removed");},
   "du-del"(el){const key="du:"+el.dataset.id;if(state.armed!==key){state.armed=key;render();return;}state.armed=null;
     updateProjectById(el.dataset.pid,pr=>{pr.updates=(pr.updates||[]).filter(x=>x.id!==el.dataset.id);});render();toast("Update deleted");},
+  "jb-exp"(el){const k=el.dataset.id;state.jbOpen=Object.assign({},state.jbOpen,{[k]:!state.jbOpen[k]});render();},
   "open-jobs"(el){flushProject();state.tab="jobs";state.jbFilter="";state.jbBlocked=!!el.dataset.blocked;state.jbClient="";state.jbPerson="";
     try{localStorage.setItem("sp-tab","jobs");}catch(e){}render();window.scrollTo(0,0);},
   async "cu-add"(){const d=state.cuDraft;const cr=parseNum(d.credits);
@@ -2860,7 +2909,7 @@ async function saveCSV(name,rows){
   const csv=rows.map(r=>r.map(v=>{v=v==null?"":String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(",")).join("\n");
   downloadFile(name,"\uFEFF"+csv,"text/csv;charset=utf-8");toast("Exported "+name);
 }
-const RO_ACTIONS=["theme","gran","month","retry","tab","goto","sched-mode","zoom","gshift","gt-toggle","gt-legend","comments","cu-gran","cu-nav","cu-view","cu-sel","cu-open","cu-add","cu-undo","cu-pick","du-add","du-undo","open-jobs","brief-add","brief-del"];
+const RO_ACTIONS=["theme","gran","month","retry","tab","goto","sched-mode","zoom","gshift","gt-toggle","gt-legend","comments","cu-gran","cu-nav","cu-view","cu-sel","cu-open","cu-add","cu-undo","cu-pick","du-add","du-undo","open-jobs","brief-add","brief-del","jb-exp"];
 document.addEventListener("click",e=>{
   const el=e.target.closest("[data-action]");if(!el)return;
   const a=actions[el.dataset.action];if(!a)return;
