@@ -19,10 +19,10 @@ There's no sign-in screen. Which planner you get depends on the address:
 
 | Link | Who | What they get |
 |---|---|---|
-| **Site address** (e.g. studio-planner-chi.vercel.app) | Video editors, designers, the rest of the team | **Team view**: Projects, Schedule and Credits, read-only except for **logging credits**. No prices, discounts, margins or day rate, and lost quotes are hidden. Refreshes every minute. |
-| **Site address + `#<key>`** | Admins only | The full planner: Dashboard, Quote builder, Projects, Schedule, Credits, Pipeline & capacity, Rate card, Reference rates. |
+| **Site address** (e.g. studio-planner-chi.vercel.app) | Video editors, designers, the rest of the team | **Team view**: Job status, Daily updates, Projects, Schedule and Credits. They can keep the job status, post daily updates and log credits; they can't see or change prices, and lost quotes are hidden. Refreshes every minute. |
+| **Site address + `#<key>`** | Admins only | The full planner: Dashboard, Quote builder, Job status, Daily updates, Projects, Schedule, Credits, Pipeline & capacity, Rate card, Reference rates. |
 
-How it works: the `#<key>` part names a file in `k/`. That file holds the admin user's email and password, and the page signs in with it silently. Without the key, the page only has the public anon key, and the database lets that key read three stripped-down views (`sp_team_settings`, `sp_team_jobs`, `sp_team_quotes`) and call two narrow functions: `sp_log_credits` (add one credit entry to a project) and `sp_undo_credit` (remove your own entry within 15 minutes). Nothing else. So the team view can't edit projects because the **database** refuses it, not just because the buttons are hidden.
+How it works: the `#<key>` part names a file in `k/`. That file holds the admin user's email and password, and the page signs in with it silently. Without the key, the page only has the public anon key, and the database lets that key read three stripped-down views (`sp_team_settings`, `sp_team_jobs`, `sp_team_quotes`) and call a handful of narrow functions: `sp_log_credits` / `sp_undo_credit` (credit entries), `sp_set_line` (the tracking fields on one deliverable, and nothing else — prices, quantities and job types are refused) and `sp_log_update` / `sp_undo_update` (daily updates). So the team view can't change prices or create work because the **database** refuses it, not just because the buttons are hidden.
 
 Keep the admin link to admins. Anyone who has it has full edit access. To change it, rename the file in `k/` (the new file name is the new key) and push. The repo should stay private, because the key file is in it.
 
@@ -82,6 +82,28 @@ A tab in both the admin and the team view.
 - Filter to one project with the project menu, or use **Log credits →** / **Credit log →** on any row of the Projects tab.
 - Totals entered before the credit log existed were carried over as one entry per provider, dated on the project's delivery date (or the day of the upgrade if that date is still ahead).
 
+## Job status
+
+The deliverable-by-deliverable tracker, and the team's home tab. One row per quote line, grouped by brand and project:
+
+- **Client brief** — Not received / Received / Clarification required.
+- **Client assets** — Not received / Received / Some pending.
+- **Assigned to** — people who can do that job first, then everyone else.
+- **Start** and **Due** — these are the deliverable's own dates, so they move its bar on the Schedule timeline.
+- **Stage** — Scripting / Storyboard / Production / Editing / Post production, with a free-text **Stage progress** note.
+- **Status** — Not started / In progress / Under review / Complete.
+- **Blocker** — pick a type (client feedback, client assets, internal approval, creative issue, technical issue, other) and the row opens a red strip for what the blocker is and the action to clear it.
+- **Delivered** — a tick. Delivered rows are hidden unless you ask for them.
+- **Rename for the client**: each row can carry its own name ("10s product forward") on top of the rate-card job name.
+
+Filter by brand, person, blocked-only, and whether to include pitches. Blockers and deliverables waiting on a brief or assets near a delivery date show up in the dashboard's Needs attention list. Project rows (here and on the Projects tab) show **3/7 delivered** and the blocked count.
+
+New deliverables are added by an admin in the Quote builder, so everything stays priced and in capacity.
+
+## Daily updates
+
+The end-of-day note, replacing the per-editor tabs in the sheet. Pick your name (remembered on that computer), the project and optionally the task, then fill in stage, **work done today**, pending work, blocker and an EOD files link. Updates are listed newest first, grouped by day, filtered by person and period. A banner says who hasn't posted today (production people only). You can undo your own update for 15 minutes; admins can delete any.
+
 ## Projects and schedule
 
 - **Projects tab:** every quote appears here automatically. Set status, priority (Critical / High / Medium / Low), start and delivery dates inline, see who's on each project, and keep a running comment thread per project. Your name for comments is remembered in your browser.
@@ -112,7 +134,7 @@ Each row stores one JSON document (`data`), plus `updated_at` and `updated_by`. 
 
 1. In Supabase, open **SQL Editor** and run `supabase/schema.sql`, which creates the tables.
 2. Under **Authentication → Users → Add user → Create new user**, add the admin user with the email and password from the file in `k/`, and tick **Auto Confirm User**.
-3. Run `supabase/team-access.sql`. It makes the tables admin-only and creates the read-only team views. Then run `supabase/team-credit-log.sql`, which lets the team view log credits. (`open-access.sql` is the older no-sign-in setup and is no longer used.)
+3. Run `supabase/team-access.sql`. It makes the tables admin-only and creates the read-only team views. Then run `supabase/team-credit-log.sql` (team credit logging) and `supabase/team-job-status.sql` (team job status and daily updates). (`open-access.sql` is the older no-sign-in setup and is no longer used.)
 4. Open the admin link. If the database is empty, choose **Import from this browser** or **Start from the repo defaults**.
 
 To use per-person email sign-in instead, set `requireLogin: true` in `data/config.js` and remove the file in `k/`. Only @juicelabs.ai emails will then get in, by emailed sign-in link, and you'll need to set the Site URL under Authentication → URL Configuration.

@@ -227,6 +227,49 @@ textarea.inp{resize:vertical;min-height:64px;line-height:1.5}
 body.ro .gt-bar{cursor:default}
 body.ro .gt-bar .hd{display:none}
 body.ro [data-action="gt-fit"],body.ro [data-action="gt-autoplan"],body.ro [data-action="gt-reset-line"],body.ro [data-action="gt-schedule"]{display:none}
+/* job status */
+.jb-grid{min-width:1480px}
+.jb-grid th,.jb-grid td{padding:9px 8px;vertical-align:top}
+.jb-grid td:first-child,.jb-grid th:first-child{padding-left:14px;position:sticky;left:0;z-index:2;background:var(--surface);box-shadow:1px 0 0 var(--line)}
+.jb-grid tr:hover td:first-child{background:color-mix(in srgb,var(--surface-2) 45%,var(--surface))}
+.jb-grid .jb-grp td:first-child{background:var(--surface-2)}
+.jb-grid .jb-blk td:first-child{background:var(--bad-soft)}
+.table-wrap{scrollbar-width:thin}
+.jb-grid .inp.xs{padding:5px 7px}
+.jb-grid select.inp{min-width:112px}
+.jb-name{font-weight:600;font-size:var(--fs-sm);line-height:1.3}
+.jb-name .muted{font-weight:500}
+.jb-grp td{background:var(--surface-2);padding:12px 14px}
+.jb-grp .nm{font-family:var(--f-display);font-weight:600;font-size:var(--fs-md)}
+.jb-grp .meta{font-size:var(--fs-xs);color:var(--ink-2);margin-top:2px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+tbody tr.jb-grp:hover td{background:var(--surface-2)}
+.jb-blk td{background:var(--bad-soft);padding-top:0}
+tbody tr.jb-blk:hover td{background:var(--bad-soft)}
+.jb-blk .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.jb-blk .field{flex:1 1 260px}
+.jb-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;flex:none}
+.jb-chk{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--ink-2);white-space:nowrap}
+.jb-chk input{accent-color:var(--accent);width:16px;height:16px}
+.st-progress{background:var(--warn-soft);color:var(--warn)}
+.st-review{background:var(--accent-soft);color:var(--accent)}
+.st-complete{background:var(--good-soft);color:var(--good)}
+/* daily updates */
+.du-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:16px 20px}
+@media(max-width:900px){.du-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.du-form{grid-template-columns:1fr}}
+.du-form .wide{grid-column:span 2}
+@media(max-width:560px){.du-form .wide{grid-column:span 1}}
+.du-form textarea.inp{min-height:62px}
+.du-day{font-size:var(--fs-sm);font-weight:700;color:var(--ink-2);padding:14px 2px 8px;letter-spacing:.02em}
+.du-card{display:grid;grid-template-columns:168px minmax(0,1fr);gap:4px 16px;padding:14px 18px;border-top:1px solid var(--line)}
+@media(max-width:700px){.du-card{grid-template-columns:1fr}}
+.du-who{display:flex;gap:8px;align-items:center;font-weight:600;font-size:var(--fs-sm);min-width:0}
+.du-who .avatar{width:26px;height:26px;font-size:11px}
+.du-body{min-width:0}
+.du-body .ln{font-size:var(--fs-sm);line-height:1.5;margin-bottom:3px}
+.du-body .ln b{font-weight:600}
+.du-body .hd{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:5px}
+.du-body .hd .proj{font-weight:600}
 /* credits */
 .cu-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:18px}
 @media(max-width:1000px){.cu-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -522,6 +565,13 @@ const STATUSES=[["pitch","Pitch"],["confirmed","Confirmed"],["production","In pr
 const FIRM=p=>p.status==="confirmed"||p.status==="production"||p.status==="delivered";
 const LIVE=p=>p.status!=="lost";
 const STATUS_LABEL=Object.fromEntries(STATUSES);
+const BRIEF=[["","Not set"],["none","Not received"],["received","Received"],["clarify","Clarification required"]];
+const ASSETS=[["","Not set"],["none","Not received"],["received","Received"],["partial","Some pending"]];
+const STAGES=[["","Not started"],["scripting","Scripting"],["storyboard","Storyboard"],["production","Production"],["editing","Editing"],["post","Post production"]];
+const WSTATUS=[["","Not started"],["progress","In progress"],["review","Under review"],["complete","Complete"]];
+const BTYPES=[["feedback","Client feedback"],["assets","Client assets"],["approval","Internal approval"],["creative","Creative issue"],["technical","Technical issue"],["other","Other"]];
+const LBL=arr=>Object.fromEntries(arr);
+const BRIEF_L=LBL(BRIEF),ASSETS_L=LBL(ASSETS),STAGE_L=LBL(STAGES),WSTATUS_L=LBL(WSTATUS),BTYPE_L=LBL(BTYPES);
 const PRICING=[["fixed","Fixed price"],["range","Price range"],["tbd","Quote per brief"],["free","Complimentary"],["adapt","% of base film"]];
 const EMPTY_SETTINGS={credits:[],dayRate:0,hoursPerDay:8,markupFloor:1.5,targetMarkup:2.5,roles:[],categoryBlurbs:{},history:[]};
 
@@ -529,6 +579,8 @@ const EMPTY_SETTINGS={credits:[],dayRate:0,hoursPerDay:8,markupFloor:1.5,targetM
 const state={
   tab:"dash", dbState:"live", ro:false, admin:false,
   cuGran:"month", cuOff:-2, cuSel:null, cuView:"project", cuProv:"", cuPid:"", cuDraft:{date:"",pid:"",person:"",prov:"",credits:"",note:"",by:""}, cuMine:[],
+  jbFilter:"", jbClient:"", jbPerson:"", jbBlocked:false, jbDone:false, jbOpen:{},
+  duDraft:{date:"",pid:"",lineId:"",stage:"",done:"",pending:"",blocker:"",files:"",by:""}, duPerson:"", duDays:"14", duMine:[],
   settings:null, jobs:[], projects:[], loaded:{settings:false,jobs:false,projects:false},
   curId:null, cur:null, dirty:false, saveTimer:null, saving:false,
   addJobId:"", addQty:1,
@@ -544,6 +596,8 @@ try{const t=localStorage.getItem("sp-tab");if(t)state.tab=t;
   state.me=localStorage.getItem("sp-me")||"";
   state.cuDraft.by=localStorage.getItem("sp-logby")||"";
   try{state.cuMine=JSON.parse(localStorage.getItem("sp-mine")||"[]");}catch(e){state.cuMine=[];}
+  state.duDraft.by=state.cuDraft.by;
+  try{state.duMine=JSON.parse(localStorage.getItem("sp-dumine")||"[]");}catch(e){state.duMine=[];}
   const sm=localStorage.getItem("sp-schedmode");if(sm)state.schedMode=sm;
   const z=localStorage.getItem("sp-zoom");if(z==="day"||z==="week")state.zoom=z;}catch(e){}
 const S=()=>state.settings||EMPTY_SETTINGS;
@@ -847,7 +901,7 @@ async function boot(){
     if(open){
       /* no admin key: read-only team view */
       state.ro=true;document.body.classList.add("ro");cloud.open=true;
-      if(!["projects","schedule","credits"].includes(state.tab))state.tab="projects";
+      if(!["jobs","daily","projects","schedule","credits"].includes(state.tab))state.tab="jobs";
       await cloudLoad();
       setInterval(()=>{if(!document.hidden&&state.cloudView==="live")cloudLoad(true);},60000);
       return;
@@ -983,8 +1037,8 @@ function render(){
   const scrollY=window.scrollY;
   const dScroll=$(".drawer-body")?.scrollTop;
   const gw=$("#gt-wrap");const gS=gw?{l:gw.scrollLeft,t:gw.scrollTop}:null;
-  const TABS=state.ro?[["projects","Projects"],["schedule","Schedule"],["credits","Credits"]]
-    :[["dash","Dashboard"],["quote","Quote builder"],["projects","Projects"],["schedule","Schedule"],["credits","Credits"],["pipeline","Pipeline & capacity"],["rates","Rate card"],["reference","Reference rates"]];
+  const TABS=state.ro?[["jobs","Job status"],["daily","Daily updates"],["projects","Projects"],["schedule","Schedule"],["credits","Credits"]]
+    :[["dash","Dashboard"],["quote","Quote builder"],["jobs","Job status"],["daily","Daily updates"],["projects","Projects"],["schedule","Schedule"],["credits","Credits"],["pipeline","Pipeline & capacity"],["rates","Rate card"],["reference","Reference rates"]];
   if(!TABS.some(([k])=>k===state.tab))state.tab=TABS[0][0];
   $("#tabs").innerHTML=TABS
     .map(([k,l])=>`<button class="tab" role="tab" aria-selected="${state.tab===k}" data-action="tab" data-tab="${k}">${l}</button>`).join("");
@@ -994,6 +1048,8 @@ function render(){
   if(gated){$("#tabs").innerHTML="";m.innerHTML=viewCloud();}
   else if(state.tab==="dash")m.innerHTML=viewDashboard();
   else if(state.tab==="credits")m.innerHTML=viewCredits();
+  else if(state.tab==="jobs")m.innerHTML=viewJobs();
+  else if(state.tab==="daily")m.innerHTML=viewDaily();
   else if(state.tab==="quote")m.innerHTML=viewQuote();
   else if(state.tab==="projects")m.innerHTML=viewProjects();
   else if(state.tab==="schedule")m.innerHTML=viewSchedule();
@@ -1599,6 +1655,16 @@ function viewDashboard(){
   all.filter(p=>openish(p)&&!projDates(p)).forEach(p=>push(2,"info","No dates",`<b>${nm(p)}</b> has no dates yet, so it isn't in the schedule`,"projects",p.id));
   Object.entries(d.unassigned).forEach(([id,v])=>{const p=projById(id);if(p&&openish(p))
     push(2,"info","Unassigned",`<b>${nm(p)}</b> has ${days(v)} d with nobody on it`,"quote",id);});
+  all.filter(openish).forEach(p=>{
+    (p.lines||[]).forEach(l=>{
+      if(l.delivered)return;
+      const j=jobById(l.jobId);const dnm=j?lineName(j,l):"A deliverable";
+      if(l.blocked)push(0,"bad","Blocked",`<b>${nm(p)}</b> — ${esc(dnm)} is blocked${l.btype?" ("+esc(BTYPE_L[l.btype]||l.btype)+")":""}${l.bdetail?": "+esc(l.bdetail):""}`,"jobs",p.id);
+    });
+    const due=p.end&&diffDays(d.tIso,p.end)<=10;
+    const miss=(p.lines||[]).filter(l=>!l.delivered&&(l.brief==="none"||l.brief==="clarify"||l.assets==="none"||l.assets==="partial"));
+    if(due&&miss.length)push(1,"warn","Waiting on client",`<b>${nm(p)}</b> has ${miss.length} deliverable${miss.length===1?"":"s"} waiting on a brief or assets`,"jobs",p.id);
+  });
   belowFloor.forEach(p=>{const c=calcs[p.id];push(1,"warn","Thin margin",`<b>${nm(p)}</b> is at ${xfmt(c.sp/c.cost)}, under the ${xfmt(floor)} floor`,"quote",p.id);});
   Object.entries(d.credDelta).forEach(([id,v])=>{const p=projById(id);if(p&&v>1)
     push(1,"warn","Overspend",`<b>${nm(p)}</b> spent ${inr(v)} more on credits than estimated`,"projects",id);});
@@ -1860,6 +1926,163 @@ function viewCredits(){
   <p class="sub" style="margin-top:12px;max-width:95ch">${undatedTot>0.0001?`${fv(undatedTot)}${unit} more is estimated on deliverables with no dates yet, so it isn't in the columns. `:""}Lost quotes are left out${state.includePitches?"; pitches are included":"; pitches are left out"} (change it on the Schedule tab).</p>`;
 }
 
+/* ----- job status + daily updates ----- */
+const lineName=(j,l)=>((l&&l.label||"").trim())||((j&&j.name||"Deliverable")+(j&&j.variant?" · "+j.variant:""));
+function rpcMsg(err,file){
+  const m=String(err&&err.message||err||"");
+  if(/function|schema cache|does not exist|not find/i.test(m))return "that isn't switched on yet. An admin needs to run supabase/"+file+" in Supabase.";
+  return m||"unknown error";
+}
+function patchLine(pid,lid,patch){
+  const p=projById(pid);const l=p&&(p.lines||[]).find(x=>x.id===lid);
+  if(state.ro){
+    if(l)Object.assign(l,patch);
+    cloud.sb.rpc("sp_set_line",{p_quote:pid,p_line:lid,p_patch:patch})
+      .then(r=>{if(r.error){toast("Not saved: "+rpcMsg(r.error,"team-job-status.sql"));cloudLoad(true);}})
+      .catch(e=>{toast("Not saved: "+rpcMsg(e,"team-job-status.sql"));cloudLoad(true);});
+  }else{
+    updateProjectById(pid,pr=>{const x=(pr.lines||[]).find(y=>y.id===lid);if(x)Object.assign(x,patch);});
+  }
+}
+function lineStats(p){
+  const out={n:0,done:0,blocked:0,open:0};
+  (p.lines||[]).forEach(l=>{out.n++;if(l.delivered)out.done++;else out.open++;if(l.blocked)out.blocked++;});
+  return out;
+}
+function peopleOptions(rid,sel,s){
+  s=s||S();const hold=rid?peopleForRole(rid,s):[];const rest=(s.people||[]).filter(x=>!hold.some(h=>h.id===x.id));
+  const o=x=>`<option value="${esc(x.id)}" ${sel===x.id?"selected":""}>${esc(x.name)}</option>`;
+  return `<option value="">Unassigned</option>${hold.length?`<optgroup label="Can do this">${hold.map(o).join("")}</optgroup>`:""}${rest.length?`<optgroup label="Everyone else">${rest.map(o).join("")}</optgroup>`:""}`;
+}
+const selOpts=(arr,v)=>arr.map(([k,l])=>`<option value="${esc(k)}" ${(v||"")===k?"selected":""}>${esc(l)}</option>`).join("");
+
+function viewJobs(){
+  const s=S();
+  const q=(state.jbFilter||"").trim().toLowerCase();
+  const list=state.projects.filter(p=>LIVE(p)&&(p.status!=="pitch"||state.includePitches)&&(!state.jbClient||(p.client||"")===state.jbClient))
+    .sort((a,b)=>PRI_RANK[priOf(a)]-PRI_RANK[priOf(b)]||(a.end||"9").localeCompare(b.end||"9"));
+  const clients=[...new Set(state.projects.filter(LIVE).map(p=>(p.client||"").trim()).filter(Boolean))].sort();
+  const assignOf=(p,l,c)=>{const rid=c?doerOf(c.j).id:null;return (l.assignee&&personById(l.assignee,s)?l.assignee:null)||(rid&&personById((p.assign||{})[rid],s)?(p.assign||{})[rid]:"");};
+  let rows="",shown=0;
+  list.forEach(p=>{
+    const pc=projectCalc(p,s);
+    const items=pc.lines.filter(({l,c})=>{
+      if(!c)return false;
+      if(!state.jbDone&&l.delivered)return false;
+      if(state.jbBlocked&&!l.blocked)return false;
+      if(state.jbPerson&&assignOf(p,l,c)!==state.jbPerson)return false;
+      if(q&&!`${p.name||""} ${p.client||""} ${lineName(c.j,l)} ${l.note||""} ${l.stageNote||""}`.toLowerCase().includes(q))return false;
+      return true;
+    });
+    if(!items.length)return;
+    const st=lineStats(p);shown+=items.length;
+    rows+=`<tr class="jb-grp"><td colspan="11">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+        <div><div class="nm">${esc(p.client||"No brand")} <span class="muted">·</span> ${esc(p.name||"Untitled")}</div>
+        <div class="meta"><span class="pill st-${esc(p.status)}">${esc(STATUS_LABEL[p.status]||p.status)}</span>${priPill(p)}
+          <span>${projDates(p)?esc(fmtRange(p.start,p.end)):"no dates"}</span>
+          <span><b>${st.done}/${st.n}</b> delivered</span>${st.blocked?`<span style="color:var(--bad);font-weight:700">${st.blocked} blocked</span>`:""}</div></div>
+        ${state.ro?"":`<button class="btn ghost sm" data-action="open-project" data-id="${esc(p.id)}">Open quote</button>`}
+      </div></td></tr>`;
+    items.forEach(({l,c})=>{
+      const rid=doerOf(c.j).id;const who=assignOf(p,l,c);
+      const id=x=>`jb-${x}-${esc(p.id)}-${esc(l.id)}`;
+      const d=(k,label,val,type)=>`<input class="inp xs" type="${type||"text"}" id="${id(k)}" data-k="jl.${k}" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" value="${esc(val||"")}" aria-label="${label}">`;
+      const sel=(k,arr,val,label)=>`<select class="inp xs" id="${id(k)}" data-k="jl.${k}" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" aria-label="${label}">${selOpts(arr,val)}</select>`;
+      rows+=`<tr>
+        <td style="min-width:200px"><div class="jb-name">${esc(lineName(c.j,l))}</div>
+          <div class="sub">${esc(c.j.name)}${c.qty>1?` · ×${num(c.qty)}`:""} · ${days(c.days)} d</div>
+          <input class="inp xs" style="margin-top:5px" id="${id("label")}" data-k="jl.label" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" value="${esc(l.label||"")}" placeholder="Rename for the client" aria-label="Deliverable name">
+        </td>
+        <td>${sel("brief",BRIEF,l.brief,"Client brief")}</td>
+        <td>${sel("assets",ASSETS,l.assets,"Client assets")}</td>
+        <td><select class="inp xs" style="min-width:150px" id="${id("assignee")}" data-k="jl.assignee" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" aria-label="Assigned to">${peopleOptions(rid,who,s)}</select></td>
+        <td>${d("start","Start date",l.start,"date")}</td>
+        <td>${d("end","Due date",l.end,"date")}${l.end&&p.end&&l.end>p.end?`<div class="sub" style="color:var(--bad)">${diffDays(p.end,l.end)} d past delivery</div>`:""}</td>
+        <td>${sel("stage",STAGES,l.stage,"Stage")}</td>
+        <td style="min-width:180px">${d("stageNote","Stage progress",l.stageNote)}</td>
+        <td>${sel("wstatus",WSTATUS,l.wstatus,"Status")}</td>
+        <td><select class="inp xs" id="${id("blocker")}" data-k="jl2.blocker" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" aria-label="Blocker">${selOpts([["","No blocker"]].concat(BTYPES),l.blocked?(l.btype||"other"):"")}</select></td>
+        <td><label class="jb-chk"><input type="checkbox" id="${id("delivered")}" data-k="jl.delivered" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" ${l.delivered?"checked":""}> Delivered</label></td>
+      </tr>${l.blocked?`<tr class="jb-blk"><td colspan="11"><div class="row">
+        <div class="field"><label for="${id("bdetail")}">What's the blocker?</label><input class="inp xs" id="${id("bdetail")}" data-k="jl.bdetail" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" value="${esc(l.bdetail||"")}" placeholder="e.g. final packshot not shared"></div>
+        <div class="field"><label for="${id("baction")}">Action to clear it</label><input class="inp xs" id="${id("baction")}" data-k="jl.baction" data-pid="${esc(p.id)}" data-id="${esc(l.id)}" value="${esc(l.baction||"")}" placeholder="e.g. Laksh to chase the client"></div>
+      </div></td></tr>`:""}`;
+    });
+  });
+  const seg=(k,on,label,title)=>`<label class="jb-chk" title="${title}"><input type="checkbox" data-k="${k}" ${on?"checked":""}> ${label}</label>`;
+  return `<div class="section-head"><div><h2>Job status</h2><p>Every deliverable in one place: what the client has sent, who's on it, where it's got to, what's stuck and what's gone out. Changes here are shared with everyone, and the dates feed the schedule.</p></div>
+    <div class="toolbar">
+      <input class="inp" id="jb-filter" data-k="jbFilter" value="${esc(state.jbFilter||"")}" placeholder="Search…" style="width:170px">
+      <select class="inp xs" style="width:auto" id="jb-client" data-k="jbClient" aria-label="Brand"><option value="">All brands</option>${clients.map(c=>`<option value="${esc(c)}" ${state.jbClient===c?"selected":""}>${esc(c)}</option>`).join("")}</select>
+      <select class="inp xs" style="width:auto" id="jb-person" data-k="jbPerson" aria-label="Person"><option value="">Everyone</option>${(s.people||[]).map(x=>`<option value="${esc(x.id)}" ${state.jbPerson===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select>
+      ${seg("jbBlocked",state.jbBlocked,"Blocked only","Show only deliverables with a blocker")}
+      ${seg("jbDone",state.jbDone,"Show delivered","Include deliverables already marked delivered")}
+      ${seg("includePitches",state.includePitches,"Pitches","Include quotes still at pitch stage")}
+    </div></div>
+  <div class="panel"><div class="table-wrap"><table class="jb-grid">
+    <thead><tr><th>Deliverable</th><th>Client brief</th><th>Client assets</th><th>Assigned to</th><th>Start</th><th>Due</th><th>Stage</th><th>Stage progress</th><th>Status</th><th>Blocker</th><th>Delivered</th></tr></thead>
+    <tbody>${rows||`<tr><td colspan="11"><div class="empty"><strong>Nothing to show</strong>${state.jbBlocked?"Nothing is blocked right now.":"Deliverables appear here as soon as a quote has lines."}</div></td></tr>`}</tbody>
+  </table></div></div>
+  <p class="sub" style="margin-top:12px">${shown} deliverable${shown===1?"":"s"} shown. Delivered ones are hidden unless you tick "Show delivered". New deliverables are added by an admin in the Quote builder.</p>`;
+}
+
+/* ----- daily updates ----- */
+function allUpdates(){
+  const out=[];
+  state.projects.forEach(p=>(p.updates||[]).forEach(u=>out.push({p,u})));
+  return out.sort((a,b)=>String(b.u.date).localeCompare(String(a.u.date))||String(b.u.at||"").localeCompare(String(a.u.at||"")));
+}
+function viewDaily(){
+  const s=S();const d=state.duDraft;if(!d.date)d.date=todayISO();
+  const projOpts=state.projects.filter(p=>LIVE(p)&&p.status!=="delivered").sort((a,b)=>PRI_RANK[priOf(a)]-PRI_RANK[priOf(b)]||(a.name||"").localeCompare(b.name||""));
+  const dp=projById(d.pid);const dpc=dp?projectCalc(dp,s):null;
+  const form=`<div class="panel" style="margin-bottom:18px"><div class="grid-title"><h3>Today's update</h3><p>One line each on what moved, what's left and what's stuck. Takes a minute at the end of the day.</p></div>
+    <div class="du-form">
+      <div class="field"><label for="du-by">Who's posting? <span class="req">*</span></label><select class="inp" id="du-by" data-k="du.by"><option value="">Choose your name…</option>${(s.people||[]).map(x=>`<option value="${esc(x.id)}" ${d.by===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}${state.ro?"":`<option value="admin" ${d.by==="admin"?"selected":""}>Admin</option>`}</select></div>
+      <div class="field"><label for="du-date">Date</label><input class="inp" type="date" id="du-date" data-k="du.date" value="${esc(d.date)}"></div>
+      <div class="field"><label for="du-pid">Project <span class="req">*</span></label><select class="inp" id="du-pid" data-k="du.pid"><option value="">Choose…</option>${projOpts.map(p=>`<option value="${esc(p.id)}" ${d.pid===p.id?"selected":""}>${esc(p.client?p.client+" · ":"")}${esc(p.name||"Untitled")}</option>`).join("")}</select></div>
+      <div class="field"><label for="du-line">Task</label><select class="inp" id="du-line" data-k="du.lineId" ${dpc?"":"disabled"}><option value="">Whole project</option>${dpc?dpc.lines.filter(x=>x.c).map(({l,c})=>`<option value="${esc(l.id)}" ${d.lineId===l.id?"selected":""}>${esc(lineName(c.j,l))}</option>`).join(""):""}</select></div>
+      <div class="field"><label for="du-stage">Stage</label><select class="inp" id="du-stage" data-k="du.stage">${selOpts(STAGES,d.stage)}</select></div>
+      <div class="field wide"><label for="du-files">EOD files link <span class="muted" style="font-weight:500">(optional)</span></label><input class="inp" id="du-files" data-k="du.files" value="${esc(d.files)}" placeholder="Drive / Frame.io link"></div>
+      <div class="field wide"><label for="du-done">Work done today <span class="req">*</span></label><textarea class="inp" id="du-done" data-k="du.done" placeholder="e.g. Completed V1 edit and synced VO">${esc(d.done)}</textarea></div>
+      <div class="field wide"><label for="du-pending">Pending work</label><textarea class="inp" id="du-pending" data-k="du.pending" placeholder="e.g. Product end frame correction">${esc(d.pending)}</textarea></div>
+      <div class="field wide"><label for="du-blocker">Blocker</label><input class="inp" id="du-blocker" data-k="du.blocker" value="${esc(d.blocker)}" placeholder="e.g. Waiting for final packshot"></div>
+      <div class="field" style="justify-content:end"><button class="btn primary" data-action="du-add" ${state.duBusy?"disabled":""}>${state.duBusy?"Posting…":"Post update"}</button></div>
+    </div></div>`;
+
+  const win=state.duDays==="0"?0:+state.duDays;
+  const cut=win?addDays(todayISO(),-win+1):null;
+  const rows=allUpdates().filter(({u})=>(!state.duPerson||u.by===state.duPerson)&&(!cut||String(u.date)>=cut));
+  let html="",lastDay="";
+  rows.forEach(({p,u})=>{
+    if(u.date!==lastDay){lastDay=u.date;const isToday=u.date===todayISO();
+      html+=`<div class="du-day">${esc(fmtDate(u.date))}${isToday?" · today":""}${" · "+esc(D(u.date).toLocaleDateString("en-IN",{weekday:"long"}))}</div>`;}
+    const x=personById(u.by,s);const line=(p.lines||[]).find(l=>l.id===u.lineId);const lj=line?jobById(line.jobId):null;
+    const mine=state.duMine.includes(u.id)&&u.at&&Date.now()-new Date(u.at)<14*6e4;
+    html+=`<div class="panel du-card">
+      <div class="du-who">${x?`<span class="avatar" style="background:${keyColor(u.by,s)}">${esc(initials(x.name))}</span>`:""}<span>${esc(x?x.name:(u.by==="admin"?"Admin":u.by||"Someone"))}</span></div>
+      <div class="du-body">
+        <div class="hd"><span class="proj">${esc(p.client?p.client+" · ":"")}${esc(p.name||"Untitled")}</span>${line?`<span class="muted">${esc(lineName(lj,line))}</span>`:""}${u.stage?`<span class="chip">${esc(STAGE_L[u.stage]||u.stage)}</span>`:""}
+          ${state.ro?(mine?`<button class="btn sm" style="margin-left:auto" data-action="du-undo" data-pid="${esc(p.id)}" data-id="${esc(u.id)}">Undo</button>`:""):`<button class="icon-btn danger ${state.armed==="du:"+u.id?"armed":""}" style="margin-left:auto" data-action="du-del" data-pid="${esc(p.id)}" data-id="${esc(u.id)}" title="${state.armed==="du:"+u.id?"Click again to delete":"Delete update"}" aria-label="Delete update">${ICON.trash}</button>`}</div>
+        <div class="ln"><b>Done:</b> ${esc(u.done||"")}</div>
+        ${u.pending?`<div class="ln"><b>Pending:</b> ${esc(u.pending)}</div>`:""}
+        ${u.blocker?`<div class="ln" style="color:var(--bad)"><b>Blocker:</b> ${esc(u.blocker)}</div>`:""}
+        ${u.files?`<div class="ln sub"><a href="${esc(u.files)}" target="_blank" rel="noopener">EOD files</a></div>`:""}
+      </div></div>`;
+  });
+  const prod=(s.people||[]).filter(x=>!isLead((s.roles||[])[personRoleIdx(x,s)]));
+  const missing=prod.filter(x=>!allUpdates().some(({u})=>u.by===x.id&&u.date===todayISO()));
+  return `<div class="section-head"><div><h2>Daily updates</h2><p>The end-of-day note from each person: what moved today, what's left and what's stuck.</p></div>
+    <div class="toolbar">
+      <select class="inp xs" style="width:auto" id="du-person" data-k="duPerson" aria-label="Person"><option value="">Everyone</option>${(s.people||[]).map(x=>`<option value="${esc(x.id)}" ${state.duPerson===x.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select>
+      <select class="inp xs" style="width:auto" id="du-days" data-k="duDays" aria-label="Period"><option value="7" ${state.duDays==="7"?"selected":""}>Last 7 days</option><option value="14" ${state.duDays==="14"?"selected":""}>Last 14 days</option><option value="30" ${state.duDays==="30"?"selected":""}>Last 30 days</option><option value="0" ${state.duDays==="0"?"selected":""}>Everything</option></select>
+    </div></div>
+  ${form}
+  ${!prod.length?"":missing.length?`<div class="callout warn" style="margin-bottom:14px">No update today from <b>${esc(missing.map(x=>x.name).join(", "))}</b>.</div>`:'<div class="callout" style="margin-bottom:14px">Everyone has posted today.</div>'}
+  ${html||'<div class="panel empty"><strong>No updates yet</strong>Post the first one above.</div>'}`;
+}
+
 /* ----- project tracker ----- */
 function usedBy(p){const u={};(p.usage||[]).forEach(e=>{if(e.prov)u[e.prov]=(u[e.prov]||0)+(+e.credits||0);});return u;}
 function actualsCell(p,pc,s){
@@ -1903,6 +2126,7 @@ function viewProjects(){
     return `<tr class="${open?"tr-open":""}">
       <td class="tr-nm"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${state.ro?`<b>${esc(p.name||"Untitled")}</b>`:`<button class="btn ghost sm" style="padding:0;font-weight:600;color:var(--ink)" data-action="open-project" data-id="${esc(p.id)}">${esc(p.name||"Untitled")}</button>`}</div>
         <div class="sub">${esc(p.client||"No client")}${state.ro?"":" · "+inr(pc.sp)} · ${days(pc.days)} production d</div>
+        ${(()=>{const st=lineStats(p);return st.n?`<div class="sub"><b>${st.done}/${st.n}</b> delivered${st.blocked?` · <b style="color:var(--bad)">${st.blocked} blocked</b>`:""}</div>`:"";})()}
         ${late>0.0001?`<div class="sub" style="color:var(--bad);font-weight:600">${days(late)} d won't fit before delivery</div>`:""}</td>
       ${state.ro?`<td class="tr-st"><span class="pill st-${esc(p.status)}">${esc(STATUS_LABEL[p.status]||p.status)}</span></td><td class="tr-pr">${priPill(p)}</td>
       <td class="tr-dt">${p.start?esc(fmtDate(p.start)):'<span class="muted">—</span>'}</td><td class="tr-dt">${p.end?esc(fmtDate(p.end)):'<span class="muted">—</span>'}${pd?`<div class="sub">${pd.n} working days</div>`:""}</td>`:`<td class="tr-st"><select class="inp xs" id="tr-st-${esc(p.id)}" data-k="tp.status" data-id="${esc(p.id)}" aria-label="Status">${STATUSES.map(([k,l])=>`<option value="${k}" ${p.status===k?"selected":""}>${l}</option>`).join("")}</select></td>
@@ -2240,13 +2464,28 @@ function readVal(el){
 }
 function onField(e){
   const el=e.target.closest("[data-k]");if(!el)return;
+  const kk=el.dataset.k||"";
+  if(kk.startsWith("jl.")||kk==="jl2.blocker"){
+    if(e.type!=="change")return;
+    const val=readVal(el),pid=el.dataset.pid,lid=el.dataset.id;
+    patchLine(pid,lid,kk==="jl2.blocker"?{blocked:!!val,btype:val||""}:{[kk.slice(3)]:val});
+    render();return;
+  }
+  if(kk.startsWith("du.")){
+    if(e.type==="input"&&(el.tagName==="SELECT"||el.type==="date"))return;
+    const f=kk.slice(3);state.duDraft[f]=readVal(el);
+    if(f==="by"){try{localStorage.setItem("sp-logby",state.duDraft.by);}catch(err){}}
+    if(f==="pid")state.duDraft.lineId="";
+    if(el.tagName==="SELECT")render();
+    return;
+  }
   if(e.type==="input"&&(el.tagName==="SELECT"||el.type==="checkbox"||el.type==="radio"||el.type==="date"))return;
   if(e.type==="change"&&el.tagName!=="SELECT"&&el.type!=="checkbox"&&el.type!=="radio"&&el.type!=="date")return;
   const k=el.dataset.k;const v=readVal(el);
-  if(state.ro&&!["trFilter","includePitches","cuPid","cuProv"].includes(k)&&!k.startsWith("cu."))return;
+  if(state.ro&&!["trFilter","includePitches","cuPid","cuProv","jbFilter","jbClient","jbPerson","jbBlocked","jbDone","duPerson","duDays"].includes(k)&&!k.startsWith("cu."))return;
   if(k==="curId"){flushProject();state.curId=v;try{localStorage.setItem("sp-cur",v);}catch(e){}const f=state.projects.find(p=>p.id===v);state.cur=f?clone(f):null;state.armed=null;render();return;}
   if(k==="qFilter"){state.qFilter=v;render();return;}
-  if(k==="cuProv"||k==="cuPid"){state[k]=v;render();return;}
+  if(k==="cuProv"||k==="cuPid"||k==="jbFilter"||k==="jbClient"||k==="jbPerson"||k==="jbBlocked"||k==="jbDone"||k==="duPerson"||k==="duDays"){state[k]=v;render();return;}
   if(k.startsWith("cu.")){const f=k.slice(3);const prevBy=state.cuDraft.by;state.cuDraft[f]=v;
     if(f==="by"){try{localStorage.setItem("sp-logby",v);}catch(e){}if(!state.cuDraft.person||state.cuDraft.person===prevBy)state.cuDraft.person=personById(v)?v:"";}
     if(f==="pid"&&!state.cuDraft.person)cuDefaultPerson();
@@ -2326,6 +2565,30 @@ const actions={
   "cu-open"(el){flushProject();state.tab="credits";state.cuPid=el.dataset.id;state.cuView="entries";state.cuSel=-1;
     if(projById(el.dataset.id)&&projById(el.dataset.id).status!=="delivered"){state.cuDraft.pid=el.dataset.id;if(!state.cuDraft.person)cuDefaultPerson();}
     try{localStorage.setItem("sp-tab","credits");}catch(e){}render();window.scrollTo(0,0);},
+  async "du-add"(){const d=state.duDraft;
+    if(!d.by){toast("Pick who is posting");return;}
+    if(!d.pid){toast("Choose a project");return;}
+    if(!String(d.done||"").trim()){toast("Write what you did today");return;}
+    const u={id:uid("d"),date:d.date||todayISO(),by:d.by,lineId:d.lineId||"",stage:d.stage||"",done:String(d.done).trim(),pending:String(d.pending||"").trim(),blocker:String(d.blocker||"").trim(),files:String(d.files||"").trim(),at:new Date().toISOString()};
+    if(state.ro){
+      state.duBusy=true;render();
+      let res;try{res=await cloud.sb.rpc("sp_log_update",{p_quote:d.pid,p_entry:u});}catch(err){res={error:err};}
+      state.duBusy=false;
+      if(res.error){render();toast("Not saved: "+rpcMsg(res.error,"team-job-status.sql"));return;}
+      const saved=Object.assign({},u,res.data||{});const p=projById(d.pid);if(p)p.updates=(p.updates||[]).concat([saved]);
+      state.duMine=state.duMine.concat([saved.id]).slice(-50);try{localStorage.setItem("sp-dumine",JSON.stringify(state.duMine));}catch(err){}
+    }else{
+      updateProjectById(d.pid,pr=>{pr.updates=(pr.updates||[]).concat([u]);});
+    }
+    state.duDraft=Object.assign({},d,{done:"",pending:"",blocker:"",files:""});render();toast("Update posted");},
+  async "du-undo"(el){const pid=el.dataset.pid,id=el.dataset.id;
+    let res;try{res=await cloud.sb.rpc("sp_undo_update",{p_quote:pid,p_id:id});}catch(err){res={error:err};}
+    if(res.error||!res.data){toast(res.error?"Couldn't undo: "+rpcMsg(res.error,"team-job-status.sql"):"Too late to undo. Ask an admin to remove it.");return;}
+    const p=projById(pid);if(p)p.updates=(p.updates||[]).filter(x=>x.id!==id);render();toast("Update removed");},
+  "du-del"(el){const key="du:"+el.dataset.id;if(state.armed!==key){state.armed=key;render();return;}state.armed=null;
+    updateProjectById(el.dataset.pid,pr=>{pr.updates=(pr.updates||[]).filter(x=>x.id!==el.dataset.id);});render();toast("Update deleted");},
+  "open-jobs"(el){flushProject();state.tab="jobs";state.jbFilter="";state.jbBlocked=!!el.dataset.blocked;state.jbClient="";state.jbPerson="";
+    try{localStorage.setItem("sp-tab","jobs");}catch(e){}render();window.scrollTo(0,0);},
   async "cu-add"(){const d=state.cuDraft;const cr=parseNum(d.credits);
     if(!d.by){toast("Pick who is logging");$("#cu-by")&&$("#cu-by").focus();return;}
     if(!d.pid){toast("Choose a project");return;}
@@ -2454,13 +2717,13 @@ async function saveCSV(name,rows){
   const csv=rows.map(r=>r.map(v=>{v=v==null?"":String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(",")).join("\n");
   downloadFile(name,"\uFEFF"+csv,"text/csv;charset=utf-8");toast("Exported "+name);
 }
-const RO_ACTIONS=["theme","gran","month","retry","tab","goto","sched-mode","zoom","gshift","gt-toggle","gt-legend","comments","cu-gran","cu-nav","cu-view","cu-sel","cu-open","cu-add","cu-undo","cu-pick"];
+const RO_ACTIONS=["theme","gran","month","retry","tab","goto","sched-mode","zoom","gshift","gt-toggle","gt-legend","comments","cu-gran","cu-nav","cu-view","cu-sel","cu-open","cu-add","cu-undo","cu-pick","du-add","du-undo","open-jobs"];
 document.addEventListener("click",e=>{
   const el=e.target.closest("[data-action]");if(!el)return;
   const a=actions[el.dataset.action];if(!a)return;
   if(state.ro&&!RO_ACTIONS.includes(el.dataset.action))return;
   if(el.dataset.action!=="close-drawer-bg")e.preventDefault();
-  if(state.armed&&!["del-project","del-job","reset-defaults","del-row","cu-del"].includes(el.dataset.action))state.armed=null;
+  if(state.armed&&!["del-project","del-job","reset-defaults","del-row","cu-del","du-del"].includes(el.dataset.action))state.armed=null;
   a(el,e);
 });
 window.addEventListener("beforeunload",()=>{flushProject();});
